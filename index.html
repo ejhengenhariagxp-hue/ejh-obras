@@ -2087,19 +2087,19 @@ const SICOR = [
 
 // Tabela de preços de projetos EJH (customizável)
 const PRECO_PROJETOS = [
-  {id:"ARQ", nome:"Projeto Arquitetônico",           un:"m²",  preco:35.00,  desc:"Planta baixa, cortes, fachadas, perspectiva, memorial descritivo"},
-  {id:"EST", nome:"Projeto Estrutural",               un:"m²",  preco:28.00,  desc:"Cálculo estrutural completo, detalhamento, ART inclusa"},
-  {id:"HID", nome:"Projeto Hidrossanitário",          un:"m²",  preco:12.00,  desc:"Água fria, esgoto, águas pluviais"},
-  {id:"ELE", nome:"Projeto Elétrico",                un:"m²",  preco:14.00,  desc:"Instalações elétricas, QGBT"},
-  {id:"PREV",nome:"PPCI / Prevenção de Incêndio",    un:"m²",  preco:8.00,   desc:"Laudo e projeto PPCI conforme CBMMG"},
-  {id:"AR2", nome:"Regularização / Prefeitura",      un:"vb",  preco:1800.00,desc:"Protocolo, aprovação e habite-se"},
-  {id:"TOP", nome:"Levantamento Topográfico",        un:"vb",  preco:2200.00,desc:"Levantamento planialtimétrico georreferenciado"},
-  {id:"SOLO",nome:"Sondagem SPT",                    un:"furo",preco:1800.00,desc:"Sondagem a percussão com laudo técnico"},
-  {id:"GER", nome:"Gerenciamento de Obra",            un:"mês", preco:1200.00,desc:"ART, visitas técnicas semanais, relatórios mensais, controle de cronograma"},
-  {id:"ACO", nome:"Acompanhamento de Obra",           un:"mês", preco:900.00, desc:"Visitas periódicas, diário fotográfico, relatório de avanço e conformidade"},
-  {id:"VIS", nome:"Vistoria Técnica",                 un:"vb",  preco:800.00, desc:"Vistoria com emissão de relatório técnico fotográfico"},
-  {id:"LAU", nome:"Laudo Técnico",                    un:"vb",  preco:1400.00,desc:"Laudo de patologias, avaliação estrutural ou de conformidade — com ART"},
-  {id:"ASB", nome:"Assessoria / Consultoria",        un:"hr",  preco:280.00, desc:"Hora técnica de engenharia"},
+  {id:"ARQ", nome:"Projeto Arquitetônico",           un:"m²",  preco:35.00,  desc:"Planta baixa, cortes, fachadas, perspectiva, memoriais e aprovação"},
+  {id:"EST", nome:"Projeto Estrutural",               un:"m²",  preco:28.00,  desc:"Cálculo estrutural, detalhamento de armaduras, formas e locação — com ART"},
+  {id:"HID", nome:"Projeto Hidrossanitário",          un:"m²",  preco:12.00,  desc:"Projeto de água fria/quente, esgoto sanitário e águas pluviais — com ART"},
+  {id:"ELE", nome:"Projeto Elétrico",                un:"m²",  preco:14.00,  desc:"Instalações elétricas residenciais/comerciais e quadro de cargas — com ART"},
+  {id:"PREV",nome:"PPCI / Incêndio",                 un:"m²",  preco:8.00,   desc:"Projeto de prevenção e combate a incêndio conforme normas do CBMMG"},
+  {id:"AR2", nome:"Regularização / Prefeitura",      un:"vb",  preco:1800.00,desc:"Processo administrativo de regularização e obtenção de Habite-se"},
+  {id:"TOP", nome:"Topografia",                      un:"vb",  preco:2200.00,desc:"Levantamento planialtimétrico georreferenciado com locação de divisas"},
+  {id:"SOLO",nome:"Sondagem SPT",                    un:"furo",preco:1800.00,desc:"Sondagem a percussão com relatório de resistência (NSTP)"},
+  {id:"GER", nome:"Gerenciamento de Obra",            un:"mês", preco:1200.00,desc:"Controle de custos, cronograma, compras e gestão de contratos"},
+  {id:"ACO", nome:"Acompanhamento Técnico",           un:"mês", preco:900.00, desc:"Visitas técnicas periódicas para verificação de conformidade do projeto"},
+  {id:"VIS", nome:"Vistoria Técnica",                 un:"vb",  preco:800.00, desc:"Vistoria pontual com emissão de relatório técnico fotográfico"},
+  {id:"LAU", nome:"Laudo de Engenharia",              un:"vb",  preco:1400.00,desc:"Laudo pericial ou de patologia com diagnóstico e recomendações"},
+  {id:"ASB", nome:"Consultoria Técnica",              un:"hr",  preco:280.00, desc:"Assessoria técnica especializada por hora consultada"},
 ];
 
 // ── NEW STATE FIELDS ────────────────────────────────────────────────────────
@@ -2784,7 +2784,9 @@ function renderProjServicos(){
       <input type="checkbox" ${s.incluso?'checked':''} onchange="projServicos[${i}].incluso=this.checked;updateSubtotalRow(${i});calcPropProjeto()" style="width:16px;height:16px;cursor:pointer;accent-color:var(--blue)">
       <div>
         <div style="font-size:13px;font-weight:600;color:var(--navy)">${s.nome}</div>
-        <div style="font-size:11px;color:var(--muted)">${s.desc}</div>
+        <textarea oninput="projServicos[${i}].desc=this.value" 
+          placeholder="Escopo / Descrição do serviço..."
+          style="width:100%;font-size:11px;color:var(--muted);border:none;background:transparent;resize:vertical;min-height:34px;padding:0;font-family:inherit;margin-top:2px;display:block">${s.desc||''}</textarea>
       </div>
       <select onchange="projServicos[${i}].un=this.value;calcPropProjeto()"
         style="padding:5px 7px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;cursor:pointer">
@@ -2850,8 +2852,9 @@ function addObraItem(){
 }
 function importFromOrcamento(){
   populateSelects();
-  const obraId=document.getElementById('f-po-data')?state.obras[0]?.id:'';
-  const items=state.orc.filter(x=>x.obraId===obraId||true).slice(0,20);
+  const obraId = prompt('Selecione a obra de origem:', state.obras[0]?.id);
+  if(!obraId) return;
+  const items = state.orc.filter(x => x.obraId === obraId).slice(0, 50);
   obraItens=[...items.map(x=>({item:x.item,un:x.un,qtd:x.qtd,vunit:x.vunit}))];
   renderObraItens(); calcPropostaObra();
   showToast('✅ Itens importados do orçamento');
@@ -3191,7 +3194,7 @@ function printProposta(id){
       <div><div style="height:48px"></div><div class="ass-line">${p.cliente}<br>Contratante</div></div>
     </div>
 
-    <div class="footer"><span>EJH Engenharia — ${p.id}</span><span>Gerado em ${hoje}</span></div>
+    <div class="footer"><span>${state.relatorioRodape || 'EJH Engenharia'} — ${p.id}</span><span>Gerado em ${hoje}</span></div>
     <script>window.onload=()=>window.print()<\/script>
     </body></html>`);
   win.document.close();
