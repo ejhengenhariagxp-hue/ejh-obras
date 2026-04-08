@@ -266,10 +266,12 @@ textarea{resize:vertical;min-height:70px}
     <div class="nav-group">Propostas & Relatório</div>
     <div class="nav-item" onclick="nav('propostas',this)"><span class="nav-icon">📝</span><span>Propostas</span></div>
     <div class="nav-item" onclick="nav('relatorio',this)"><span class="nav-icon">📄</span><span>Relatório</span></div>
+    <div class="nav-group">Preferências</div>
+    <div class="nav-item" onclick="openModal('modal-settings')"><span class="nav-icon">⚙️</span><span>Configurações</span></div>
   </div>
   <div class="sidebar-footer">
     v4.1 • EJH Engenharia<br>
-    <button onclick="openModal('modal-assinatura')" style="margin-top:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;width:100%">✍️ Minha Assinatura</button>
+    <button onclick="openSettings()" style="margin-top:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;width:100%">⚙️ Configurar Meu Perfil</button>
   </div>
 </nav>
 
@@ -932,6 +934,43 @@ textarea{resize:vertical;min-height:70px}
   </div>
 </div></div>
 
+<!-- Modal Configurações Perfil -->
+<div class="modal-bg" id="modal-settings"><div class="modal" style="max-width:540px">
+  <div class="modal-title">⚙️ Configurações do Profissional</div>
+  <div class="form-grid">
+    <div class="form-group full">
+      <label>Engenheiro Responsável</label>
+      <input id="set-eng-nome" placeholder="Seu nome completo">
+    </div>
+    <div class="form-group full">
+      <label>Registro Profissional (Ex: CREA/MG 123.456)</label>
+      <input id="set-eng-reg" placeholder="CREA ou CAU">
+    </div>
+    <div class="divider full"></div>
+    <div class="form-group full">
+      <label>Nome / Slogan da Empresa (Cabeçalho)</label>
+      <input id="set-emp-nome" placeholder="EJH Engenharia">
+    </div>
+    <div class="form-group full">
+      <label>Logo da Empresa</label>
+      <div class="foto-upload-area">
+         <input type="file" accept="image/*" onchange="handleLogoUpload(this)">
+         <div id="set-logo-preview" style="display:flex;align-items:center;justify-content:center;min-height:60px">
+           <span style="font-size:12px;color:var(--muted)">Clique para subir sua logomarca</span>
+         </div>
+      </div>
+    </div>
+    <div class="form-group full">
+      <label>Texto do Rodapé (Relatórios)</label>
+      <textarea id="set-rel-rodape" placeholder="Sua empresa — Endereço — Contato"></textarea>
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-outline" onclick="closeModal('modal-settings')">Fechar</button>
+    <button class="btn btn-primary" onclick="saveSettings()">💾 Salvar Configurações</button>
+  </div>
+</div></div>
+
 <!-- Modal Assinatura Digital -->
 <div class="modal-bg" id="modal-assinatura"><div class="modal" style="max-width:520px">
   <div class="modal-title">✍️ Assinatura do Responsável Técnico</div>
@@ -1155,6 +1194,9 @@ let state = {
   ],
   counters:{obra:4,orc:5,cron:5,dia:4,fin:6,med:2},
   sinapiCatFilter:"Todos",
+  engNome:"Eng. Eber", engRegistro:"CREA/MG 123456",
+  empresaNome:"EJH Engenharia", empresaLogo:"",
+  relatorioRodape:"EJH Engenharia — Sistema de Gestão de Obras",
 };
 
 // ── HELPERS ────────────────────────────────────────────────────────────────
@@ -1187,6 +1229,43 @@ function showPage(id,navEl){
 // ── MODAL ──────────────────────────────────────────────────────────────────
 function openModal(id){populateSelects();document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+function openSettings(){
+  document.getElementById('set-eng-nome').value = state.engNome || '';
+  document.getElementById('set-eng-reg').value = state.engRegistro || '';
+  document.getElementById('set-emp-nome').value = state.empresaNome || '';
+  document.getElementById('set-rel-rodape').value = state.relatorioRodape || '';
+  const preview = document.getElementById('set-logo-preview');
+  if(state.empresaLogo){
+    preview.innerHTML = `<img src="${state.empresaLogo}" style="max-height:80px;max-width:100%;object-fit:contain">`;
+  } else {
+    preview.innerHTML = '<span style="font-size:12px;color:var(--muted)">Clique para subir sua logomarca</span>';
+  }
+  openModal('modal-settings');
+}
+
+function handleLogoUpload(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    state.empresaLogo = e.target.result;
+    document.getElementById('set-logo-preview').innerHTML = `<img src="${state.empresaLogo}" style="max-height:80px;max-width:100%;object-fit:contain">`;
+    showToast('✅ Logo processado');
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveSettings(){
+  state.engNome = document.getElementById('set-eng-nome').value;
+  state.engRegistro = document.getElementById('set-eng-reg').value;
+  state.empresaNome = document.getElementById('set-emp-nome').value;
+  state.relatorioRodape = document.getElementById('set-rel-rodape').value;
+  closeModal('modal-settings');
+  render();
+  showToast('✅ Configurações salvas!');
+  if(typeof fbSaveData === 'function') fbSaveData();
+}
 function openModalFin(tipo){
   populateSelects();
   document.getElementById('f-fin-tipo').value=tipo;
@@ -1361,48 +1440,28 @@ function render(){
   ];
 
   renders.forEach(r => {
-    try {
-      r.fn();
-    } catch(e) {
-      console.error(`Erro ao renderizar ${r.name}:`, e);
-    }
+    try { r.fn(); } catch(e) { console.error(`Erro ao renderizar ${r.name}:`, e); }
   });
 
-  // Gantt (only when visible)
   if(typeof cronView!=='undefined'&&cronView==='gantt'){
     try{ renderGantt(); } catch(e){ console.error('Erro ao renderizar Gantt:', e); }
   }
 
-  // Persist locally
-  try{
-    const toSave={...state,diario:state.diario.map(d=>({...d,fotos:(d.fotos||[])}))};
-    localStorage.setItem('ejh_obras_v4',JSON.stringify(toSave));
-  }catch(e){
-    console.warn('Erro ao salvar no localStorage:', e);
-  }
+  // Persistência Local
+  saveState();
 
-  // ORC alert
-  try {
-    const estouros=state.orc.filter(x=>x.real>(x.qtd*x.vunit)&&x.real>0);
-    let banner=document.getElementById('alert-banner');
-    if(estouros.length>0){
-      if(!banner){
-        banner=document.createElement('div');
-        banner.id='alert-banner';
-        banner.className='alert-banner';
-        banner.onclick=()=>banner.remove();
-        document.body.appendChild(banner);
+  // ALERTA DE ORÇAMENTO
+  checkOrcamento();
+
+  // AUTO-SYNC FIREBASE (Debounced 3s)
+  if(fbUser && fbDb && fbConfigured){
+    if(_fbSaveTimer) clearTimeout(_fbSaveTimer);
+    _fbSaveTimer = setTimeout(() => {
+      // Só salva se não estivermos processando uma atualização remota
+      if(!window._fbLoadingRemote){
+        fbSaveData();
       }
-      banner.textContent='⚠️ '+estouros.length+' item(ns) com estouro de orçamento — clique para fechar';
-    }else if(banner){
-      banner.remove();
-    }
-  } catch(e) { console.error('Erro ao processar alertas:', e); }
-
-  // Firebase debounce
-  if(typeof fbUser!=='undefined'&&fbUser&&typeof fbConfigured!=='undefined'&&fbConfigured){
-    clearTimeout(_fbSaveTimer);
-    _fbSaveTimer=setTimeout(fbSaveData,3000);
+    }, 3000);
   }
 }
 
@@ -1722,6 +1781,7 @@ function printMedicao(id){
       body{font-family:'DM Sans',sans-serif;padding:40px;max-width:800px;margin:0 auto;color:#1e293b}
       h1{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#0f2744}
       .hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0f2744;padding-bottom:16px;margin-bottom:24px}
+      .logo-img{height:54px;max-width:200px;object-fit:contain;margin-bottom:8px}
       .badge{background:#dbeafe;color:#1d4ed8;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
       table{width:100%;border-collapse:collapse;font-size:13px;margin-top:16px}
       th{background:#0f2744;color:#fff;padding:10px 14px;text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px}
@@ -1733,7 +1793,8 @@ function printMedicao(id){
     </style></head><body>
     <div class="hdr">
       <div>
-        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#0f2744">EJH ENGENHARIA</div>
+        ${state.empresaLogo?`<img src="${state.empresaLogo}" class="logo-img">`:''}
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#0f2744">${state.empresaNome || 'EJH ENGENHARIA'}</div>
         <div style="font-size:12px;color:#64748b;margin-top:2px">Boletim de Medição</div>
       </div>
       <div style="text-align:right">
@@ -1760,8 +1821,8 @@ function printMedicao(id){
     <div style="margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:24px">
       <div style="border-top:2px solid #0f2744;padding-top:8px;text-align:center;font-size:12px">
         ${engSig?`<img src="${engSig}" style="height:64px;margin-bottom:4px;display:block;margin-left:auto;margin-right:auto" alt="Assinatura">`:'<div style="height:64px"></div>'}
-        <div>${m.resp||state.engNome||'Responsável Técnico'}</div>
-        <div style="color:#64748b">Responsável Técnico — ${new Date().toLocaleDateString('pt-BR')}</div>
+        <div>${m.resp || state.engNome || 'Responsável Técnico'}</div>
+        <div style="color:#64748b">${state.engRegistro || 'Responsável Técnico'} — ${new Date().toLocaleDateString('pt-BR')}</div>
       </div>
       <div style="border-top:2px solid #0f2744;padding-top:8px;text-align:center;font-size:12px">
         ${m.assinatura?.dataUrl?`<img src="${m.assinatura.dataUrl}" style="height:64px;margin-bottom:4px;display:block;margin-left:auto;margin-right:auto" alt="Assinatura contratante">`:'<div style="height:64px"></div>'}
@@ -1769,7 +1830,7 @@ function printMedicao(id){
         <div style="color:#64748b">Aprovação${m.assinatura?.data?' — '+m.assinatura.data:''}</div>
       </div>
     </div>
-    <div class="footer"><span>EJH Engenharia — ${m.id}</span><span>Gerado em ${new Date().toLocaleDateString('pt-BR')}</span></div>
+    <div class="footer"><span>${state.relatorioRodape || 'EJH Engenharia'} — ${m.id}</span><span>Gerado em ${new Date().toLocaleDateString('pt-BR')}</span></div>
     <script>window.onload=()=>window.print()<\/script>
   </body></html>`);
   win.document.close();
@@ -1818,7 +1879,7 @@ function gerarTextoRelatorio(obraId){
     if(emExec.length) msg+='🔨 Em execução: '+emExec.map(e=>e.etapa).join(', ')+'\n';
     msg+='\n';
   });
-  msg+=`_Gerado por EJH Engenharia — Sistema de Gestão de Obras_`;
+  msg+=`_Gerado por ${state.engNome || 'EJH Engenharia'} — Sistema de Gestão de Obras_`;
   return msg;
 }
 
@@ -1860,7 +1921,8 @@ function renderReport(){
     <!-- Cabeçalho -->
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #0f2744">
       <div>
-        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#0f2744">EJH ENGENHARIA</div>
+        ${state.empresaLogo?`<img src="${state.empresaLogo}" style="height:48px;max-width:180px;object-fit:contain;margin-bottom:8px">`:''}
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#0f2744">${state.empresaNome || 'EJH ENGENHARIA'}</div>
         <div style="font-size:12px;color:#64748b">Engenharia Civil • Projetos • Obras</div>
         <div style="font-size:13px;font-weight:600;color:#2563eb;margin-top:4px">${tipoLabel}</div>
       </div>
@@ -1937,7 +1999,7 @@ function renderReport(){
 
     <!-- Rodapé -->
     <div style="margin-top:24px;padding-top:14px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:11px;color:#94a3b8">
-      <span>EJH Engenharia — Sistema de Gestão de Obras</span>
+      <span>${state.relatorioRodape || 'EJH Engenharia — Sistema de Gestão de Obras'}</span>
       <span>Emitido em ${hoje}</span>
     </div>
 
@@ -2000,7 +2062,7 @@ const PRECO_PROJETOS = [
   {id:"ARQ", nome:"Projeto Arquitetônico",           un:"m²",  preco:35.00,  desc:"Planta baixa, cortes, fachadas, perspectiva, memorial descritivo"},
   {id:"EST", nome:"Projeto Estrutural",               un:"m²",  preco:28.00,  desc:"Cálculo estrutural completo, detalhamento, ART inclusa"},
   {id:"HID", nome:"Projeto Hidrossanitário",          un:"m²",  preco:12.00,  desc:"Água fria, esgoto, águas pluviais"},
-  {id:"ELE", nome:"Projeto Elétrico / SPDA",         un:"m²",  preco:14.00,  desc:"Instalações elétricas, SPDA, QGBT"},
+  {id:"ELE", nome:"Projeto Elétrico",                un:"m²",  preco:14.00,  desc:"Instalações elétricas, QGBT"},
   {id:"PREV",nome:"PPCI / Prevenção de Incêndio",    un:"m²",  preco:8.00,   desc:"Laudo e projeto PPCI conforme CBMMG"},
   {id:"AR2", nome:"Regularização / Prefeitura",      un:"vb",  preco:1800.00,desc:"Protocolo, aprovação e habite-se"},
   {id:"TOP", nome:"Levantamento Topográfico",        un:"vb",  preco:2200.00,desc:"Levantamento planialtimétrico georreferenciado"},
@@ -2017,8 +2079,12 @@ const PRECO_PROJETOS = [
 function initNewStateFields(){
   if(!Array.isArray(state.empreitas))  state.empreitas=[];
   if(!Array.isArray(state.empreita))   state.empreita=[];
-  if(!Array.isArray(state.propostas))  state.propostas=[];
-  if(!Array.isArray(state.medicoes))   state.medicoes=[];
+  if(!state.propostas)                 state.propostas=[];
+  if(!state.medicoes)                  state.medicoes=[];
+  if(!state.engNome)                   state.engNome="Eng. Eber";
+  if(!state.engRegistro)                state.engRegistro="CREA/MG";
+  if(!state.empresaNome)               state.empresaNome="EJH Engenharia";
+  if(!state.relatorioRodape)           state.relatorioRodape="EJH Engenharia — Gestão de Obras";
   if(!state.counters)                  state.counters={obra:1,orc:1,cron:1,dia:1,fin:1,med:1,emp:1,prop:1};
   if(!state.counters.emp)              state.counters.emp=1;
   if(!state.counters.prop)             state.counters.prop=1;
@@ -3493,17 +3559,26 @@ function _fbSetup(){
         const iniEl=document.getElementById('user-initials');
         if(iniEl) iniEl.textContent=iniciais;
         document.getElementById('user-name').textContent=nome.split(' ')[0];
+        
         setSyncDot('syncing');
-        fbLoadData().then(()=>setSyncDot('ok'));
-        try{closeModal('modal-login');}catch(e){}
+        
+        // Listener em Tempo Real
+        fbDb.collection('usuarios').doc(user.uid).onSnapshot(doc => {
+          if(doc.exists && !doc.metadata.hasPendingWrites){
+            window._fbLoadingRemote = true;
+            processarDadosRemotos(doc.data());
+            window._fbLoadingRemote = false;
+            setSyncDot('ok');
+          }
+        }, err => {
+          console.warn('Snapshot error:', err);
+          setSyncDot('offline');
+        });
+
       } else {
         document.getElementById('user-bar').style.display='none';
         document.getElementById('login-bar').style.display='flex';
         setSyncDot('offline');
-        // Handle redirect result (volta após redirect do Google)
-        fbAuth.getRedirectResult().then(result=>{
-          if(result&&result.user) setSyncDot('ok');
-        }).catch(e=>{ if(e.code!='auth/no-current-user') console.warn('redirect result:',e.message); });
       }
     });
   }catch(e){ console.warn('Firebase setup error:',e.message); }
@@ -3560,44 +3635,37 @@ async function fbLoadData(){
   if(!fbUser||!fbDb||!fbConfigured)return;
   try{
     const doc=await fbDb.collection('usuarios').doc(fbUser.uid).get();
-    if(doc.exists){
-      const remoto=doc.data();
-      delete remoto.updatedAt;
-      // Merge inteligente: arrays remotos só substituem se tiverem dados
-      // Nunca sobrescreve dado local com array vazio do servidor
-      const mergeArr=(local,remote)=>{
-        if(!Array.isArray(remote)||remote.length===0) return local||[];
-        if(!Array.isArray(local)||local.length===0) return remote;
-        // Combina: usa remoto como base, adiciona locais que não existem no remoto
-        const ids=new Set(remote.map(x=>x.id).filter(Boolean));
-        const extras=local.filter(x=>x.id&&!ids.has(x.id));
-        return [...remote,...extras];
-      };
-      // Merge campo a campo
-      const merged={...state,...remoto};
-      // Arrays: merge inteligente
-      ['obras','orc','cron','diario','fin','medicoes','empreita','empreitas','propostas'].forEach(k=>{
-        merged[k]=mergeArr(state[k],remoto[k]);
-      });
-      // Counters: usa o maior entre local e remoto
-      if(remoto.counters&&state.counters){
-        merged.counters={};
-        Object.keys({...state.counters,...remoto.counters}).forEach(k=>{
-          merged.counters[k]=Math.max(state.counters[k]||1,remoto.counters[k]||1);
-        });
-      }
-      state=merged;
-      render();
-      showToast('☁️ Dados sincronizados da nuvem!',3000);
-    } else {
-      // Primeira vez no servidor: salva os dados locais
-      showToast('☁️ Conta nova — salvando dados locais na nuvem…',2000);
-      setTimeout(fbSaveData,1000);
-    }
-  }catch(e){
-    console.warn('fbLoad error:',e.message);
-    showToast('⚠️ Erro ao carregar nuvem: '+e.message,4000);
+    if(doc.exists) processarDadosRemotos(doc.data());
+    else setTimeout(fbSaveData,1000);
+  }catch(e){ console.warn('fbLoad error:',e.message); }
+}
+
+function processarDadosRemotos(remoto){
+  if(!remoto) return;
+  delete remoto.updatedAt;
+  
+  const mergeArr=(local,remote)=>{
+    if(!Array.isArray(remote)||remote.length===0) return local||[];
+    if(!Array.isArray(local)||local.length===0) return remote;
+    const ids=new Set(remote.map(x=>x.id).filter(Boolean));
+    const extras=local.filter(x=>x.id&&!ids.has(x.id));
+    return [...remote,...extras];
+  };
+
+  const merged={...state,...remoto};
+  ['obras','orc','cron','diario','fin','medicoes','empreita','empreitas','propostas'].forEach(k=>{
+    merged[k]=mergeArr(state[k],remoto[k]);
+  });
+  
+  if(remoto.counters){
+    merged.counters=merged.counters||{};
+    Object.keys(remoto.counters).forEach(k=>{
+      merged.counters[k]=Math.max(state.counters[k]||1,remoto.counters[k]||1);
+    });
   }
+  
+  state=merged;
+  render();
 }
 
 
