@@ -2569,14 +2569,27 @@ function applyMapping(){
 function importManual(){
   const txt=document.getElementById('f-imp-texto').value.trim();
   if(!txt){ showToast('⚠️ Campo vazio'); return; }
-  const sep=txt.includes(';')?';':txt.includes('\t')?'\t':',';
   const lines=txt.split('\n').filter(l=>l.trim());
-  pendingImportItems=lines.map(line=>{
-    const cols=line.split(sep).map(c=>c.trim());
-    return {item:cols[0]||'',un:cols[1]||'vb',qtd:cleanNum(cols[2])||1,vunit:cleanNum(cols[3]),sinapi:'',etapa:detectEtapa(cols[0]||'')};
-  }).filter(x=>x.item.length>1);
-  if(pendingImportItems.length) showImportPreview(`Manual (${pendingImportItems.length} itens)`);
-  else showToast('⚠️ Nenhum item reconhecido');
+  // Identifica separador: Tab, Ponto e Vírgula ou múltiplos espaços (comum em PDFs)
+  const hasTab=txt.includes('\t');
+  const hasSemicolon=txt.includes(';');
+  
+  rawImportRows=lines.map(l=>{
+    if(hasTab) return l.split('\t').map(c=>c.trim());
+    if(hasSemicolon) return l.split(';').map(c=>c.trim());
+    // Fallback: divide por 2 ou mais espaços seguidos (típico de colunas alinhadas em texto)
+    return l.split(/\s{2,}/).map(c=>c.trim());
+  }).filter(r=>r.length>=2);
+
+  if(!rawImportRows.length){
+    showToast('⚠️ Formato não reconhecido. Tente usar mais espaços ou Tab entre as colunas.',4000);
+    return;
+  }
+  
+  rawImportHeaders=rawImportRows[0]||[];
+  buildColumnMapper();
+  showToast('✅ Texto carregado! Use o mapeador acima para definir as colunas.',3000);
+  document.getElementById('col-mapper-wrap').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 // ─── PRÉ-VISUALIZAÇÃO EDITÁVEL ─────────────────────────────────────────────
