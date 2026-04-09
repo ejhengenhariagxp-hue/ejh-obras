@@ -1156,46 +1156,15 @@ let selectedSinapiItem = null;
 
 // ── STATE ──────────────────────────────────────────────────────────────────
 let state = {
-  obras:[
-    {id:"OBR-001",nome:"Residencial Guaxupé",cliente:"Cliente A",area:250,endereco:"Rua das Flores, 10 - Guaxupé/MG",inicio:"2025-01-10",fim:"2025-08-30",status:"Em andamento",contrato:380000},
-    {id:"OBR-002",nome:"Galpão Industrial",cliente:"Cliente B",area:1200,endereco:"Av. Industrial, 500",inicio:"2025-03-01",fim:"2025-12-15",status:"Em andamento",contrato:920000},
-    {id:"OBR-003",nome:"Edifício Comercial",cliente:"Cliente C",area:800,endereco:"Rua Central, 200",inicio:"2024-11-01",fim:"2025-06-01",status:"Concluída",contrato:650000},
-  ],
-  orc:[
-    {id:"ORC-001",obraId:"OBR-001",item:"Fundações",sinapi:"94966",un:"m³",qtd:45,vunit:380,real:15390},
-    {id:"ORC-002",obraId:"OBR-001",item:"Estrutura concreto",sinapi:"94990",un:"m³",qtd:120,vunit:520,real:49920},
-    {id:"ORC-003",obraId:"OBR-001",item:"Alvenaria",sinapi:"87435",un:"m²",qtd:650,vunit:85,real:46800},
-    {id:"ORC-004",obraId:"OBR-002",item:"Estrutura metálica",sinapi:"92545",un:"kg",qtd:8500,vunit:12.50,real:90312},
-  ],
-  cron:[
-    {id:"CRN-001",obraId:"OBR-001",etapa:"Fundações",inicio:"2025-01-10",fim:"2025-02-20",prev:100,conc:100},
-    {id:"CRN-002",obraId:"OBR-001",etapa:"Estrutura",inicio:"2025-02-21",fim:"2025-04-30",prev:100,conc:80},
-    {id:"CRN-003",obraId:"OBR-001",etapa:"Alvenaria",inicio:"2025-05-01",fim:"2025-06-15",prev:50,conc:30},
-    {id:"CRN-004",obraId:"OBR-002",etapa:"Estrutura metálica",inicio:"2025-03-01",fim:"2025-06-30",prev:100,conc:60},
-  ],
-  diario:[
-    {id:"DIA-001",obraId:"OBR-001",data:"2025-04-01",desc:"Concretagem dos pilares P1 a P8. Consumo: 18m³ concreto fck25.",equipe:"8 operários",clima:"☀️ Ensolarado",ocorr:"Sem ocorrências",fotos:[]},
-    {id:"DIA-002",obraId:"OBR-001",data:"2025-04-02",desc:"Desforma pilares P1-P4. Montagem de escoramento laje L1.",equipe:"6 operários",clima:"🌧 Chuva (tarde)",ocorr:"Interrupção às 14h por chuva",fotos:[]},
-    {id:"DIA-003",obraId:"OBR-002",data:"2025-04-01",desc:"Recebimento e içamento de vigas metálicas V1-V20.",equipe:"10 operários + guindaste",clima:"⛅ Nublado",ocorr:"Sem ocorrências",fotos:[]},
-  ],
-  fin:[
-    {id:"FIN-001",tipo:"Receita",obraId:"OBR-001",data:"2025-02-28",desc:"Medição nº 1 — Fundações",cat:"Medição",valor:42000,obs:"NF 1001"},
-    {id:"FIN-002",tipo:"Despesa",obraId:"OBR-001",data:"2025-03-05",desc:"Compra de cimento e aço",cat:"Material",valor:18500,obs:"NF fornecedor"},
-    {id:"FIN-003",tipo:"Receita",obraId:"OBR-002",data:"2025-04-01",desc:"Adiantamento contratual 30%",cat:"Adiantamento",valor:276000,obs:"Contrato cláusula 4.2"},
-    {id:"FIN-004",tipo:"Despesa",obraId:"OBR-002",data:"2025-04-10",desc:"Subcontrato estrutura metálica",cat:"Serviço terceirizado",valor:110000,obs:""},
-    {id:"FIN-005",tipo:"Receita",obraId:"OBR-001",data:"2025-04-15",desc:"Medição nº 2 — Estrutura",cat:"Medição",valor:62000,obs:"NF 1042"},
-  ],
-  medicoes:[
-    {id:"MED-001",obraId:"OBR-001",num:1,periodo:"Março/2025",data:"2025-03-31",resp:"Eng. Eber — CREA/MG 123456",
-     itens:[
-       {item:"Fundações",un:"m³",qtd:45,vunit:380,qtdMed:45,valorMed:17100},
-       {item:"Estrutura concreto",un:"m³",qtd:120,vunit:520,qtdMed:60,valorMed:31200},
-     ]
-    },
-  ],
-  counters:{obra:4,orc:5,cron:5,dia:4,fin:6,med:2},
+  obras:[],
+  orc:[],
+  cron:[],
+  diario:[],
+  fin:[],
+  medicoes:[],
+  counters:{obra:1,orc:1,cron:1,dia:1,fin:1,med:1},
   sinapiCatFilter:"Todos",
-  engNome:"Eng. Eber", engRegistro:"CREA/MG 123456",
+  engNome:"", engRegistro:"",
   empresaNome:"EJH Engenharia", empresaLogo:"",
   relatorioRodape:"EJH Engenharia — Sistema de Gestão de Obras",
 };
@@ -1288,9 +1257,16 @@ function populateSelects(){
 
 // ── ADD ────────────────────────────────────────────────────────────────────
 function addObra(){
+  const nome=document.getElementById('f-obra-nome').value.trim();
+  if(!nome){
+    document.getElementById('f-obra-nome').style.border='1.5px solid var(--red)';
+    showToast('⚠️ Informe o nome da obra antes de salvar.');
+    return;
+  }
+  document.getElementById('f-obra-nome').style.border='';
   const id='OBR-'+pad(state.counters.obra);
   state.obras.push({id,
-    nome:document.getElementById('f-obra-nome').value||'Nova Obra',
+    nome,
     cliente:document.getElementById('f-obra-cliente').value,
     area:+document.getElementById('f-obra-area').value||0,
     endereco:document.getElementById('f-obra-end').value,
@@ -1302,13 +1278,27 @@ function addObra(){
   state.counters.obra++;closeModal('modal-obra');render();showToast('✅ Obra cadastrada!');
 }
 function addOrc(){
+  const item=document.getElementById('f-orc-item').value.trim();
+  const vunit=+document.getElementById('f-orc-vunit').value||0;
+  if(!item){
+    document.getElementById('f-orc-item').style.border='1.5px solid var(--red)';
+    showToast('⚠️ Informe a descrição do item.');
+    return;
+  }
+  if(vunit<=0){
+    document.getElementById('f-orc-vunit').style.border='1.5px solid var(--red)';
+    showToast('⚠️ Valor unitário deve ser maior que zero.');
+    return;
+  }
+  document.getElementById('f-orc-item').style.border='';
+  document.getElementById('f-orc-vunit').style.border='';
   state.orc.push({id:'ORC-'+pad(state.counters.orc),
     obraId:document.getElementById('f-orc-obra').value,
-    item:document.getElementById('f-orc-item').value||'Item',
+    item,
     sinapi:document.getElementById('f-orc-sinapi').value,
     un:document.getElementById('f-orc-un').value||'vb',
     qtd:+document.getElementById('f-orc-qtd').value||0,
-    vunit:+document.getElementById('f-orc-vunit').value||0,
+    vunit,
     real:+document.getElementById('f-orc-real').value||0,
   });
   state.counters.orc++;closeModal('modal-orc');render();showToast('✅ Item adicionado!');
@@ -1423,48 +1413,64 @@ function delCron(id){state.cron=state.cron.filter(x=>x.id!==id);render()}
 function delDiario(id){state.diario=state.diario.filter(x=>x.id!==id);render()}
 function delFin(id){state.fin=state.fin.filter(x=>x.id!==id);render()}
 
-// ── RENDER ALL ─────────────────────────────────────────────────────────────
+// ── RENDER ATIVA (só reconstrói a aba visível) ─────────────────────────────
+const PAGE_RENDER_MAP = {
+  'dashboard':  ()=>renderDashboard(),
+  'obras':      ()=>renderObras(),
+  'orcamento':  ()=>renderOrc(),
+  'cronograma': ()=>renderCron(),
+  'diario':     ()=>renderDiario(),
+  'financeiro': ()=>renderFinanceiro(),
+  'tabelas':    ()=>renderTabelas(),
+  'medicao':    ()=>renderMedicoes(),
+  'empreita':   ()=>renderEmpreita(),
+  'propostas':  ()=>renderPropostas(),
+  'relatorio':  ()=>renderReport(),
+  'importar':   ()=>{},
+};
+
+function paginaAtiva(){
+  const pg=document.querySelector('.page.active');
+  if(!pg) return 'dashboard';
+  return pg.id.replace('page-','');
+}
+
 let _fbSaveTimer=null;
-function render(){
-  const renders = [
-    {fn: renderDashboard, name: 'Dashboard'},
-    {fn: renderObras, name: 'Obras'},
-    {fn: renderOrc, name: 'Orçamento'},
-    {fn: renderCron, name: 'Cronograma'},
-    {fn: renderDiario, name: 'Diário'},
-    {fn: renderFinanceiro, name: 'Financeiro'},
-    {fn: renderTabelas, name: 'Tabelas'},
-    {fn: renderMedicoes, name: 'Medições'},
-    {fn: renderEmpreita, name: 'Empreita'},
-    {fn: renderPropostas, name: 'Propostas'},
-    {fn: renderReport, name: 'Relatório'}
-  ];
+let _lastStateHash='';
 
-  renders.forEach(r => {
-    try { r.fn(); } catch(e) { console.error(`Erro ao renderizar ${r.name}:`, e); }
-  });
+function calcStateHash(){
+  // hash simples baseado em contadores e tamanhos dos arrays
+  const s=state;
+  return [
+    s.obras.length, s.orc.length, s.cron.length,
+    s.diario.length, s.fin.length, s.medicoes.length,
+    s.empreitas.length, (s.propostas||[]).length,
+    JSON.stringify(s.counters)
+  ].join('|');
+}
 
-  if(typeof cronView!=='undefined'&&cronView==='gantt'){
-    try{ renderGantt(); } catch(e){ console.error('Erro ao renderizar Gantt:', e); }
+function renderAtiva(){
+  const ativa = paginaAtiva();
+  const fn = PAGE_RENDER_MAP[ativa];
+  try{ if(fn) fn(); } catch(e){ console.error('Erro ao renderizar '+ativa+':',e); }
+  if(ativa==='cronograma' && typeof cronView!=='undefined' && cronView==='gantt'){
+    try{ renderGantt(); } catch(e){ console.error('Gantt error:',e); }
   }
-
-  // Persistência Local
   saveState();
-
-  // ALERTA DE ORÇAMENTO
   checkOrcamento();
-
-  // AUTO-SYNC FIREBASE (Debounced 3s)
+  // Firebase: só sincroniza se houve mudança real no estado
   if(fbUser && fbDb && fbConfigured){
-    if(_fbSaveTimer) clearTimeout(_fbSaveTimer);
-    _fbSaveTimer = setTimeout(() => {
-      // Só salva se não estivermos processando uma atualização remota
-      if(!window._fbLoadingRemote){
-        fbSaveData();
-      }
-    }, 3000);
+    const hash = calcStateHash();
+    if(hash !== _lastStateHash){
+      _lastStateHash = hash;
+      if(_fbSaveTimer) clearTimeout(_fbSaveTimer);
+      _fbSaveTimer = setTimeout(()=>{ if(!window._fbLoadingRemote) fbSaveData(); }, 3000);
+    }
   }
 }
+
+// render() chama renderAtiva() — mantém compat com todo código existente
+function render(){ renderAtiva(); }
 
 // DASHBOARD
 function renderDashboard(){
@@ -1592,11 +1598,13 @@ function renderCron(){
   }).join(''));
 }
 
-// DIÁRIO
+// DIÁRIO — com paginação (últimos 20, botão Ver mais)
+let _diarioLimit = 20;
 function renderDiario(){
-  const html = [...state.diario]
-    .sort((a,b)=>b.data.localeCompare(a.data))
-    .map(d=>{
+  const sorted = [...state.diario].sort((a,b)=>b.data.localeCompare(a.data));
+  const total = sorted.length;
+  const visiveis = sorted.slice(0, _diarioLimit);
+  const html = visiveis.map(d=>{
       const fotos=d.fotos||[];
       const galeriaHtml=fotos.length?`
         <div class="foto-galeria">
@@ -1621,10 +1629,15 @@ function renderDiario(){
         </div>
       </div>`;
     }).join('')||'<div style="color:var(--muted);padding:20px">Nenhum registro ainda.</div>';
-  safeInner('list-diario', html);
+  const verMaisHtml = total > _diarioLimit
+    ? `<div style="text-align:center;padding:14px">
+        <button class="btn btn-outline" onclick="_diarioLimit+=20;renderDiario()">Ver mais (${total-_diarioLimit} restantes)</button>
+       </div>` : '';
+  safeInner('list-diario', html + verMaisHtml);
 }
 
-// FINANCEIRO
+// FINANCEIRO — com paginação
+let _finLimit = 20;
 function renderFinanceiro(){
   const rec=state.fin.filter(x=>x.tipo==='Receita').reduce((a,x)=>a+x.valor,0);
   const des=state.fin.filter(x=>x.tipo==='Despesa').reduce((a,x)=>a+x.valor,0);
@@ -1654,10 +1667,11 @@ function renderFinanceiro(){
     }).join('');
   }
 
-  // Lançamentos
-  const htmlFin = [...state.fin]
-    .sort((a,b)=>b.data.localeCompare(a.data))
-    .map(f=>`<tr>
+  // Lançamentos — com paginação
+  const sortedFin = [...state.fin].sort((a,b)=>b.data.localeCompare(a.data));
+  const totalFin = sortedFin.length;
+  const visiveisFin = sortedFin.slice(0, _finLimit);
+  const htmlFin = visiveisFin.map(f=>`<tr>
       <td>${fmtD(f.data)}</td>
       <td><span class="badge ${f.tipo==='Receita'?'badge-green':'badge-red'}">${f.tipo}</span></td>
       <td>${obraName(f.obraId)}</td>
@@ -1667,6 +1681,15 @@ function renderFinanceiro(){
       <td><button class="btn btn-outline btn-xs" onclick="delFin('${f.id}')" style="color:var(--red);border-color:var(--red)">✕</button></td>
     </tr>`).join('');
   safeInner('tbody-fin', htmlFin);
+  if(totalFin > _finLimit){
+    const el=document.getElementById('tbody-fin');
+    if(el) el.insertAdjacentHTML('afterend',
+      `<tr id="fin-ver-mais"><td colspan="7" style="text-align:center;padding:12px">
+        <button class="btn btn-outline btn-sm" onclick="_finLimit+=20;renderFinanceiro()">Ver mais (${totalFin-_finLimit} restantes)</button>
+      </td></tr>`);
+  } else {
+    const old=document.getElementById('fin-ver-mais'); if(old) old.remove();
+  }
 }
 
 // SINAPI
@@ -2933,6 +2956,13 @@ function saveProposta(tipo){
   let proposta={id, tipo, data:new Date().toISOString().split('T')[0]};
   try{
     if(tipo==='projeto'){
+      const _cli=document.getElementById('f-pp-cliente').value.trim();
+      if(!_cli){
+        document.getElementById('f-pp-cliente').style.border='1.5px solid var(--red)';
+        showToast('\u26a0\ufe0f Informe o nome do cliente antes de salvar.');
+        return;
+      }
+      document.getElementById('f-pp-cliente').style.border='';
       const sel=document.getElementById('f-pp-parcela');
       const customEl=document.getElementById('f-pp-parcela-custom');
       const parcela=sel?(sel.value==='custom'?(customEl?customEl.value:''):sel.value):'';
@@ -2954,6 +2984,13 @@ function saveProposta(tipo){
       };
       closeModal('modal-proposta-projeto');
     } else {
+      const _cliObra=document.getElementById('f-po-cliente').value.trim();
+      if(!_cliObra){
+        document.getElementById('f-po-cliente').style.border='1.5px solid var(--red)';
+        showToast('⚠️ Informe o nome do cliente antes de salvar.');
+        return;
+      }
+      document.getElementById('f-po-cliente').style.border='';
       const bdi=+document.getElementById('f-po-bdi').value||25;
       const desc=+document.getElementById('f-po-desc').value||0;
       const sub=obraItens.reduce((a,x)=>a+x.qtd*x.vunit,0);
