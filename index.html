@@ -1410,8 +1410,8 @@ function saveCronEdit(){
 function delObra(id){if(confirm('Remover obra e todos os dados associados?')){state.obras=state.obras.filter(x=>x.id!==id);render()}}
 function delOrc(id){state.orc=state.orc.filter(x=>x.id!==id);render()}
 function delCron(id){state.cron=state.cron.filter(x=>x.id!==id);render()}
-function delDiario(id){state.diario=state.diario.filter(x=>x.id!==id);render()}
-function delFin(id){state.fin=state.fin.filter(x=>x.id!==id);render()}
+function delDiario(id){state.diario=state.diario.filter(x=>x.id!==id);_diarioLimit=20;render()}
+function delFin(id){state.fin=state.fin.filter(x=>x.id!==id);_finLimit=20;render()}
 
 // ── RENDER ATIVA (só reconstrói a aba visível) ─────────────────────────────
 const PAGE_RENDER_MAP = {
@@ -1442,10 +1442,10 @@ function calcStateHash(){
   // hash simples baseado em contadores e tamanhos dos arrays
   const s=state;
   return [
-    s.obras.length, s.orc.length, s.cron.length,
-    s.diario.length, s.fin.length, s.medicoes.length,
-    s.empreitas.length, (s.propostas||[]).length,
-    JSON.stringify(s.counters)
+    (s.obras||[]).length, (s.orc||[]).length, (s.cron||[]).length,
+    (s.diario||[]).length, (s.fin||[]).length, (s.medicoes||[]).length,
+    (s.empreitas||[]).length, (s.propostas||[]).length,
+    JSON.stringify(s.counters||{})
   ].join('|');
 }
 
@@ -1923,10 +1923,13 @@ function gerarRelatorioEmail(){
 }
 
 function renderReport(){
-  // Populate obra selector
+  // Populate obra selector — sempre sincroniza com estado atual
   const sel=document.getElementById('rel-obra-sel');
-  if(sel&&sel.options.length<=1){
+  if(sel){
+    const valorAtual=sel.value;
+    sel.innerHTML='<option value="">Todas as obras</option>';
     state.obras.forEach(o=>{const opt=document.createElement('option');opt.value=o.id;opt.textContent=o.nome;sel.appendChild(opt);});
+    if(valorAtual) sel.value=valorAtual;
   }
   const obraId=sel?.value||'';
   const tipo=document.getElementById('rel-tipo-sel')?.value||'gerencial';
@@ -2620,7 +2623,7 @@ function showImportPreview(fonte){
   pendingImportObraId=getImpObraId();
   const usaCron=getImpCron(), usaMed=getImpMed();
   document.getElementById('import-preview-title').textContent=`Pré-visualização — ${fonte}`;
-  document.getElementById('import-propagacao-info').textContent=
+  document.getElementById('import-prop-info').textContent=
     `→ Orçamento${usaCron?' + Cronograma':''}${usaMed?' + Medição':''}`;
   renderImportRows();
   updateImportTotals();
@@ -2631,7 +2634,7 @@ function renderImportRows(){
   const UNS=['m²','m³','m','kg','vb','un','pt','hr','cj','l','t','furo','verba','pç'];
   const ETAPAS=['Serviços Preliminares','Fundações','Estrutura','Alvenaria','Cobertura','Revestimentos','Instalações','Acabamentos','Demolição','Complementares'];
   document.getElementById('import-count-label').textContent=`${pendingImportItems.length} itens`;
-  document.getElementById('tbody-import-preview').innerHTML=pendingImportItems.map((x,i)=>`
+  document.getElementById('tbody-import').innerHTML=pendingImportItems.map((x,i)=>`
     <tr>
       <td style="color:var(--muted);font-size:11px;text-align:center">${i+1}</td>
       <td><input value="${(x.item||'').replace(/"/g,'&quot;')}"
