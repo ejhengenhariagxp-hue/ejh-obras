@@ -252,7 +252,7 @@ textarea{resize:vertical;min-height:70px}
   <div class="nav">
     <div class="nav-group">Principal</div>
     <div class="nav-item active" onclick="nav('dashboard',this)"><span class="nav-icon">📊</span><span>Dashboard</span></div>
-    <div class="nav-item" onclick="nav('obras',this)"><span class="nav-icon">🏗</span><span>Obras</span></div>
+    <div class="nav-item" onclick="nav('obras',this)"><span class="nav-icon">🏗</span><span>R1 / R2</span></div>
     <div class="nav-group">Execução</div>
     <div class="nav-item" onclick="nav('orcamento',this)"><span class="nav-icon">💰</span><span>Orçamento</span></div>
     <div class="nav-item" onclick="nav('empreita',this)"><span class="nav-icon">🤝</span><span>Empreita M.O.</span></div>
@@ -281,10 +281,10 @@ textarea{resize:vertical;min-height:70px}
 <div id="page-dashboard" class="page active">
   <div class="page-hdr">
     <div><div class="page-title">Dashboard</div><div class="page-sub" id="dash-date"></div></div>
-    <button class="btn btn-primary" onclick="openModal('modal-obra')">＋ Nova Obra</button>
+    <button class="btn btn-primary" onclick="openModal('modal-obra')">＋ Novo R1/R2</button>
   </div>
   <div class="kpi-grid">
-    <div class="kpi blue"><div class="kpi-label">Total de Obras</div><div class="kpi-value" id="kpi-total">0</div><div class="kpi-sub">cadastradas</div></div>
+    <div class="kpi blue"><div class="kpi-label">R1 e R2 Ativos</div><div class="kpi-value" id="kpi-total">0</div><div class="kpi-sub">cadastrados</div></div>
     <div class="kpi green"><div class="kpi-label">Orçamento Total</div><div class="kpi-value" id="kpi-orc">R$0</div><div class="kpi-sub">soma dos itens</div></div>
     <div class="kpi amber"><div class="kpi-label">Realizado</div><div class="kpi-value" id="kpi-real">R$0</div><div class="kpi-sub" id="kpi-real-pct"></div></div>
     <div class="kpi teal"><div class="kpi-label">Saldo Financeiro</div><div class="kpi-value" id="kpi-saldo">R$0</div><div class="kpi-sub">receitas − despesas</div></div>
@@ -295,26 +295,35 @@ textarea{resize:vertical;min-height:70px}
 
 <!-- OBRAS -->
 <div id="page-obras" class="page">
-  <div class="page-hdr"><div><div class="page-title">Obras</div><div class="page-sub">Todos os projetos</div></div><button class="btn btn-primary" onclick="openModal('modal-obra')">＋ Nova Obra</button></div>
-  <div class="table-wrap"><table><thead><tr><th>ID</th><th>Nome</th><th>Cliente</th><th>Área</th><th>Início</th><th>Fim</th><th>Status</th><th></th></tr></thead><tbody id="tbody-obras"></tbody></table></div>
+  <div class="page-hdr"><div><div class="page-title">R1 e R2</div><div class="page-sub">Gestão de Projetos e Obras</div></div><button class="btn btn-primary" onclick="openModal('modal-obra')">＋ Novo R1/R2</button></div>
+  <div class="table-wrap"><table><thead><tr><th>Tipo</th><th>ID</th><th>Nome</th><th>Cliente</th><th>Área</th><th>Início</th><th>Fim</th><th>Status</th><th></th></tr></thead><tbody id="tbody-obras"></tbody></table></div>
 </div>
 
 <!-- ORÇAMENTO -->
 <div id="page-orcamento" class="page">
   <div class="page-hdr">
-    <div><div class="page-title">Orçamento</div><div class="page-sub">Orçado × Realizado</div></div>
+    <div><div class="page-title">Orçamento</div><div class="page-sub">Orçado × Realizado por Obra</div></div>
     <div class="hdr-actions">
       <button class="btn btn-outline" onclick="exportJSON()">↑ Exportar</button>
       <button class="btn btn-outline" onclick="nav('tabelas',null)">📐 SINAPI/SICOR</button>
       <button class="btn btn-outline" onclick="nav('importar',null)" style="color:var(--blue);border-color:var(--blue)">📥 Importar Planilha</button>
-      <button class="btn btn-primary" onclick="openModal('modal-orc')">＋ Item</button>
     </div>
   </div>
-  <div class="table-wrap"><table>
-    <thead><tr><th>ID</th><th>Obra</th><th>Item/Serviço</th><th>Un.</th><th>Qtd</th><th>V.Unit</th><th>Total Orçado</th><th>Realizado</th><th>Desvio</th><th></th></tr></thead>
-    <tbody id="tbody-orc"></tbody>
-    <tfoot><tr><td colspan="6" style="text-align:right">TOTAIS</td><td id="tfoot-orc-tot"></td><td id="tfoot-orc-real"></td><td id="tfoot-orc-dev"></td><td></td></tr></tfoot>
-  </table></div>
+  
+  <div id="orcamento-lista-obras" class="cards-grid"></div>
+  
+  <div id="orcamento-detalhe" style="display:none">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+       <button class="btn btn-outline btn-sm" onclick="voltarOrcLista()">← Voltar às Obras</button>
+       <button class="btn btn-primary btn-sm" onclick="openModal('modal-orc')">＋ Adicionar Item</button>
+    </div>
+    <h3 id="orc-detalhe-nome" style="color:var(--navy); font-family:'Syne',sans-serif; margin-bottom: 14px;"></h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Item/Descrição</th><th>Un.</th><th>Qtd</th><th>V.Unit</th><th>Total Orçado</th><th>Realizado</th><th>Desvio</th><th></th></tr></thead>
+      <tbody id="tbody-orc-detalhe"></tbody>
+      <tfoot><tr><td colspan="4" style="text-align:right">TOTAIS DA OBRA</td><td id="tfoot-orc-tot"></td><td id="tfoot-orc-real"></td><td id="tfoot-orc-dev"></td><td></td></tr></tfoot>
+    </table></div>
+  </div>
 </div>
 
 <!-- EMPREITA -->
@@ -366,7 +375,7 @@ textarea{resize:vertical;min-height:70px}
 <!-- FINANCEIRO -->
 <div id="page-financeiro" class="page">
   <div class="page-hdr">
-    <div><div class="page-title">Controle Financeiro</div><div class="page-sub">Receitas, despesas e fluxo por obra</div></div>
+    <div><div class="page-title">Controle Financeiro</div><div class="page-sub">Receitas, despesas e fluxo por R1 e R2</div></div>
     <div class="hdr-actions"><button class="btn btn-green" onclick="openModalFin('Receita')">＋ Receita</button><button class="btn btn-outline" style="color:var(--red);border-color:var(--red)" onclick="openModalFin('Despesa')">＋ Despesa</button></div>
   </div>
   <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
@@ -374,7 +383,11 @@ textarea{resize:vertical;min-height:70px}
     <div class="kpi red"><div class="kpi-label">Despesas</div><div class="kpi-value" id="fin-kpi-des">R$0</div></div>
     <div class="kpi teal"><div class="kpi-label">Saldo</div><div class="kpi-value" id="fin-kpi-sal">R$0</div></div>
   </div>
-  <div class="section"><div class="section-hdr"><div class="section-title">Por Obra</div></div><div class="table-wrap"><table><thead><tr><th>Obra</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="tbody-fin-obra"></tbody></table></div></div>
+  <!-- Dashboard Financeiro Avançado (Indicadores e % YoY) -->
+  <div id="dash-fin-avancado"></div>
+
+  <div class="section"><div class="section-hdr"><div class="section-title">R1 - Projetos</div></div><div class="table-wrap"><table><thead><tr><th>Projeto (R1)</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="tbody-fin-r1"></tbody></table></div></div>
+  <div class="section"><div class="section-hdr"><div class="section-title">R2 - Obras</div></div><div class="table-wrap"><table><thead><tr><th>Obra (R2)</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="tbody-fin-r2"></tbody></table></div></div>
   <div class="section"><div class="section-hdr"><div class="section-title">Lançamentos</div></div><div class="table-wrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Obra</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th></th></tr></thead><tbody id="tbody-fin"></tbody></table></div></div>
 </div>
 
@@ -386,7 +399,7 @@ textarea{resize:vertical;min-height:70px}
   </div>
   <div class="source-tabs"><button class="source-tab active" id="tab-sinapi" onclick="setTabelaSrc('sinapi')">SINAPI Federal</button><button class="source-tab" id="tab-sicor" onclick="setTabelaSrc('sicor')">SICOR-MG</button></div>
   <div class="sinapi-filter" id="sinapi-filter"></div>
-  <div class="sinapi-search-wrap"><span class="sinapi-search-icon">🔍</span><input id="sinapi-search" placeholder="Buscar código, descrição…" oninput="renderTabelas()"></div>
+  <div class="sinapi-search-wrap"><span class="sinapi-search-icon">🔍</span><input id="sinapi-search" placeholder="Buscar código, descrição…" oninput="filterSinapi(this.value)"></div>
   <div class="table-wrap"><div id="sinapi-list" style="max-height:420px;overflow-y:auto"></div></div>
 </div>
 
@@ -401,7 +414,7 @@ textarea{resize:vertical;min-height:70px}
   <div class="page-hdr"><div><div class="page-title">Importar Orçamento</div><div class="page-sub">Excel, PDF, CSV ou manual — propaga para Orçamento, Cronograma e Medição</div></div></div>
   <div class="table-wrap" style="padding:16px 20px;margin-bottom:18px">
     <div class="form-grid">
-      <div class="fg"><label>Obra destino</label><select id="f-imp-obra"></select></div>
+      <div class="fg"><label>Destino (R1/R2)</label><select id="f-imp-obra"></select></div>
       <div class="fg"><label>Fonte</label><input id="f-imp-fonte" placeholder="Ex: Orçamento do cliente…"></div>
       <div class="fg"><label>Gerar Cronograma?</label><select id="f-imp-cron"><option value="sim">✅ Sim</option><option value="nao">❌ Não</option></select></div>
       <div class="fg"><label>Preparar Medição?</label><select id="f-imp-med"><option value="sim">✅ Sim</option><option value="nao">❌ Não</option></select></div>
@@ -456,8 +469,8 @@ textarea{resize:vertical;min-height:70px}
 <!-- PROPOSTAS -->
 <div id="page-propostas" class="page">
   <div class="page-hdr">
-    <div><div class="page-title">Propostas Comerciais</div><div class="page-sub">Projetos e obras</div></div>
-    <div class="hdr-actions"><button class="btn btn-outline" onclick="openPropProjeto()">📐 Proposta de Projeto</button><button class="btn btn-primary" onclick="openPropObra()">🏗 Proposta de Obra</button></div>
+    <div><div class="page-title">Propostas Comerciais</div><div class="page-sub">Propostas para R1 e R2</div></div>
+    <div class="hdr-actions"><button class="btn btn-outline" onclick="openPropProjeto()">📐 Proposta R1 (Projeto)</button><button class="btn btn-primary" onclick="openPropObra()">🏗 Proposta R2 (Obra)</button></div>
   </div>
   <div id="list-propostas"></div>
 </div>
@@ -500,9 +513,12 @@ textarea{resize:vertical;min-height:70px}
 
 
 <div class="modal-bg" id="modal-obra"><div class="modal">
-  <div class="modal-title">🏗 Nova Obra</div>
+  <div class="modal-title">🏗 Novo R1 / R2 (Projeto ou Obra)</div>
   <div class="form-grid">
-    <div class="form-group full"><label>Nome da Obra</label><input id="f-obra-nome" placeholder="Ex: Residencial Guaxupé"></div>
+    <div class="form-group"><label>Tipo</label><select id="f-obra-tipo">
+      <option value="R1">R1 - Projeto</option><option value="R2" selected>R2 - Obra</option>
+    </select></div>
+    <div class="form-group"><label>Nome</label><input id="f-obra-nome" placeholder="Ex: Residencial Guaxupé"></div>
     <div class="form-group"><label>Cliente</label><input id="f-obra-cliente" placeholder="Nome do cliente"></div>
     <div class="form-group"><label>Área (m²)</label><input id="f-obra-area" type="number" placeholder="250"></div>
     <div class="form-group full"><label>Endereço</label><input id="f-obra-end" placeholder="Rua, nº — Cidade/UF"></div>
@@ -1267,6 +1283,7 @@ function addObra(){
   const id='OBR-'+pad(state.counters.obra);
   state.obras.push({id,
     nome,
+    tipo:document.getElementById('f-obra-tipo').value,
     cliente:document.getElementById('f-obra-cliente').value,
     area:+document.getElementById('f-obra-area').value||0,
     endereco:document.getElementById('f-obra-end').value,
@@ -1304,9 +1321,16 @@ function addOrc(){
   state.counters.orc++;closeModal('modal-orc');render();showToast('✅ Item adicionado!');
 }
 function addCron(){
+  const etapa=document.getElementById('f-cron-etapa').value.trim();
+  if(!etapa){
+    document.getElementById('f-cron-etapa').style.border='1.5px solid var(--red)';
+    showToast('⚠️ Informe o nome da etapa.');
+    return;
+  }
+  document.getElementById('f-cron-etapa').style.border='';
   state.cron.push({id:'CRN-'+pad(state.counters.cron),
     obraId:document.getElementById('f-cron-obra').value,
-    etapa:document.getElementById('f-cron-etapa').value||'Etapa',
+    etapa:etapa||'Etapa',
     inicio:document.getElementById('f-cron-inicio').value,
     fim:document.getElementById('f-cron-fim').value,
     prev:+document.getElementById('f-cron-prev').value||100,
@@ -1336,13 +1360,27 @@ function openModalDiario(){
   document.getElementById('modal-diario').classList.add('open');
 }
 function addFin(){
+  const desc=document.getElementById('f-fin-desc').value.trim();
+  const valor=+document.getElementById('f-fin-valor').value||0;
+  if(!desc){
+    document.getElementById('f-fin-desc').style.border='1.5px solid var(--red)';
+    showToast('⚠️ Informe a descrição do lançamento.');
+    return;
+  }
+  if(valor<=0){
+    document.getElementById('f-fin-valor').style.border='1.5px solid var(--red)';
+    showToast('⚠️ O valor deve ser maior que zero.');
+    return;
+  }
+  document.getElementById('f-fin-desc').style.border='';
+  document.getElementById('f-fin-valor').style.border='';
   state.fin.push({id:'FIN-'+pad(state.counters.fin),
     tipo:document.getElementById('f-fin-tipo').value,
     obraId:document.getElementById('f-fin-obra').value,
     data:document.getElementById('f-fin-data').value,
-    desc:document.getElementById('f-fin-desc').value,
+    desc:desc,
     cat:document.getElementById('f-fin-cat').value,
-    valor:+document.getElementById('f-fin-valor').value||0,
+    valor:valor,
     obs:document.getElementById('f-fin-obs').value,
   });
   state.counters.fin++;closeModal('modal-fin');render();showToast('✅ Lançamento registrado!');
@@ -1408,10 +1446,10 @@ function saveCronEdit(){
 
 // ── DELETE ─────────────────────────────────────────────────────────────────
 function delObra(id){if(confirm('Remover obra e todos os dados associados?')){state.obras=state.obras.filter(x=>x.id!==id);render()}}
-function delOrc(id){state.orc=state.orc.filter(x=>x.id!==id);render()}
-function delCron(id){state.cron=state.cron.filter(x=>x.id!==id);render()}
-function delDiario(id){state.diario=state.diario.filter(x=>x.id!==id);_diarioLimit=20;render()}
-function delFin(id){state.fin=state.fin.filter(x=>x.id!==id);_finLimit=20;render()}
+function delOrc(id){if(confirm('Excluir este item?')){state.orc=state.orc.filter(x=>x.id!==id);render()}}
+function delCron(id){if(confirm('Excluir este estágio?')){state.cron=state.cron.filter(x=>x.id!==id);render()}}
+function delDiario(id){if(confirm('Excluir este registro?')){state.diario=state.diario.filter(x=>x.id!==id);_diarioLimit=20;render()}}
+function delFin(id){if(confirm('Excluir este lançamento?')){state.fin=state.fin.filter(x=>x.id!==id);_finLimit=20;render()}}
 
 // ── RENDER ATIVA (só reconstrói a aba visível) ─────────────────────────────
 const PAGE_RENDER_MAP = {
@@ -1542,6 +1580,7 @@ function renderDashboard(){
 function renderObras(){
   safeInner('tbody-obras', state.obras.map(o=>`
     <tr>
+      <td><span class="badge ${o.tipo==='R1'?'badge-purple':'badge-blue'}">${o.tipo||'R2'}</span></td>
       <td class="td-id">${o.id}</td><td style="font-weight:600">${o.nome}</td>
       <td>${o.cliente}</td><td>${o.area.toLocaleString('pt-BR')} m²</td>
       <td>${fmtD(o.inicio)}</td><td>${fmtD(o.fim)}</td>
@@ -1551,26 +1590,77 @@ function renderObras(){
 }
 
 // ORÇAMENTO
+let currentOrcObraId = null;
+
 function renderOrc(){
-  let tot=0,real=0;
-  document.getElementById('tbody-orc').innerHTML=state.orc.map(x=>{
-    const t=x.qtd*x.vunit,dev=x.real-t;tot+=t;real+=x.real;
-    const dc=dev>=0?'var(--red)':'var(--green)';
-    return `<tr>
-      <td class="td-id">${x.id}</td><td>${obraName(x.obraId)}</td>
-      <td style="font-weight:500">${x.item}${x.sinapi?` <span style="font-size:10px;color:var(--muted)">[${x.sinapi}]</span>`:''}</td>
-      <td>${x.un}</td><td>${x.qtd.toLocaleString('pt-BR')}</td>
-      <td>${fmt(x.vunit)}</td>
-      <td style="font-weight:700">${fmt(t)}</td>
-      <td>${fmt(x.real)}</td>
-      <td style="font-weight:700;color:${dc}">${dev>=0?'+':''}${fmt(dev)}</td>
-      <td><button class="btn btn-outline btn-xs" onclick="delOrc('${x.id}')" style="color:var(--red);border-color:var(--red)">✕</button></td>
-    </tr>`;
-  }).join('');
-  const dev=real-tot,dc=dev>=0?'var(--red)':'var(--green)';
-  safeText('tfoot-orc-tot', fmt(tot));
-  safeText('tfoot-orc-real', fmt(real));
-  safeInner('tfoot-orc-dev', `<span style="color:${dc}">${dev>=0?'+':''}${fmt(dev)}</span>`);
+   const lista = document.getElementById('orcamento-lista-obras');
+   const detalhe = document.getElementById('orcamento-detalhe');
+   if(currentOrcObraId) {
+      lista.style.display = 'none';
+      detalhe.style.display = 'block';
+      renderOrcDetalhe();
+   } else {
+      lista.style.display = 'grid';
+      detalhe.style.display = 'none';
+      
+      lista.innerHTML = state.obras.map(o => {
+         const itens = state.orc.filter(x => x.obraId === o.id);
+         const orcado = itens.reduce((a,x)=>a+x.qtd*x.vunit, 0);
+         const real = itens.reduce((a,x)=>a+x.real, 0);
+         const dev = real - orcado;
+         const dc = dev > 0 ? 'var(--red)' : 'var(--green)';
+         return `
+           <div class="obra-card" onclick="abrirOrcamentoObra('${o.id}')">
+             <div class="obra-card-title">${o.nome}</div>
+             <div class="obra-card-meta">
+               <span>Itens: <b>${itens.length}</b></span>
+               <span>Orçado: <b>${fmt(orcado)}</b></span>
+               <span>Realizado: <b>${fmt(real)}</b></span>
+               <span style="color:${dc}">Desvio: <b>${dev>0?'+':''}${fmt(dev)}</b></span>
+             </div>
+           </div>
+         `;
+      }).join('') || '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:24px">Nenhuma obra cadastrada.</div>';
+   }
+}
+
+function abrirOrcamentoObra(id) {
+   currentOrcObraId = id;
+   const selectObra = document.getElementById('f-orc-obra');
+   if(selectObra) selectObra.value = id;
+   renderOrc();
+}
+
+function voltarOrcLista() {
+   currentOrcObraId = null;
+   renderOrc();
+}
+
+function renderOrcDetalhe() {
+   const o = state.obras.find(x => x.id === currentOrcObraId);
+   if(!o) return;
+   document.getElementById('orc-detalhe-nome').textContent = `Orçamento: ${o.nome}`;
+   const itens = state.orc.filter(x=>x.obraId === currentOrcObraId);
+   
+   let tot=0, real=0;
+   document.getElementById('tbody-orc-detalhe').innerHTML = itens.map(x=>{
+      const t=x.qtd*x.vunit, dev=x.real-t; tot+=t; real+=x.real;
+      const dc=dev>0?'var(--red)':'var(--green)';
+      return `<tr>
+        <td style="font-weight:500">${x.item} ${x.sinapi?`<span style="font-size:10px;color:var(--muted)">[${x.sinapi}]</span>`:''}</td>
+        <td>${x.un}</td><td>${x.qtd.toLocaleString('pt-BR')}</td>
+        <td>${fmt(x.vunit)}</td>
+        <td style="font-weight:700">${fmt(t)}</td>
+        <td>${fmt(x.real)}</td>
+        <td style="font-weight:700;color:${dc}">${dev>0?'+':''}${fmt(dev)}</td>
+        <td><button class="btn btn-outline btn-xs" onclick="delOrc('${x.id}')" style="color:var(--red);border-color:var(--red)">✕</button></td>
+      </tr>`;
+   }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:16px">Nenhum item nesta obra.</td></tr>';
+   
+   const dev=real-tot, dc=dev>0?'var(--red)':'var(--green)';
+   safeText('tfoot-orc-tot', fmt(tot));
+   safeText('tfoot-orc-real', fmt(real));
+   safeInner('tfoot-orc-dev', `<span style="color:${dc}">${dev>0?'+':''}${fmt(dev)}</span>`);
 }
 
 // CRONOGRAMA
@@ -1636,7 +1726,73 @@ function renderDiario(){
   safeInner('list-diario', html + verMaisHtml);
 }
 
-// FINANCEIRO — com paginação
+function renderDashFinAvancado() {
+  const container = document.getElementById('dash-fin-avancado');
+  if(!container) return;
+
+  const now = new Date();
+  const yearNow = now.getFullYear();
+  const yearLast = yearNow - 1;
+  const monthNow = now.getMonth() + 1; // 1-12
+
+  // Filtros por Categoria e Ano
+  const finR1 = state.fin.filter(f => {
+    const o = state.obras.find(x => x.id === f.obraId);
+    return o && o.tipo === 'R1';
+  });
+  const finR2 = state.fin.filter(f => {
+    const o = state.obras.find(x => x.id === f.obraId);
+    return o && (o.tipo === 'R2' || !o.tipo);
+  });
+
+  const sum = (arr, year, tipo) => arr.filter(f => f.data.startsWith(year) && (!tipo || f.tipo === tipo)).reduce((a,x) => a + x.valor, 0);
+
+  const r1Rec = sum(finR1, yearNow, 'Receita');
+  const r2Rec = sum(finR2, yearNow, 'Receita');
+  
+  // Média Anual (YTD)
+  const totalRecYTD = state.fin.filter(f => f.data.startsWith(yearNow) && f.tipo === 'Receita').reduce((a,x) => a+x.valor, 0);
+  const avgMensal = totalRecYTD / monthNow;
+
+  // YoY Comparison (Full Year vs Full Year or YTD vs YTD?)
+  // Vamos fazer YTD vs Same Period Last Year para ser mais justo
+  const lastYearSamePeriod = state.fin.filter(f => {
+    const y = parseInt(f.data.substring(0,4));
+    const m = parseInt(f.data.substring(5,7));
+    return y === yearLast && m <= monthNow && f.tipo === 'Receita';
+  }).reduce((a,x) => a+x.valor, 0);
+
+  const diffPct = lastYearSamePeriod > 0 ? ((totalRecYTD / lastYearSamePeriod) - 1) * 100 : 0;
+  const diffColor = diffPct >= 0 ? 'var(--green)' : 'var(--red)';
+  const diffIcon = diffPct >= 0 ? '↗' : '↘';
+
+  container.innerHTML = `
+    <div class="kpi-grid" style="margin-top:20px; margin-bottom: 30px;">
+      <div class="kpi purple">
+        <div class="kpi-label">Faturamento R1 (Projeto)</div>
+        <div class="kpi-value">${fmt(r1Rec)}</div>
+        <div class="kpi-sub">Total no ano ${yearNow}</div>
+      </div>
+      <div class="kpi blue">
+        <div class="kpi-label">Faturamento R2 (Obra)</div>
+        <div class="kpi-value">${fmt(r2Rec)}</div>
+        <div class="kpi-sub">Total no ano ${yearNow}</div>
+      </div>
+      <div class="kpi teal">
+        <div class="kpi-label">Média Mensal (${yearNow})</div>
+        <div class="kpi-value">${fmt(avgMensal)}</div>
+        <div class="kpi-sub">Baseado em ${monthNow} mês(es)</div>
+      </div>
+      <div class="kpi ${diffPct >= 0 ? 'green' : 'red'}">
+        <div class="kpi-label">Performance YoY (%)</div>
+        <div class="kpi-value" style="color:${diffColor}">${diffIcon} ${diffPct.toFixed(1)}%</div>
+        <div class="kpi-sub">vs mesmo período de ${yearLast}</div>
+      </div>
+    </div>
+  `;
+}
+
+// FINANCEIRO — com separação R1/R2 e Dashboard Avançado
 let _finLimit = 20;
 function renderFinanceiro(){
   const rec=state.fin.filter(x=>x.tipo==='Receita').reduce((a,x)=>a+x.valor,0);
@@ -1650,21 +1806,34 @@ function renderFinanceiro(){
     salEl.className='kpi-value '+(sal>=0?'saldo-positivo':'saldo-negativo');
   }
 
-  // Por obra
-  const tbodyFinObra = document.getElementById('tbody-fin-obra');
-  if(tbodyFinObra) {
-    tbodyFinObra.innerHTML=state.obras.map(o=>{
-      const r=state.fin.filter(x=>x.obraId===o.id&&x.tipo==='Receita').reduce((a,x)=>a+x.valor,0);
-      const d=state.fin.filter(x=>x.obraId===o.id&&x.tipo==='Despesa').reduce((a,x)=>a+x.valor,0);
-      const s=r-d;
-      return `<tr>
-        <td style="font-weight:600">${o.nome}</td>
-        <td style="color:var(--green);font-weight:600">${fmt(r)}</td>
-        <td style="color:var(--red);font-weight:600">${fmt(d)}</td>
-        <td style="font-weight:800;color:${s>=0?'var(--green)':'var(--red)'}">${fmt(s)}</td>
-        <td>${statusBadge(o.status)}</td>
-      </tr>`;
-    }).join('');
+  // Novo Dashboard Avançado
+  renderDashFinAvancado();
+
+  const renderObraRow = o => {
+    const r=state.fin.filter(x=>x.obraId===o.id&&x.tipo==='Receita').reduce((a,x)=>a+x.valor,0);
+    const d=state.fin.filter(x=>x.obraId===o.id&&x.tipo==='Despesa').reduce((a,x)=>a+x.valor,0);
+    const s=r-d;
+    return `<tr>
+      <td style="font-weight:600">${o.nome}</td>
+      <td style="color:var(--green);font-weight:600">${fmt(r)}</td>
+      <td style="color:var(--red);font-weight:600">${fmt(d)}</td>
+      <td style="font-weight:800;color:${s>=0?'var(--green)':'var(--red)'}">${fmt(s)}</td>
+      <td>${statusBadge(o.status)}</td>
+    </tr>`;
+  };
+
+  // Por categoria R1 (Projetos)
+  const tbR1 = document.getElementById('tbody-fin-r1');
+  if(tbR1) {
+    const obrasR1 = state.obras.filter(o => o.tipo === 'R1');
+    tbR1.innerHTML = obrasR1.map(renderObraRow).join('') || '<tr><td colspan="5" style="color:var(--muted);padding:10px">Nenhum R1 (Projeto) encontrado.</td></tr>';
+  }
+
+  // Por categoria R2 (Obras)
+  const tbR2 = document.getElementById('tbody-fin-r2');
+  if(tbR2) {
+    const obrasR2 = state.obras.filter(o => o.tipo !== 'R1'); // Default to R2 to support legacy
+    tbR2.innerHTML = obrasR2.map(renderObraRow).join('') || '<tr><td colspan="5" style="color:var(--muted);padding:10px">Nenhum R2 (Obra) encontrado.</td></tr>';
   }
 
   // Lançamentos — com paginação
@@ -2165,13 +2334,12 @@ function renderTabelas(){
   document.getElementById('sinapi-filter').innerHTML = cats.map(c=>`
     <div class="sinapi-tag ${filter===c?'active':''}" onclick="setSinapiCat('${c}')">${c}</div>`).join('');
 
-  const q=(document.getElementById('sinapi-search').value||'').toLowerCase();
+  // Removemos a filtragem por texto aqui, deixando apenas a filtragem por categoria
   let items=data;
   if(filter!=='Todos') items=items.filter(x=>x.cat===filter);
-  if(q) items=items.filter(x=>x.cod.toLowerCase().includes(q)||x.desc.toLowerCase().includes(q));
 
   document.getElementById('sinapi-list').innerHTML = items.map(s=>`
-    <div class="${src==='sinapi'?'sinapi-item':'sicor-item'}">
+    <div class="${src==='sinapi'?'sinapi-item':'sicor-item'}" data-txt="${(s.cod+' '+s.desc).toLowerCase()}">
       <span class="${src==='sinapi'?'sinapi-code':'sicor-code'}">${s.cod}</span>
       <span class="${src==='sinapi'?'sinapi-desc':'sicor-desc'}">${s.desc}
         <br><span style="font-size:11px;color:var(--muted)">${s.cat}${src==='sicor'?' — '+s.fonte:''}</span>
@@ -2181,6 +2349,19 @@ function renderTabelas(){
       <span class="${src==='sinapi'?'sinapi-price':'sicor-price'}">${fmt(s.preco)}</span>
       <button class="btn btn-primary btn-xs sinapi-add" onclick="selectTabelaItem('${s.cod}','${src}')">+ Usar</button>
     </div>`).join('')||'<div style="padding:20px;color:var(--muted)">Nenhum item encontrado.</div>';
+  
+  // Aplica o filtro atual de busca
+  filterSinapi(document.getElementById('sinapi-search').value||'');
+}
+function filterSinapi(q){
+  q = q.toLowerCase();
+  const els = document.getElementById('sinapi-list').children;
+  for(let i=0; i<els.length; i++){
+    const el = els[i];
+    if(!el.dataset.txt) continue;
+    if(!q || el.dataset.txt.includes(q)) el.style.display='';
+    else el.style.display='none';
+  }
 }
 function selectTabelaItem(cod, src){
   const data = src==='sinapi' ? SINAPI : SICOR;
@@ -2630,39 +2811,77 @@ function showImportPreview(fonte){
   document.getElementById('import-preview').style.display='block';
   document.getElementById('import-preview').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
+function renameImportEtapa(oldEtapa, input) {
+   const newEtapa = input.value.trim();
+   if(newEtapa && newEtapa !== oldEtapa) {
+      pendingImportItems.forEach(x => { if(x.etapa === oldEtapa) x.etapa = newEtapa; });
+      renderImportRows();
+      updateImportTotals();
+   }
+}
+
 function renderImportRows(){
   const UNS=['m²','m³','m','kg','vb','un','pt','hr','cj','l','t','furo','verba','pç'];
   const ETAPAS=['Serviços Preliminares','Fundações','Estrutura','Alvenaria','Cobertura','Revestimentos','Instalações','Acabamentos','Demolição','Complementares'];
   document.getElementById('import-count-label').textContent=`${pendingImportItems.length} itens`;
-  document.getElementById('tbody-import').innerHTML=pendingImportItems.map((x,i)=>`
-    <tr>
-      <td style="color:var(--muted);font-size:11px;text-align:center">${i+1}</td>
-      <td><input value="${(x.item||'').replace(/"/g,'&quot;')}"
-        oninput="pendingImportItems[${i}].item=this.value"
-        style="border:none;width:100%;min-width:200px;font-size:13px;background:transparent"></td>
-      <td><select onchange="pendingImportItems[${i}].un=this.value"
-        style="border:none;background:transparent;font-size:12px;cursor:pointer">
-        ${UNS.map(u=>`<option ${u===x.un?'selected':''}>${u}</option>`).join('')}
-        <option ${!UNS.includes(x.un)?'selected':''}>${UNS.includes(x.un)?'outro':x.un}</option>
-      </select></td>
-      <td><input type="number" value="${x.qtd||0}" step="0.01"
-        oninput="pendingImportItems[${i}].qtd=+this.value;updateImportTotals()"
-        style="border:none;width:80px;font-size:13px;background:transparent;text-align:right"></td>
-      <td><input type="number" value="${x.vunit||0}" step="0.01"
-        oninput="pendingImportItems[${i}].vunit=+this.value;updateImportTotals()"
-        style="border:none;width:100px;font-size:13px;background:transparent;text-align:right"></td>
-      <td style="font-weight:700;color:var(--navy);text-align:right" id="imp-tot-${i}">${fmt((x.qtd||0)*(x.vunit||0))}</td>
-      <td><select onchange="pendingImportItems[${i}].etapa=this.value"
-        style="border:none;background:transparent;font-size:11px;cursor:pointer;max-width:150px">
-        ${ETAPAS.map(e=>`<option ${e===x.etapa?'selected':''}>${e}</option>`).join('')}
-      </select></td>
-      <td><button class="btn btn-outline btn-xs" style="color:var(--red)" onclick="removeImportRow(${i})">✕</button></td>
-    </tr>`).join('');
+
+  // Agrupar por etapa
+  const groups = {};
+  pendingImportItems.forEach((x,i) => {
+     let et = x.etapa || 'Complementares';
+     if(!groups[et]) groups[et] = [];
+     groups[et].push(i);
+  });
+  
+  let html = '';
+  for(let et in groups) {
+     const subtotal = groups[et].reduce((a, idx) => a + (pendingImportItems[idx].qtd||0)*(pendingImportItems[idx].vunit||0), 0);
+     html += `<tr style="background:#0f2744;color:#fff"><td colspan="5" style="padding:6px 14px"><input value="${et}" onchange="renameImportEtapa('${et}', this)" style="background:transparent;border:none;color:#fff;font-weight:700;font-size:12.5px;width:100%"></td><td style="font-weight:800;text-align:right" id="imp-tot-group-${et.replace(/[^a-zA-Z0-9]/g,'_')}">${fmt(subtotal)}</td><td colspan="2"></td></tr>`;
+     groups[et].forEach(i => {
+       const x = pendingImportItems[i];
+       html += `<tr>
+        <td style="color:var(--muted);font-size:11px;text-align:center">${i+1}</td>
+        <td><input value="${(x.item||'').replace(/"/g,'&quot;')}"
+          oninput="pendingImportItems[${i}].item=this.value"
+          style="border:none;width:100%;min-width:200px;font-size:13px;background:transparent"></td>
+        <td><select onchange="pendingImportItems[${i}].un=this.value"
+          style="border:none;background:transparent;font-size:12px;cursor:pointer">
+          ${UNS.map(u=>`<option ${u===x.un?'selected':''}>${u}</option>`).join('')}
+          <option ${!UNS.includes(x.un)?'selected':''}>${UNS.includes(x.un)?'outro':x.un}</option>
+        </select></td>
+        <td><input type="number" value="${x.qtd||0}" step="0.01"
+          oninput="pendingImportItems[${i}].qtd=+this.value;updateImportTotals()"
+          style="border:none;width:80px;font-size:13px;background:transparent;text-align:right"></td>
+        <td><input type="number" value="${x.vunit||0}" step="0.01"
+          oninput="pendingImportItems[${i}].vunit=+this.value;updateImportTotals()"
+          style="border:none;width:100px;font-size:13px;background:transparent;text-align:right"></td>
+        <td style="font-weight:700;color:var(--navy);text-align:right" id="imp-tot-${i}">${fmt((x.qtd||0)*(x.vunit||0))}</td>
+        <td><select onchange="pendingImportItems[${i}].etapa=this.value;renderImportRows();updateImportTotals()"
+          style="border:none;background:transparent;font-size:11px;cursor:pointer;max-width:150px">
+          ${ETAPAS.map(e=>`<option ${e===x.etapa?'selected':''}>${e}</option>`).join('')}
+          <option ${!ETAPAS.includes(x.etapa)?'selected':''}>${!ETAPAS.includes(x.etapa)?x.etapa:'Outro'}</option>
+        </select></td>
+        <td><button class="btn btn-outline btn-xs" style="color:var(--red)" onclick="removeImportRow(${i})">✕</button></td>
+      </tr>`;
+     });
+  }
+  document.getElementById('tbody-import').innerHTML = html;
 }
+
 function updateImportTotals(){
   let total=0;
-  pendingImportItems.forEach((x,i)=>{ const t=(x.qtd||0)*(x.vunit||0); total+=t; const el=document.getElementById('imp-tot-'+i); if(el) el.textContent=fmt(t); });
+  const groupTots = {};
+  pendingImportItems.forEach((x,i)=>{ 
+     const t=(x.qtd||0)*(x.vunit||0); total+=t; 
+     const el=document.getElementById('imp-tot-'+i); if(el) el.textContent=fmt(t); 
+     const et=x.etapa||'Complementares';
+     groupTots[et] = (groupTots[et]||0)+t;
+  });
   const tf=document.getElementById('tfoot-import-total'); if(tf) tf.textContent=fmt(total);
+  for(let et in groupTots){
+      const el = document.getElementById('imp-tot-group-'+et.replace(/[^a-zA-Z0-9]/g,'_'));
+      if(el) el.textContent=fmt(groupTots[et]);
+  }
 }
 function removeImportRow(i){ pendingImportItems.splice(i,1); renderImportRows(); updateImportTotals(); }
 function addImportRow(){
@@ -2751,6 +2970,25 @@ let modoGlobalProjeto = false;
 let projExtras = []; // [{nome, un, qtd, preco}]
 
 function openPropProjeto(){
+  const draftStr = localStorage.getItem('rascunho_proposta');
+  if (draftStr) {
+    try {
+      const draft = JSON.parse(draftStr);
+      if (draft.tipo === 'projeto') {
+        if (Date.now() - (draft.ts || 0) > 86400000) {
+          localStorage.removeItem('rascunho_proposta');
+        } else if (confirm('Você possui um rascunho não-salvo. Deseja restaurá-lo?')) {
+          projServicos = draft.projServicos || [];
+          projExtras = draft.projExtras || [];
+          if(draft.cliente) document.getElementById('f-pp-cliente').value = draft.cliente;
+          if(draft.empreend) document.getElementById('f-pp-empreend').value = draft.empreend;
+          renderProjServicos(); renderProjExtras(); calcPropProjeto();
+          document.getElementById('modal-proposta-projeto').classList.add('open');
+          return;
+        } else { localStorage.removeItem('rascunho_proposta'); }
+      }
+    } catch(e){}
+  }
   modoGlobalProjeto=false;
   projServicos=PRECO_PROJETOS.map(p=>({...p,qtd:0,incluso:false}));
   projExtras=[];
@@ -2877,8 +3115,33 @@ function calcPropProjeto(){
   document.getElementById('f-pp-total').value=fmt(total);
   const inl=document.getElementById('pp-subtotal-inline');
   if(inl) inl.textContent=fmt(subtotal);
+  try{
+    localStorage.setItem('rascunho_proposta', JSON.stringify({
+      tipo:'projeto', projServicos, projExtras,
+      cliente: document.getElementById('f-pp-cliente')?.value||'',
+      empreend: document.getElementById('f-pp-empreend')?.value||'',
+      ts: Date.now()
+    }));
+  }catch(e){}
 }
 function openPropObra(){
+  const draftStr = localStorage.getItem('rascunho_proposta');
+  if (draftStr) {
+    try {
+      const draft = JSON.parse(draftStr);
+      if (draft.tipo === 'obra') {
+        if (Date.now() - (draft.ts || 0) > 86400000) {
+          localStorage.removeItem('rascunho_proposta');
+        } else if (confirm('Você possui um rascunho de obra não-salvo. Deseja restaurá-lo?')) {
+          obraItens = draft.obraItens || [];
+          if(draft.cliente) document.getElementById('f-po-cliente').value = draft.cliente;
+          renderObraItens(); calcPropostaObra();
+          document.getElementById('modal-proposta-obra').classList.add('open');
+          return;
+        } else { localStorage.removeItem('rascunho_proposta'); }
+      }
+    } catch(e){}
+  }
   obraItens=[];
   renderObraItens();
   document.getElementById('f-po-data').value=new Date().toISOString().split('T')[0];
@@ -2951,6 +3214,13 @@ function calcPropostaObra(){
   const total=sub*(1+bdi/100)*(1-desc/100);
   document.getElementById('f-po-sub').value=fmt(sub);
   document.getElementById('f-po-total').value=fmt(total);
+  try{
+    localStorage.setItem('rascunho_proposta', JSON.stringify({
+      tipo:'obra', obraItens,
+      cliente: document.getElementById('f-po-cliente')?.value||'',
+      ts: Date.now()
+    }));
+  }catch(e){}
 }
 function saveProposta(tipo){
   if(!Array.isArray(state.propostas)) state.propostas=[];
@@ -3020,6 +3290,10 @@ function saveProposta(tipo){
   state.counters.prop++;
   // Backup dedicado de propostas (proteção extra)
   try{localStorage.setItem('ejh_propostas_bak',JSON.stringify(state.propostas));}catch(e){}
+  
+  // Limpa o rascunho se salvo com sucesso
+  try{localStorage.removeItem('rascunho_proposta');}catch(e){}
+
   render();
   showToast('✅ Proposta salva! Veja em Propostas.');
   // Navega para propostas e garante que a aba fica ativa
@@ -3254,8 +3528,26 @@ function printProposta(id){
 }
 
 // ── PERSISTÊNCIA — localStorage ────────────────────────────────────────────
+function showSaveIndicator(){
+  let el=document.getElementById('save-indicator-float');
+  if(!el){
+    el=document.createElement('div');
+    el.id='save-indicator-float';
+    el.style.cssText='position:fixed;top:20px;right:20px;background:var(--navy);color:#fff;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:9999;transition:all 0.3s;opacity:0;pointer-events:none;display:flex;align-items:center;gap:6px';
+    document.body.appendChild(el);
+  }
+  el.innerHTML='<span style="animation:pulse 0.8s infinite">🔄</span> <span>Salvando...</span>';
+  el.style.opacity='1';
+  el.style.transform='translateY(0)';
+  setTimeout(()=>{
+    el.innerHTML='<span>💾</span> <span>Salvo às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'</span>';
+    setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(-10px)'; }, 2500);
+  }, 400);
+}
+
 function saveState(){
   try{
+    showSaveIndicator();
     // fotos ficam em memória apenas (base64 pode exceder quota)
     const toSave={...state, diario:state.diario.map(d=>({...d,fotos:(d.fotos||[]).map(f=>({name:f.name,dataUrl:f.dataUrl}))}))};
     localStorage.setItem('ejh_obras_v4', JSON.stringify(toSave));
