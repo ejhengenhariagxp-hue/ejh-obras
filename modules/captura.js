@@ -1,7 +1,8 @@
-﻿// modules/captura.js
+// modules/captura.js
 import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge } from '../utils.js';
 
-
+var capResultadoAtual = null;
+var capArquivos = [];
 var CAP_TIPOS={
   diario:   {label:'Diário de Obra',    icon:'📋',cor:'#2563eb',bg:'#eff6ff'},
   pendencia:{label:'Pendência',          icon:'⚠️',cor:'#d97706',bg:'#fffbeb'},
@@ -25,10 +26,10 @@ export function renderCaptura(state){
       });
     });
   }
-  renderHistoricoCaptura();
+  renderHistoricoCaptura(state);
 }
 
-async function capProcessarIA(){
+export async function capProcessarIA(state){
   var texto=document.getElementById('cap-texto')?.value?.trim();
   var obraId=document.getElementById('cap-obra-sel')?.value;
   if(!texto){showToast('⚠️ Cole algum texto primeiro');return;}
