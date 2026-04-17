@@ -21,7 +21,7 @@ export function addMedicao(state){
     resp:document.getElementById('f-med-resp').value,
     itens,
   });
-  state.counters.med++;closeModal('modal-medicao');return true;showToast('✅ Medição gerada!');
+  state.counters.med++;closeModal('modal-medicao');showToast('✅ Medição gerada!');return true;
 }
 
 export function updateMedVal(state, input,orcId){

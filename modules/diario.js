@@ -1,6 +1,9 @@
 ﻿// modules/diario.js
 import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal } from '../utils.js';
 
+let pendingFotos = [];
+let _diarioLimit = 20;
+
 export function addDiario(state){
   state.diario.push({id:'DIA-'+pad(state.counters.dia),
     obraId:document.getElementById('f-dia-obra').value,
@@ -13,10 +16,10 @@ export function addDiario(state){
   });
   pendingFotos=[];
   renderFotoPreview();
-  state.counters.dia++;closeModal('modal-diario');return true;showToast('✅ Registro salvo!');
+  state.counters.dia++;closeModal('modal-diario');showToast('✅ Registro salvo!');return true;
 }
 
-export function delDiario(state, id){if(confirm('Excluir este registro?')){state.diario=state.diario.filter(x=>x.id!==id);_diarioLimit=20;render()}}
+export function delDiario(state, id){if(confirm('Excluir este registro?')){state.diario=state.diario.filter(x=>x.id!==id);_diarioLimit=20;return true;}}
 
 export function handleFotos(state, input){
   const files = Array.from(input.files);

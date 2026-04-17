@@ -1,6 +1,8 @@
 ﻿// modules/financeiro.js
 import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge } from '../utils.js';
 
+let _finLimit = 20;
+
 export function addFin(state){
   const desc=document.getElementById('f-fin-desc').value.trim();
   const valor=+document.getElementById('f-fin-valor').value||0;
@@ -25,10 +27,10 @@ export function addFin(state){
     valor:valor,
     obs:document.getElementById('f-fin-obs').value,
   });
-  state.counters.fin++;closeModal('modal-fin');return true;showToast('✅ Lançamento registrado!');
+  state.counters.fin++;closeModal('modal-fin');showToast('✅ Lançamento registrado!');return true;
 }
 
-export function delFin(state, id){if(confirm('Excluir este lançamento?')){state.fin=state.fin.filter(x=>x.id!==id);_finLimit=20;render()}}
+export function delFin(state, id){if(confirm('Excluir este lançamento?')){state.fin=state.fin.filter(x=>x.id!==id);_finLimit=20;return true;}}
 
 export function openModalFin(state, tipo){
   populateSelects();
@@ -50,7 +52,7 @@ export function renderFinanceiro(state){
   }
 
   // Novo Dashboard Avançado
-  renderDashFinAvancado();
+  renderDashFinAvancado(state);
 
   const renderObraRow = o => {
     const r=state.fin.filter(x=>x.obraId===o.id&&x.tipo==='Receita').reduce((a,x)=>a+x.valor,0);

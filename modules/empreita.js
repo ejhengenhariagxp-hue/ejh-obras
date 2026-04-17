@@ -4,7 +4,7 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, 
 
 export function addEmpreita(state){
   const id='EMP-'+pad(state.counters.emp);
-  state.empreitas.push({
+  state.empreita.push({
     id, obraId:document.getElementById('f-emp-obra').value,
     nome:document.getElementById('f-emp-nome').value||'Empreiteiro',
     tel:document.getElementById('f-emp-tel').value,
@@ -19,10 +19,10 @@ export function addEmpreita(state){
     pagamentos:[],
   });
   state.counters.emp++;
-  closeModal('modal-empreita'); return true; showToast('✅ Contrato de empreita cadastrado!');
+  closeModal('modal-empreita'); showToast('✅ Contrato de empreita cadastrado!'); return true;
 }
 
-export function delEmpreita(state, id){if(confirm('Remover contrato?')){state.empreitas=state.empreitas.filter(x=>x.id!==id);return true;}}
+export function delEmpreita(state, id){if(confirm('Remover contrato?')){state.empreita=state.empreita.filter(x=>x.id!==id);return true;}}
 
 export function openEmpPag(state, id){
   document.getElementById('f-epag-id').value=id;
@@ -34,23 +34,23 @@ export function openEmpPag(state, id){
 
 export function addEmpPag(state){
   const id=document.getElementById('f-epag-id').value;
-  const emp=state.empreitas.find(x=>x.id===id); if(!emp) return;
+  const emp=state.empreita.find(x=>x.id===id); if(!emp) return;
   emp.pagamentos.push({
     valor:+document.getElementById('f-epag-valor').value||0,
     data:document.getElementById('f-epag-data').value,
     desc:document.getElementById('f-epag-desc').value,
   });
-  closeModal('modal-emp-pag'); return true; showToast('✅ Pagamento registrado!');
+  closeModal('modal-emp-pag'); showToast('✅ Pagamento registrado!'); return true;
 }
 
 export function renderEmpreita(state){
-  const total=state.empreitas.reduce((a,x)=>a+x.valor,0);
-  const pago=state.empreitas.reduce((a,x)=>a+(x.pagamentos||[]).reduce((b,p)=>b+p.valor,0),0);
-  document.getElementById('emp-kpi-total').textContent=state.empreitas.length;
+  const total=state.empreita.reduce((a,x)=>a+x.valor,0);
+  const pago=state.empreita.reduce((a,x)=>a+(x.pagamentos||[]).reduce((b,p)=>b+p.valor,0),0);
+  document.getElementById('emp-kpi-total').textContent=state.empreita.length;
   document.getElementById('emp-kpi-valor').textContent=fmt(total);
   document.getElementById('emp-kpi-pago').textContent=fmt(pago);
 
-  document.getElementById('list-empreita').innerHTML=state.empreitas.map(e=>{
+  document.getElementById('list-empreita').innerHTML=state.empreita.map(e=>{
     const pago=(e.pagamentos||[]).reduce((a,p)=>a+p.valor,0);
     const saldo=e.valor-pago;
     const pct=e.valor>0?Math.min(100,(pago/e.valor*100)).toFixed(0):0;

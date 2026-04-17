@@ -1,6 +1,8 @@
 ﻿// modules/sinapi.js
 import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge } from '../utils.js';
 
+let selectedSinapiItem = null;
+
 
 const SINAPI = [
   // Serviços preliminares
@@ -201,7 +203,8 @@ export function importSinapi(state){
   });
   state.counters.orc++;
   closeModal('modal-sinapi-import');selectedSinapiItem=null;
-  return true;showToast('✅ Item SINAPI importado para orçamento!');
+  showToast('✅ Item SINAPI importado para orçamento!');
+  return true;
 }
 
 
