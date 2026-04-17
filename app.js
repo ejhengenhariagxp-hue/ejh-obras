@@ -6,7 +6,7 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
          popularSelectsObras, modalidadeIcon, verificarAvisosObra,
          toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js';
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
-         fbSaveData, fbLoadData, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA } from './services.js';
+         fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA } from './services.js';
 import { addObra, delObra, renderObras, registrarMedicaoRapida } from './modules/obras.js';
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe } from './modules/orcamento.js';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js';
@@ -97,6 +97,8 @@ export function renderAtiva() {
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────
+let pendingFotos = [];
+
 function renderDashboard() {
   const hoje = new Date();
   safeText('dash-date', hoje.toLocaleDateString('pt-BR',{weekday:'long',year:'numeric',month:'long',day:'numeric'}));
@@ -272,8 +274,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Expor tudo ao HTML (onclick inline)
   const G = window;
-  G.obraName = id => { const o = state.obras.find(x => x.id === id); return o ? o.nome : id; };
-  G.populateSelects = ids => popularSelectsObras(state, ids);
   G.nav = (id,el) => { nav(id,el); renderAtiva(); };
   G.setBnActive = setBnActive;
   G.openModal = openModal;
@@ -293,6 +293,13 @@ window.addEventListener('DOMContentLoaded', () => {
   G.openSigModal = openSigModal;
   G.saveSig = saveSig;
   G.clearSig = clearSig;
+  G.saveIaConfig = () => {
+    const key = document.getElementById('set-ia-key')?.value;
+    if(!key) { showToast('⚠️ Cole sua chave primeiro'); return; }
+    saveIaKey(key);
+    closeModal('modal-ia-config');
+    showToast('✅ Chave IA salva com sucesso!');
+  };
 
   // Obras
   G.addObra  = () => { if(addObra(state)) renderAtiva(); };
@@ -308,16 +315,16 @@ window.addEventListener('DOMContentLoaded', () => {
   G.delCron  = id => { if(delCron(state,id)) renderAtiva(); };
   G.saveCronEdit = () => { if(saveCronEdit(state)) renderAtiva(); };
   G.openCronEdit = (id) => openCronEdit(state,id);
-  G.setCronView  = v => setCronView(state, v);
+  G.setCronView  = v => setCronView(v);
   G.renderGantt  = () => renderGantt(state);
   // Diário
   G.openModalDiario = () => openModalDiario(state);
   G.addDiario  = () => { if(addDiario(state)) renderAtiva(); };
   G.delDiario  = id => { if(delDiario(state,id)) renderAtiva(); };
-  G.handleFotos = inp => handleFotos(state, inp);
-  G.removePendingFoto = i => { removePendingFoto(state, i); };
+  G.handleFotos = inp => handleFotos(inp);
+  G.removePendingFoto = i => removePendingFoto(i);
   // Financeiro
-  G.openModalFin = tipo => openModalFin(state, tipo);
+  G.openModalFin = tipo => openModalFin(tipo);
   G.addFin = () => { if(addFin(state)) renderAtiva(); };
   G.delFin = id => { if(delFin(state,id)) renderAtiva(); };
   // Medições
@@ -325,7 +332,7 @@ window.addEventListener('DOMContentLoaded', () => {
   G.updateMedVal = (a,b,c) => updateMedVal(state,a,b,c);
   G.loadMedItems = () => loadMedItems(state);
   G.printMedicao = id => printMedicao(state,id);
-  G.colherAssinatura = id => colherAssinatura(state, id);
+  G.colherAssinatura = id => colherAssinatura(id);
   // Empreita
   G.addEmpreita = () => { if(addEmpreita(state)) renderAtiva(); };
   G.delEmpreita = id => { if(delEmpreita(state,id)) renderAtiva(); };
@@ -364,8 +371,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // Captura
   G.capProcessarIA = () => capProcessarIA(state);
   G.capConfirmarTodos = () => { capConfirmarTodos(state); renderAtiva(); };
-  G.capLimpar = () => capLimpar(state);
-  G.capDescartarResultado = () => capDescartarResultado(state);
+  G.capLimpar = () => capLimpar();
+  G.capDescartarResultado = () => capDescartarResultado();
 
   // Firebase
   fbInit(user => {

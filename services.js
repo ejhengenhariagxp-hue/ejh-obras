@@ -105,37 +105,63 @@ export async function fbLoadData(cur) {
 }
 
 // ── Anthropic IA ─────────────────────────────────────────────────────
-export async function iaCall(system, user, maxTokens=1500) {
+export function saveIaKey(key) {
+  if (!key) return;
+  localStorage.setItem('anthropic_api_key', key.trim());
+}
+
+export async function iaCall(system, userContent, maxTokens=1500) {
+  const key = localStorage.getItem('anthropic_api_key');
+  if (!key) throw new Error('Chave da Anthropic não configurada. Vá em IA Inteligente (BETA) na barra lateral.');
+
+  const messages = [{
+    role: 'user',
+    content: typeof userContent === 'string' ? [{ type: 'text', text: userContent }] : userContent
+  }];
+
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
     body: JSON.stringify({
-      model: IA_MODEL, max_tokens: maxTokens,
-      system, messages: [{ role:'user', content: user }]
+      model: IA_MODEL,
+      max_tokens: maxTokens,
+      system,
+      messages
     })
   });
-  if (!r.ok) { const e=await r.json().catch(()=>({})); throw new Error(e.error?.message||'IA error '+r.status); }
+  if (!r.ok) {
+    const e = await r.json().catch(() => ({}));
+    const msg = e.error?.message || 'Erro na IA (' + r.status + ')';
+    if (r.status === 401) throw new Error('Chave da Anthropic inválida ou expirada.');
+    throw new Error(msg);
+  }
   const d = await r.json();
-  return d.content?.map(c=>c.text||'').join('') || '';
+  return d.content?.map(c => c.text || '').join('') || '';
 }
 
 export async function gerarOrcamentoIA(descricao) {
   const raw = await iaCall(
     'Orçamentista de obras experiente no Brasil (Minas Gerais). Retorne APENAS JSON: {"itens":[{"item":"","sinapi":"","un":"","qtd":0,"vunit":0,"etapa":""}],"totalEstimado":0,"observacoes":""}',
-    'Gerar orçamento: ' + descricao, 2000);
-  return JSON.parse(raw.replace(/```json|```/g,'').trim());
+    'Gerar orçamento para: ' + descricao, 2000);
+  return JSON.parse(raw.replace(/```json|```/g, '').trim());
 }
 
 export async function gerarEscopoIA(dados) {
   return await iaCall(
     'Engenheiro civil sênior redator de contratos. Gere texto de escopo técnico. Máx 200 palavras. Texto corrido.',
-    `Obra: ${dados.empreend||''} | Cliente: ${dados.cliente||''} | Área: ${dados.area||''}m² | Itens: ${dados.itens||''}`,
+    `Obra: ${dados.empreend || ''} | Cliente: ${dados.cliente || ''} | Área: ${dados.area || ''}m² | Itens: ${dados.itens || ''}`,
     500);
 }
 
-export async function gerarRelatorioIA(dadosObras, contexto='') {
+export async function gerarRelatorioIA(dadosObras, contexto = '') {
   return await iaCall(
     'Engenheiro civil consultor sênior. Relatório gerencial executivo: resumo executivo, situação das obras, análise financeira, recomendações. Máx 400 palavras. Sem markdown.',
     `Contexto: ${contexto}\n\n${dadosObras}\n\nData: ${new Date().toLocaleDateString('pt-BR')}`,
     1000);
 }
+

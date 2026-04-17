@@ -58,10 +58,10 @@
     <div class="nav-item" onclick="nav('tabelas',this)"><span class="nav-icon">📐</span><span>SINAPI / SICOR-MG</span></div>
     <div class="nav-item" onclick="nav('medicao',this)"><span class="nav-icon">📏</span><span>Medição</span></div>
     <div class="nav-item" onclick="nav('importar',this)"><span class="nav-icon">📥</span><span>Importar Orçamento</span></div>
-    <div class="nav-item" onclick="nav('captura',this)"><span class="nav-icon">🤖</span><span>Captura IA</span></div>
     <div class="nav-group">Propostas & Relatório</div>
     <div class="nav-item" onclick="nav('propostas',this)"><span class="nav-icon">📝</span><span>Propostas</span></div>
     <div class="nav-item" onclick="nav('relatorio',this)"><span class="nav-icon">📄</span><span>Relatório</span></div>
+    <div class="nav-item" onclick="openModal('modal-ia-config')"><span class="nav-icon">🤖</span><span>IA Inteligente (BETA)</span></div>
     <div class="nav-group">Preferências</div>
     <div class="nav-item" onclick="openModal('modal-settings')"><span class="nav-icon">⚙️</span><span>Configurações</span></div>
   </div>
@@ -921,6 +921,37 @@
   <div class="modal-actions">
     <button class="btn btn-outline" onclick="closeModal('modal-assinatura-cliente')">Cancelar</button>
     <button class="btn btn-green" onclick="saveCliSig()">✅ Confirmar Assinatura</button>
+  </div>
+</div></div>
+
+<!-- Modal Configurar IA (Anthropic) -->
+<div class="modal-bg" id="modal-ia-config"><div class="modal" style="max-width:480px">
+  <div class="modal-title">🤖 Configurar IA (Anthropic)</div>
+  <div style="background:#fef3c7;border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:13px;color:#78350f">
+    <strong>⚡ IA Nativa no Browser</strong><br>
+    Sua chave será salva apenas neste dispositivo para garantir sua privacidade.
+  </div>
+  
+  <div style="margin-bottom:16px">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--navy);font-size:13.5px;margin-bottom:6px">
+      1️⃣ Obtenha sua chave
+    </div>
+    <a href="https://console.anthropic.com/" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;font-size:13px">
+      🔗 Criar Chave em console.anthropic.com
+    </a>
+  </div>
+
+  <div class="form-group full">
+    <label>2️⃣ Cole sua API Key aqui</label>
+    <input type="password" id="set-ia-key" placeholder="sk-ant-api03-..." style="font-family:monospace;font-size:12px">
+    <div style="font-size:11px;color:var(--muted);margin-top:6px">
+      A chave começa com <code>sk-ant-</code>. Nunca compartilhe sua chave.
+    </div>
+  </div>
+
+  <div class="modal-actions">
+    <button class="btn btn-outline" onclick="closeModal('modal-ia-config')">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveIaConfig()">💾 Salvar Chave</button>
   </div>
 </div></div>
 
