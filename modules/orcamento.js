@@ -1,4 +1,4 @@
-﻿// ══════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════
 // modules/orcamento.js — Orçamento por obra
 // ══════════════════════════════════════════════════════════════════════
 
@@ -8,7 +8,7 @@ export function addOrc(state) {
   const obraId = document.getElementById('f-orc-obra')?.value;
   const item   = document.getElementById('f-orc-item')?.value.trim();
   if (!obraId) { showToast('⚠️ Selecione uma obra'); return false; }
-  if (!item)   { showToast('⚠️ Informe o item/serviço'); document.getElementById('f-orc-item').focus(); return false; }
+  if (!item)   { showToast('⚠️ Informe o item/serviço'); if(document.getElementById('f-orc-item')) document.getElementById('f-orc-item').focus(); return false; }
 
   state.orc.push({
     id:     'ORC-'+pad(state.counters.orc),
@@ -42,7 +42,7 @@ export function renderOrcObra(state, obraId) {
     <div class="table-wrap">
       <table>
         <thead><tr>
-          <th>ID</th><th>Item/Serviço</th><th>SINAPI</th>
+          <th>ID</th><th>Item/Serviço</th><th></th>
           <th>Un.</th><th>Qtd</th><th>V.Unit</th>
           <th>Total Orçado</th><th>Realizado</th><th>Desvio</th><th></th>
         </tr></thead>
@@ -146,20 +146,28 @@ export function renderOrcDetalhe(state, obraId) {
       <td style="font-weight:500">${x.item}</td>
       <td>${x.un}</td>
       <td>${x.qtd.toLocaleString('pt-BR')}</td>
-      <td>${(+(x.vunit)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td>
-      <td style="font-weight:600">${(tot).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td>
-      <td>${(+(x.real)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td>
+      <td>${fmt(x.vunit)}</td>
+      <td style="font-weight:600">${fmt(tot)}</td>
+      <td>${fmt(x.real)}</td>
       <td style="color:${dev>10?'var(--red)':dev<-10?'var(--green)':'var(--muted)'}">
         ${dev>0?'+':''}${dev.toFixed(1)}%
       </td>
-      <td><button onclick="window.delOrc('${x.id}')" class="btn btn-outline btn-xs" style="color:var(--red);border-color:var(--red)">✕</button></td>
+      <td><button onclick="delOrc('${x.id}')" class="btn btn-outline btn-xs" style="color:var(--red);border-color:var(--red)">✕</button></td>
     </tr>`;
   }).join('');
+  
   // Totals footer
   const tOrc  = document.getElementById('tfoot-orc-tot');
   const tReal = document.getElementById('tfoot-orc-real');
   const tDev  = document.getElementById('tfoot-orc-dev');
-  const f = v=>(+v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  if (tOrc)  tOrc.textContent  = fmt(totOrc);
+  if (tReal) tReal.textContent = fmt(totReal);
+  if (tDev)  {
+    tDev.textContent  = (desvio>0?'+':'')+desvio.toFixed(1)+'%';
+    tDev.style.color  = desvio>10?'var(--red)':desvio<-10?'var(--green)':'var(--muted)';
+  }
+}
+tring('pt-BR',{style:'currency',currency:'BRL'});
   if (tOrc)  tOrc.textContent  = f(totOrc);
   if (tReal) tReal.textContent = f(totReal);
   if (tDev)  tDev.textContent  = (desvio>0?'+':'')+desvio.toFixed(1)+'%';

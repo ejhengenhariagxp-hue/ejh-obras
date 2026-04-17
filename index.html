@@ -530,9 +530,15 @@
     <div class="form-group full"><label>Obra</label><select id="f-fin-obra"></select></div>
     <div class="form-group full"><label>Descrição</label><input id="f-fin-desc" placeholder="Ex: Medição nº 1, Compra de cimento…"></div>
     <div class="form-group"><label>Categoria</label><select id="f-fin-cat">
-      <option>Medição</option><option>Adiantamento</option><option>Material</option>
-      <option>Mão de obra</option><option>Equipamento</option><option>Serviço terceirizado</option>
-      <option>Imposto/taxa</option><option>Outros</option>
+      <option>Entrada de Projeto</option><option>Medição</option><option>Adiantamento</option>
+      <option>ART</option><option>Plotagem</option><option>Taxas/Impostos</option>
+      <option>Custo Fixo</option><option>Material</option><option>Mão de obra</option>
+      <option>Equipamento</option><option>Serviço terceirizado</option><option>Outros</option>
+    </select></div>
+    <div class="form-group"><label>Status</label><select id="f-fin-status">
+      <option value="pago">✅ Pago / Recebido</option>
+      <option value="pendente">⏳ Pendente / A vencer</option>
+      <option value="agendado">📅 Agendado / Futuro</option>
     </select></div>
     <div class="form-group"><label>Valor (R$)</label><input id="f-fin-valor" type="number" step="0.01" placeholder="0,00"></div>
     <div class="form-group full"><label>Observações</label><input id="f-fin-obs" placeholder="Nota fiscal, referência…"></div>

@@ -267,6 +267,26 @@ function openSigModal() {
   setTimeout(() => initSigPad('sig-eng-canvas','sig-eng-wrap','sig-eng-ph','eng'), 100);
 }
 
+function saveCliSig(state) {
+  const medId = document.getElementById('sig-cli-med-id')?.value;
+  const canvas = sigPads['cli'];
+  if (!medId || !canvas) return;
+  const data = canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+  if (!data.some(v=>v!==0)) { showToast('⚠️ Assine antes de confirmar.'); return; }
+  
+  const m = state.medicoes.find(x => x.id === medId);
+  if (m) {
+    m.assinatura = {
+      dataUrl: canvas.toDataURL(),
+      nome: document.getElementById('sig-cli-nome')?.value || 'Cliente',
+      data: new Date().toLocaleDateString('pt-BR')
+    };
+    closeModal('modal-assinatura-cliente');
+    renderAtiva();
+    showToast('✅ Assinatura colhida!');
+  }
+}
+
 // ── DOMContentLoaded ─────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   initFields();
@@ -300,6 +320,7 @@ window.addEventListener('DOMContentLoaded', () => {
     closeModal('modal-ia-config');
     showToast('✅ Chave IA salva com sucesso!');
   };
+  G.initSigPad = initSigPad;
 
   // Obras
   G.addObra  = () => { if(addObra(state)) renderAtiva(); };
@@ -321,18 +342,18 @@ window.addEventListener('DOMContentLoaded', () => {
   G.openModalDiario = () => openModalDiario(state);
   G.addDiario  = () => { if(addDiario(state)) renderAtiva(); };
   G.delDiario  = id => { if(delDiario(state,id)) renderAtiva(); };
-  G.handleFotos = inp => handleFotos(inp);
-  G.removePendingFoto = i => removePendingFoto(i);
+  G.handleFotos = inp => handleFotos(state, inp);
+  G.removePendingFoto = i => removePendingFoto(state, i);
   // Financeiro
-  G.openModalFin = tipo => openModalFin(tipo);
+  G.openModalFin = tipo => openModalFin(state, tipo);
   G.addFin = () => { if(addFin(state)) renderAtiva(); };
   G.delFin = id => { if(delFin(state,id)) renderAtiva(); };
   // Medições
   G.addMedicao = () => { if(addMedicao(state)) renderAtiva(); };
-  G.updateMedVal = (a,b,c) => updateMedVal(state,a,b,c);
+  G.updateMedVal = (inp, orcId) => updateMedVal(state, inp, orcId);
   G.loadMedItems = () => loadMedItems(state);
-  G.printMedicao = id => printMedicao(state,id);
-  G.colherAssinatura = id => colherAssinatura(id);
+  G.printMedicao = id => printMedicao(state, id);
+  G.colherAssinatura = id => colherAssinatura(state, id);
   // Empreita
   G.addEmpreita = () => { if(addEmpreita(state)) renderAtiva(); };
   G.delEmpreita = id => { if(delEmpreita(state,id)) renderAtiva(); };
@@ -373,6 +394,8 @@ window.addEventListener('DOMContentLoaded', () => {
   G.capConfirmarTodos = () => { capConfirmarTodos(state); renderAtiva(); };
   G.capLimpar = () => capLimpar();
   G.capDescartarResultado = () => capDescartarResultado();
+  G.capToggleCard = (i,ck) => capToggleCard(state,i,ck);
+  G.capProcessarArquivo = (inp) => capProcessarArquivo(state,inp);
 
   // Firebase
   fbInit(user => {

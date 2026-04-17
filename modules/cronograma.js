@@ -1,8 +1,6 @@
 ﻿// modules/cronograma.js
 import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge } from '../utils.js';
 
-let cronView = 'tabela';
-
 export function addCron(state){
   const etapa=document.getElementById('f-cron-etapa').value.trim();
   if(!etapa){
@@ -19,10 +17,10 @@ export function addCron(state){
     prev:+document.getElementById('f-cron-prev').value||100,
     conc:+document.getElementById('f-cron-conc').value||0,
   });
-  state.counters.cron++;closeModal('modal-cron');showToast('✅ Etapa adicionada!');return true;
+  state.counters.cron++;closeModal('modal-cron');return true;showToast('✅ Etapa adicionada!');
 }
 
-export function delCron(state, id){if(confirm('Excluir este estágio?')){state.cron=state.cron.filter(x=>x.id!==id);return true;}}
+export function delCron(state, id){if(confirm('Excluir este estágio?')){state.cron=state.cron.filter(x=>x.id!==id);render()}}
 
 export function saveCronEdit(state){
   const id=document.getElementById('f-edit-cron-id').value;
@@ -31,9 +29,8 @@ export function saveCronEdit(state){
   c.prev=+document.getElementById('f-edit-prev').value||c.prev;
   const newFim=document.getElementById('f-edit-fim').value;
   if(newFim) c.fim=newFim;
-  closeModal('modal-cron-edit');
+  closeModal('modal-cron-edit');return true;
   showToast(`✅ ${c.etapa} atualizada para ${c.conc}%`);
-  return true;
 }
 
 export function openCronEdit(state, id){
@@ -55,7 +52,7 @@ export function setCronView(state, v){
   document.getElementById('gantt-filter').style.display=v==='gantt'?'block':'none';
   document.getElementById('btn-tabela').classList.toggle('active',v==='tabela');
   document.getElementById('btn-gantt').classList.toggle('active',v==='gantt');
-  if(v==='gantt') renderGantt(state);
+  if(v==='gantt') renderGantt();
 }
 
 export function renderCron(state){
@@ -118,8 +115,8 @@ export function renderGantt(state){
   const CHART_W=SVG_W-LABEL_W-PAD*2;
   const SVG_H=HDR_H+(etapas.length+1)*ROW_H+PAD;
 
-  const dateToX   = d => LABEL_W+PAD+(((new Date(d))-minD)/totalMs)*CHART_W;
-  const pct2color = p => p>=100?'#10b981':p>0?'#3b82f6':'#94a3b8';
+export function dateToX(state, d){ return LABEL_W+PAD+(((new Date(d))-minD)/totalMs)*CHART_W; }
+export function pct2color(state, p){ return p>=100?'#10b981':p>0?'#3b82f6':'#94a3b8'; }
 
   // Build months header
   let months=''; let d=new Date(minD);
