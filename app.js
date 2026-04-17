@@ -21,7 +21,7 @@ import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
 import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js';
 import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js';
 import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js';
-import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado } from './modules/captura.js';
+import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo } from './modules/captura.js';
 
 // ── Estado global ────────────────────────────────────────────────────
 const DEFAULT_STATE = {
