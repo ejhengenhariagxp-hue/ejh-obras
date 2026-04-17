@@ -287,137 +287,116 @@ function saveCliSig(state) {
   }
 }
 
+// ── Ponte Global (Exposição ao HTML) ──────────────────────────────────
+// Como app.js é um módulo, precisamos expor manualmente as funções ao window
+const G = window;
+G.nav = (id,el) => { nav(id,el); renderAtiva(); };
+G.setBnActive = setBnActive;
+G.openModal = openModal;
+G.closeModal = closeModal;
+G.toggleFab = toggleFab;
+G.closeFab = closeFab;
+G.openLightbox = openLightbox;
+G.closeLightbox = closeLightbox;
+G.renderAtiva = renderAtiva;
+G.exportJSON = exportJSON;
+G.openSettings = openSettings;
+G.saveSettings = saveSettings;
+G.handleLogoUpload = handleLogoUpload;
+G.abrirLogin = abrirLogin;
+G.fbLoginGoogle = fbLoginGoogle;
+G.fbLogout = fbLogout;
+G.openSigModal = openSigModal;
+G.saveSig = saveSig;
+G.clearSig = clearSig;
+G.saveIaConfig = () => {
+  const key = document.getElementById('set-ia-key')?.value;
+  if(!key) { showToast('⚠️ Cole sua chave primeiro'); return; }
+  saveIaKey(key);
+  closeModal('modal-ia-config');
+  showToast('✅ Chave IA salva com sucesso!');
+};
+G.initSigPad = initSigPad;
+
+// Obras
+G.addObra  = () => { if(addObra(state)) renderAtiva(); };
+G.delObra  = id => { if(delObra(state,id)) renderAtiva(); };
+G.registrarMedicaoRapida = id => { if(registrarMedicaoRapida(state,id)) renderAtiva(); };
+// Orçamento
+G.addOrc  = () => { if(addOrc(state)) renderAtiva(); };
+G.delOrc  = id => { if(delOrc(state,id)) renderAtiva(); };
+G.abrirOrcamentoObra = id => abrirOrcamentoObra(state,id);
+G.voltarOrcLista = () => voltarOrcLista();
+// Cronograma
+G.addCron  = () => { if(addCron(state)) renderAtiva(); };
+G.delCron  = id => { if(delCron(state,id)) renderAtiva(); };
+G.saveCronEdit = () => { if(saveCronEdit(state)) renderAtiva(); };
+G.openCronEdit = (id) => openCronEdit(state,id);
+G.setCronView  = v => setCronView(v);
+G.renderGantt  = () => renderGantt(state);
+// Diário
+G.openModalDiario = () => openModalDiario(state);
+G.addDiario  = () => { if(addDiario(state)) renderAtiva(); };
+G.delDiario  = id => { if(delDiario(state,id)) renderAtiva(); };
+G.handleFotos = inp => handleFotos(state, inp);
+G.removePendingFoto = i => removePendingFoto(state, i);
+// Financeiro
+G.openModalFin = tipo => openModalFin(state, tipo);
+G.addFin = () => { if(addFin(state)) renderAtiva(); };
+G.delFin = id => { if(delFin(state,id)) renderAtiva(); };
+// Medições
+G.addMedicao = () => { if(addMedicao(state)) renderAtiva(); };
+G.updateMedVal = (inp, orcId) => updateMedVal(state, inp, orcId);
+G.loadMedItems = () => loadMedItems(state);
+G.printMedicao = id => printMedicao(state, id);
+G.colherAssinatura = id => colherAssinatura(state, id);
+// Empreita
+G.addEmpreita = () => { if(addEmpreita(state)) renderAtiva(); };
+G.delEmpreita = id => { if(delEmpreita(state,id)) renderAtiva(); };
+G.openEmpPag = id => openEmpPag(state,id);
+G.addEmpPag  = () => { if(addEmpPag(state)) renderAtiva(); };
+// Propostas
+G.openPropProjeto = () => openPropProjeto(state);
+G.openPropObra    = () => openPropObra(state);
+G.calcPropProjeto = () => calcPropProjeto(state);
+G.calcPropostaObra = () => calcPropostaObra(state);
+G.saveProposta = tipo => { if(saveProposta(state,tipo)) renderAtiva(); };
+G.delProposta  = id  => { if(delProposta(state,id)) renderAtiva(); };
+G.printProposta = id => printProposta(state,id);
+G.compartilharWhatsApp = id => compartilharWhatsApp(state,id);
+G.colherAssinaturaProposta = id => colherAssinaturaProposta(state,id);
+G.saveCliSig = () => saveCliSig(state);
+G.importFromOrcamento = () => importFromOrcamento(state);
+G.addObraItem  = () => addObraItem(state);
+G.addProjServico = a => addProjServico(state,a);
+G.addProjExtra = () => addProjExtra(state);
+G.toggleModoGlobal = () => toggleModoGlobal(state);
+// SINAPI
+G.filterSinapi = q => filterSinapi(state,q);
+G.setSinapiCat = c => setSinapiCat(state,c);
+G.setTabelaSrc = s => setTabelaSrc(state,s);
+G.importSinapi = () => importSinapi(state);
+G.renderTabelas = () => renderTabelas(state);
+// Relatório
+G.gerarRelatorioWpp   = () => gerarRelatorioWpp(state);
+G.gerarRelatorioEmail = () => gerarRelatorioEmail(state);
+G.renderReport = () => renderReport(state);
+// Checklist
+G.addChecklist = () => { if(addChecklist(state)) renderAtiva(); };
+G.renderTemplatesNBR = () => renderTemplatesNBR();
+G.novoChecklist = () => novoChecklist(state);
+// Captura
+G.capProcessarIA = () => capProcessarIA(state);
+G.capConfirmarTodos = () => { capConfirmarTodos(state); renderAtiva(); };
+G.capLimpar = () => capLimpar();
+G.capDescartarResultado = () => capDescartarResultado();
+G.capToggleCard = (i,ck) => capToggleCard(state,i,ck);
+G.capProcessarArquivo = (inp) => capProcessarArquivo(state,inp);
+
 // ── DOMContentLoaded ─────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('load', () => { // Usamos 'load' para garantir que imagens e tudo mais estejam prontos
   initFields();
   renderAtiva();
 
-  // Expor tudo ao HTML (onclick inline)
-  const G = window;
-  G.nav = (id,el) => { nav(id,el); renderAtiva(); };
-  G.setBnActive = setBnActive;
-  G.openModal = openModal;
-  G.closeModal = closeModal;
-  G.toggleFab = toggleFab;
-  G.closeFab = closeFab;
-  G.openLightbox = openLightbox;
-  G.closeLightbox = closeLightbox;
-  G.renderAtiva = renderAtiva;
-  G.exportJSON = exportJSON;
-  G.openSettings = openSettings;
-  G.saveSettings = saveSettings;
-  G.handleLogoUpload = handleLogoUpload;
-  G.abrirLogin = abrirLogin;
-  G.fbLoginGoogle = fbLoginGoogle;
-  G.fbLogout = fbLogout;
-  G.openSigModal = openSigModal;
-  G.saveSig = saveSig;
-  G.clearSig = clearSig;
-  G.saveIaConfig = () => {
-    const key = document.getElementById('set-ia-key')?.value;
-    if(!key) { showToast('⚠️ Cole sua chave primeiro'); return; }
-    saveIaKey(key);
-    closeModal('modal-ia-config');
-    showToast('✅ Chave IA salva com sucesso!');
-  };
-  G.initSigPad = initSigPad;
-
-  // Obras
-  G.addObra  = () => { if(addObra(state)) renderAtiva(); };
-  G.delObra  = id => { if(delObra(state,id)) renderAtiva(); };
-  G.registrarMedicaoRapida = id => { if(registrarMedicaoRapida(state,id)) renderAtiva(); };
-  // Orçamento
-  G.addOrc  = () => { if(addOrc(state)) renderAtiva(); };
-  G.delOrc  = id => { if(delOrc(state,id)) renderAtiva(); };
-  G.abrirOrcamentoObra = id => abrirOrcamentoObra(state,id);
-  G.voltarOrcLista = () => voltarOrcLista();
-  // Cronograma
-  G.addCron  = () => { if(addCron(state)) renderAtiva(); };
-  G.delCron  = id => { if(delCron(state,id)) renderAtiva(); };
-  G.saveCronEdit = () => { if(saveCronEdit(state)) renderAtiva(); };
-  G.openCronEdit = (id) => openCronEdit(state,id);
-  G.setCronView  = v => setCronView(v);
-  G.renderGantt  = () => renderGantt(state);
-  // Diário
-  G.openModalDiario = () => openModalDiario(state);
-  G.addDiario  = () => { if(addDiario(state)) renderAtiva(); };
-  G.delDiario  = id => { if(delDiario(state,id)) renderAtiva(); };
-  G.handleFotos = inp => handleFotos(state, inp);
-  G.removePendingFoto = i => removePendingFoto(state, i);
-  // Financeiro
-  G.openModalFin = tipo => openModalFin(state, tipo);
-  G.addFin = () => { if(addFin(state)) renderAtiva(); };
-  G.delFin = id => { if(delFin(state,id)) renderAtiva(); };
-  // Medições
-  G.addMedicao = () => { if(addMedicao(state)) renderAtiva(); };
-  G.updateMedVal = (inp, orcId) => updateMedVal(state, inp, orcId);
-  G.loadMedItems = () => loadMedItems(state);
-  G.printMedicao = id => printMedicao(state, id);
-  G.colherAssinatura = id => colherAssinatura(state, id);
-  // Empreita
-  G.addEmpreita = () => { if(addEmpreita(state)) renderAtiva(); };
-  G.delEmpreita = id => { if(delEmpreita(state,id)) renderAtiva(); };
-  G.openEmpPag = id => openEmpPag(state,id);
-  G.addEmpPag  = () => { if(addEmpPag(state)) renderAtiva(); };
-  // Propostas
-  G.openPropProjeto = () => openPropProjeto(state);
-  G.openPropObra    = () => openPropObra(state);
-  G.calcPropProjeto = () => calcPropProjeto(state);
-  G.calcPropostaObra = () => calcPropostaObra(state);
-  G.saveProposta = tipo => { if(saveProposta(state,tipo)) renderAtiva(); };
-  G.delProposta  = id  => { if(delProposta(state,id)) renderAtiva(); };
-  G.printProposta = id => printProposta(state,id);
-  G.compartilharWhatsApp = id => compartilharWhatsApp(state,id);
-  G.colherAssinaturaProposta = id => colherAssinaturaProposta(state,id);
-  G.saveCliSig = () => saveCliSig(state);
-  G.importFromOrcamento = () => importFromOrcamento(state);
-  G.addObraItem  = () => addObraItem(state);
-  G.addProjServico = a => addProjServico(state,a);
-  G.addProjExtra = () => addProjExtra(state);
-  G.toggleModoGlobal = () => toggleModoGlobal(state);
-  // SINAPI
-  G.filterSinapi = q => filterSinapi(state,q);
-  G.setSinapiCat = c => setSinapiCat(state,c);
-  G.setTabelaSrc = s => setTabelaSrc(state,s);
-  G.importSinapi = () => importSinapi(state);
-  G.renderTabelas = () => renderTabelas(state);
-  // Relatório
-  G.gerarRelatorioWpp   = () => gerarRelatorioWpp(state);
-  G.gerarRelatorioEmail = () => gerarRelatorioEmail(state);
-  G.renderReport = () => renderReport(state);
-  // Checklist
-  G.addChecklist = () => { if(addChecklist(state)) renderAtiva(); };
-  G.renderTemplatesNBR = () => renderTemplatesNBR();
-  G.novoChecklist = () => novoChecklist(state);
-  // Captura
-  G.capProcessarIA = () => capProcessarIA(state);
-  G.capConfirmarTodos = () => { capConfirmarTodos(state); renderAtiva(); };
-  G.capLimpar = () => capLimpar();
-  G.capDescartarResultado = () => capDescartarResultado();
-  G.capToggleCard = (i,ck) => capToggleCard(state,i,ck);
-  G.capProcessarArquivo = (inp) => capProcessarArquivo(state,inp);
-
-  // Firebase
-  fbInit(user => {
-    window._fbUser = user;
-    const uBar = document.getElementById('user-bar');
-    const lBar = document.getElementById('login-bar');
-    if (user) {
-      if (uBar) uBar.style.display = 'flex';
-      if (lBar) lBar.style.display = 'none';
-      const nome = user.displayName || user.email || 'U';
-      const ini  = nome.split(' ').filter(Boolean).slice(0,2).map(n=>n[0].toUpperCase()).join('');
-      safeText('user-initials', ini);
-      safeText('user-name', nome.split(' ')[0]);
-      fbLoadData(state).then(merged => {
-        Object.assign(state, merged);
-        window._state = state;
-        renderAtiva();
-        showToast('☁️ Dados sincronizados!', 3000);
-      });
-    } else {
-      if (uBar) uBar.style.display = 'none';
-      if (lBar) lBar.style.display = 'flex';
-    }
   });
 });
