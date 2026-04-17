@@ -21,7 +21,7 @@ import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
 import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js';
 import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js';
 import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js';
-import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado } from './modules/captura.js';
+import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capProcessarArquivo, capToggleCard } from './modules/captura.js';
 
 // ── Estado global ────────────────────────────────────────────────────
 const DEFAULT_STATE = {
@@ -366,6 +366,8 @@ window.addEventListener('DOMContentLoaded', () => {
   G.capConfirmarTodos = () => { capConfirmarTodos(state); renderAtiva(); };
   G.capLimpar = () => capLimpar(state);
   G.capDescartarResultado = () => capDescartarResultado(state);
+  G.capProcessarArquivo = (input) => capProcessarArquivo(state, input);
+  G.capToggleCard = (i, checked) => capToggleCard(state, i, checked);
 
   // Firebase
   fbInit(user => {

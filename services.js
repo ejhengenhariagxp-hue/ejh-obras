@@ -13,6 +13,10 @@ const STORAGE_KEY = 'ejh_obras_v4';
 const PROPS_BAK   = 'ejh_propostas_bak';
 const IA_MODEL    = 'claude-sonnet-4-20250514';
 
+// URL do proxy Cloudflare Worker (ver worker/README.md).
+// Se não configurado, a IA mostra mensagem de erro clara.
+const IA_PROXY_URL = 'https://ejh-obras-ia.ejhengenhariagxp.workers.dev';
+
 export let fbUser = null;
 export let fbConfigured = false;
 let fbAuth = null, fbDb = null;
@@ -104,19 +108,44 @@ export async function fbLoadData(cur) {
   } catch(e) { console.warn('fbLoad:', e.message); return cur; }
 }
 
-// ── Anthropic IA ─────────────────────────────────────────────────────
+// ── Anthropic IA (via Cloudflare Worker proxy) ───────────────────────
+// `user` pode ser string OU array multimodal (texto + imagens + PDFs).
+// Exemplo multimodal:
+//   [{type:'text', text:'analise'},
+//    {type:'image', source:{type:'base64', media_type:'image/jpeg', data:'...'}},
+//    {type:'document', source:{type:'base64', media_type:'application/pdf', data:'...'}}]
 export async function iaCall(system, user, maxTokens=1500) {
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
+  if (!IA_PROXY_URL || IA_PROXY_URL.includes('SEU-USUARIO')) {
+    throw new Error('IA não configurada. Veja worker/README.md para deploy do proxy.');
+  }
+  const content = typeof user === 'string' ? user : user;
+  const r = await fetch(IA_PROXY_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: IA_MODEL, max_tokens: maxTokens,
-      system, messages: [{ role:'user', content: user }]
+      system, messages: [{ role:'user', content }]
     })
   });
-  if (!r.ok) { const e=await r.json().catch(()=>({})); throw new Error(e.error?.message||'IA error '+r.status); }
+  if (!r.ok) { const e=await r.json().catch(()=>({})); throw new Error(e.error?.message||e.error||'IA error '+r.status); }
   const d = await r.json();
   return d.content?.map(c=>c.text||'').join('') || '';
+}
+
+// Helper: converte File (foto/PDF) em bloco multimodal base64 da Anthropic.
+export async function fileToIaBlock(file) {
+  const b64 = await new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => res(String(fr.result).split(',')[1] || '');
+    fr.onerror = () => rej(new Error('Falha lendo ' + file.name));
+    fr.readAsDataURL(file);
+  });
+  const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+  if (isPdf) {
+    return { type:'document', source:{ type:'base64', media_type:'application/pdf', data: b64 } };
+  }
+  const mt = file.type && file.type.startsWith('image/') ? file.type : 'image/jpeg';
+  return { type:'image', source:{ type:'base64', media_type: mt, data: b64 } };
 }
 
 export async function gerarOrcamentoIA(descricao) {
