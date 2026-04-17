@@ -16,7 +16,7 @@ import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura,
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita } from './modules/empreita.js';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
          saveProposta, delProposta, printProposta, compartilharWhatsApp,
-         colherAssinaturaProposta, importFromOrcamento, saveCliSig, addObraItem,
+         colherAssinaturaProposta, importFromOrcamento, addObraItem,
          addProjServico, addProjExtra, toggleModoGlobal, renderPropostas } from './modules/propostas.js';
 import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js';
 import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js';
@@ -398,5 +398,27 @@ window.addEventListener('load', () => { // Usamos 'load' para garantir que image
   initFields();
   renderAtiva();
 
+  // Firebase
+  fbInit(user => {
+    window._fbUser = user;
+    const uBar = document.getElementById('user-bar');
+    const lBar = document.getElementById('login-bar');
+    if (user) {
+      if (uBar) uBar.style.display = 'flex';
+      if (lBar) lBar.style.display = 'none';
+      const nome = user.displayName || user.email || 'U';
+      const ini  = nome.split(' ').filter(Boolean).slice(0,2).map(n=>n[0].toUpperCase()).join('');
+      safeText('user-initials', ini);
+      safeText('user-name', nome.split(' ')[0]);
+      fbLoadData(state).then(merged => {
+        Object.assign(state, merged);
+        window._state = state;
+        renderAtiva();
+        showToast('☁️ Dados sincronizados!', 3000);
+      });
+    } else {
+      if (uBar) uBar.style.display = 'none';
+      if (lBar) lBar.style.display = 'flex';
+    }
   });
 });
