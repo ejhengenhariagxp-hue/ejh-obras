@@ -6,11 +6,11 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
          popularSelectsObras, modalidadeIcon, verificarAvisosObra,
          toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js';
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
-         fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA } from './services.js';
+         fbSaveData, fbLoadData, saveIaKey, getIaKey, setIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA } from './services.js';
 import { addObra, delObra, renderObras, registrarMedicaoRapida } from './modules/obras.js';
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js';
-import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, renderDiario } from './modules/diario.js';
+import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, renderDiario, gerarDiarioComFoto } from './modules/diario.js';
 import { addFin, delFin, openModalFin, renderFinanceiro } from './modules/financeiro.js';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes } from './modules/medicoes.js';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita } from './modules/empreita.js';
@@ -297,10 +297,45 @@ G.renderTemplatesNBR = () => renderTemplatesNBR();
 G.novoChecklist = () => novoChecklist(state);
 G.capProcessarIA = () => capProcessarIA(state);
 G.capConfirmarTodos = () => { capConfirmarTodos(state); renderAtiva(); };
-G.capLimpar = () => capLimpar();
-G.capDescartarResultado = () => capDescartarResultado();
+G.capLimpar = () => capLimpar(state);
+G.capDescartarResultado = () => capDescartarResultado(state);
 G.capToggleCard = (i,ck) => capToggleCard(state,i,ck);
 G.capProcessarArquivo = (inp) => capProcessarArquivo(state,inp);
+G.gerarOrcamentoComIA = () => gerarOrcamentoComIA(state);
+G.gerarDiarioComFoto = () => gerarDiarioComFoto(state);
+G.iaTrocarChave = () => {
+  const atual = getIaKey();
+  const nova = prompt(
+    'Chave Anthropic (sk-ant-...). Deixe em branco pra remover.\n' +
+    'Pegue em https://console.anthropic.com/ → API Keys.',
+    atual ? atual.slice(0, 12) + '…' : ''
+  );
+  if (nova === null) return;
+  if (nova.startsWith('sk-ant-')) { setIaKey(nova); showToast('✅ Chave salva'); }
+  else if (nova === '') { setIaKey(''); showToast('🗑 Chave removida'); }
+  else showToast('⚠️ Chave inválida (deve começar com sk-ant-)');
+};
+// Stubs — funções não implementadas ou que faltam
+G.showJsonPaste = () => {
+  const el = document.getElementById('json-paste-wrap');
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+};
+G.parseJsonConfig = () => {
+  showToast('⚠️ Função em desenvolvimento');
+};
+G.salvarConfigurarFb = () => {
+  showToast('⚠️ Função em desenvolvimento');
+};
+G.addImportRow = () => {
+  showToast('⚠️ Função em desenvolvimento');
+};
+G.cancelImport = () => {
+  closeModal('modal-import');
+  showToast('❌ Importação cancelada');
+};
+G.confirmImport = () => {
+  showToast('⚠️ Função em desenvolvimento');
+};
 
 window.addEventListener('load', () => {
   initFields();

@@ -1,5 +1,6 @@
 // modules/diario.js
 import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName } from '../utils.js';
+import { iaCall } from '../services.js';
 
 let _diarioLimit = 20;
 let _pendingFotos = [];
@@ -111,6 +112,35 @@ export function renderFotoPreview(){
     </div>`).join('');
 }
 
-
-
+export async function gerarDiarioComFoto(state) {
+  if (!_pendingFotos.length) { showToast('⚠️ Tire uma foto primeiro'); return; }
+  const btn = document.getElementById('dia-ia-btn');
+  const loading = document.getElementById('dia-ia-loading');
+  if (btn) btn.disabled = true;
+  if (loading) loading.style.display = 'block';
+  try {
+    const content = [];
+    const obra = state?.obras?.find(o => o.id === document.getElementById('f-dia-obra')?.value);
+    const obraCtx = obra ? `Obra: ${obra.nome} | Cliente: ${obra.cliente} | Área: ${obra.area}m²` : '';
+    content.push({type:'text', text:`Contexto: ${obraCtx}\n\nAnalise a(s) foto(s) e preencha:\n- desc: atividades observadas (máx 200 chars)\n- clima: ☀️ Ensolarado / ⛅ Parcialmente nublado / 🌧 Chuva / ⛈ Tempestade / 🌥 Nublado\n- equipe: "X operários" ou estimativa\n\nJSON: {"desc":"...","clima":"...","equipe":"..."}`});
+    for (const foto of _pendingFotos) {
+      const b64 = foto.dataUrl.split(',')[1];
+      const mediaType = foto.dataUrl.match(/data:([^;]+)/)?.[1] || 'image/jpeg';
+      content.push({ type:'image', source:{ type:'base64', media_type: mediaType, data: b64 } });
+    }
+    const resp = await iaCall(
+      'Supervisor de obras. Analise fotos, preencha descrição, clima e equipe.',
+      content, 500);
+    const data = JSON.parse(resp.replace(/```json|```/g, '').trim());
+    if (data.desc) document.getElementById('f-dia-desc').value = data.desc;
+    if (data.clima) document.getElementById('f-dia-clima').value = data.clima;
+    if (data.equipe) document.getElementById('f-dia-equipe').value = data.equipe;
+    showToast('✅ Preenchido pela IA!');
+  } catch (e) {
+    showToast('❌ Erro: ' + e.message);
+  } finally {
+    if (btn) btn.disabled = false;
+    if (loading) loading.style.display = 'none';
+  }
+}
 
