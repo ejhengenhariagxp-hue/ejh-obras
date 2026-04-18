@@ -77,7 +77,6 @@ export function printMedicao(state, id){
   const totalMed=m.itens.reduce((a,x)=>a+x.valorMed,0);
   const win=window.open('','_blank');
   
-  // Signature defaults
   const engSig = state.engSig || ''; 
   
   win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
@@ -99,8 +98,8 @@ export function printMedicao(state, id){
     </style></head><body>
     <div class="hdr">
       <div>
-        ${state.empresaLogo?`<img src="${state.empresaLogo}" class="logo-img">`:''}
-        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#0f2744">${state.empresaNome || 'EJH ENGENHARIA'}</div>
+        ${state.logoData?`<img src="${state.logoData}" class="logo-img">`:''}
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#0f2744">${state.empNome || 'EJH ENGENHARIA'}</div>
         <div style="font-size:12px;color:#64748b;margin-top:2px">Boletim de Medição</div>
       </div>
       <div style="text-align:right">
@@ -145,16 +144,13 @@ export function printMedicao(state, id){
 export function colherAssinatura(state, medId){
   const m = state.medicoes.find(x=>x.id===medId);
   if(!m) return;
-  document.getElementById('sig-cli-med-id').value=medId;
-  const clearSig = window.clearSig; 
-  if(clearSig) clearSig('cli');
+  const inputId = document.getElementById('sig-cli-med-id');
+  if(inputId) inputId.value=medId;
+  const inputNome = document.getElementById('sig-cli-nome');
+  if(inputNome) inputNome.value = m.assinatura?.nome || '';
   
-  if(document.getElementById('sig-cli-nome')) {
-    document.getElementById('sig-cli-nome').value = m.assinatura?.nome || '';
-  }
   openModal('modal-assinatura-cliente');
-  const initSigPad = window.initSigPad;
-  if(initSigPad) setTimeout(()=>initSigPad('sig-cli-canvas','sig-cli-wrap','sig-cli-ph','cli'),100);
+  if(window.initSigPad) setTimeout(()=>window.initSigPad('sig-cli-canvas','sig-cli-wrap','sig-cli-ph','cli'),100);
 }
 
 export function renderMedicoes(state){
@@ -175,7 +171,7 @@ export function renderMedicoes(state){
         </div>
       </div>
       <div class="medicao-body">
-        <table>
+        <div class="table-wrap"><table>
           <thead><tr><th>Item</th><th>Un.</th><th>Qtd Total</th><th>V.Unit.</th><th>Qtd. Medida</th><th>Valor Medição</th></tr></thead>
           <tbody>
             ${m.itens.map((it,i)=>`<tr style="background:${i%2===0?'#f8faff':'#fff'}">
@@ -191,17 +187,11 @@ export function renderMedicoes(state){
             <td colspan="5" style="padding:10px 15px;text-align:right;font-weight:700">TOTAL DA MEDIÇÃO</td>
             <td style="padding:10px 15px;text-align:right;font-weight:800;font-size:15px;color:var(--navy)">${fmt(totalMed)}</td>
           </tr></tfoot>
-        </table>
+        </table></div>
         <div style="padding:16px 20px;font-size:12px;color:var(--muted);border-top:1px solid var(--border)">
-          Responsável Técnico: <strong>${m.resp}</strong> • ID: ${m.id}
+          Responsável Técnico: <strong>${m.resp || 'Não informado'}</strong> • ID: ${m.id}
         </div>
       </div>
     </div>`;
-  }).join('')||'<div style="color:var(--muted);padding:20px">Nenhuma medição gerada ainda.</div>';
+  }).join('')||'<div style="color:var(--muted);padding:20px;text-align:center">Nenhuma medição gerada ainda.</div>';
 }
-
-export function getImpMed(){    return document.getElementById('f-imp-med')?.value==='sim'; }
-
-
-
-
