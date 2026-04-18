@@ -191,7 +191,7 @@ function openSigModal() {
   setTimeout(() => initSigPad('sig-eng-canvas','sig-eng-wrap','sig-eng-ph','eng'), 100);
 }
 
-function saveCliSig(state) {
+function saveCliSigMedicao(state) {
   const medId = document.getElementById('sig-cli-med-id')?.value;
   const canvas = sigPads['cli'];
   if (!medId || !canvas) return;
@@ -279,6 +279,7 @@ G.printProposta = id => printProposta(state,id);
 G.compartilharWhatsApp = id => compartilharWhatsApp(state,id);
 G.colherAssinaturaProposta = id => colherAssinaturaProposta(state,id);
 G.editProposta = id => editProposta(state, id);
+window._origSaveCliSig = () => saveCliSigMedicao(state);
 G.saveCliSig = () => saveCliSig(state);
 G.importFromOrcamento = () => importFromOrcamento(state);
 G.addObraItem = () => addObraItem(state);
