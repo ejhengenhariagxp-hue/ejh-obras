@@ -4,7 +4,7 @@
 import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
          openModal, closeModal, statusBadge, tipoLabel,
          popularSelectsObras, modalidadeIcon, verificarAvisosObra,
-         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js';
+         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator, obraName } from './utils.js';
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
          fbSaveData, fbLoadData, saveIaKey, getIaKey, setIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA } from './services.js';
 import { addObra, delObra, renderObras, registrarMedicaoRapida } from './modules/obras.js';
@@ -206,6 +206,7 @@ function saveCliSig(state) {
 
 // ── EXPOSIÇÃO GLOBAL ──────────────────────────────────────────────────
 const G = window;
+G.obraName = (id) => obraName(state, id);
 G.nav = (id,el) => { nav(id,el); renderAtiva(); };
 G.openModal = openModal;
 G.closeModal = closeModal;
@@ -338,6 +339,21 @@ G.confirmImport = () => {
 };
 G.importManual = () => {
   showToast('⚠️ Função em desenvolvimento');
+};
+G.importExcel = (inp) => {
+  showToast('⚠️ Import Excel em desenvolvimento');
+  inp.value = '';
+};
+G.importPDF = (inp) => {
+  showToast('⚠️ Import PDF em desenvolvimento');
+  inp.value = '';
+};
+G.importCSV = (inp) => {
+  showToast('⚠️ Import CSV em desenvolvimento');
+  inp.value = '';
+};
+G.applyMapping = () => {
+  showToast('⚠️ Mapping em desenvolvimento');
 };
 
 window.addEventListener('load', () => {
