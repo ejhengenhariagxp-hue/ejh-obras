@@ -1,9 +1,10 @@
-﻿// modules/medicoes.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge } from '../utils.js';
-
+// modules/medicoes.js
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName } from '../utils.js';
 
 export function addMedicao(state){
-  const obraId=document.getElementById('f-med-obra').value;
+  const obraId=document.getElementById('f-med-obra')?.value;
+  if(!obraId) { showToast('⚠️ Selecione uma obra'); return false; }
+  
   const itens=[];
   document.querySelectorAll('.med-item-row').forEach(row=>{
     const qtdMed=+row.querySelector('.med-qtd').value||0;
@@ -13,7 +14,9 @@ export function addMedicao(state){
       if(orc) itens.push({item:orc.item,un:orc.un,qtd:orc.qtd,vunit:orc.vunit,qtdMed,valorMed:qtdMed*orc.vunit});
     }
   });
-  state.medicoes.push({id:'MED-'+pad(state.counters.med),
+  
+  state.medicoes.push({
+    id:'MED-'+pad(state.counters.med),
     obraId,
     num:+document.getElementById('f-med-num').value||state.medicoes.filter(m=>m.obraId===obraId).length+1,
     periodo:document.getElementById('f-med-periodo').value,
@@ -21,19 +24,26 @@ export function addMedicao(state){
     resp:document.getElementById('f-med-resp').value,
     itens,
   });
-  state.counters.med++;closeModal('modal-medicao');return true;showToast('✅ Medição gerada!');
+  
+  state.counters.med++;
+  closeModal('modal-medicao');
+  showToast('✅ Medição gerada!');
+  return true;
 }
 
-export function updateMedVal(state, input,orcId){
-  const orc=state.orc.find(x=>x.id===orcId);if(!orc)return;
+export function updateMedVal(state, input, orcId){
+  const orc=state.orc.find(x=>x.id===orcId);
+  if(!orc) return;
   const v=+input.value||0;
-  document.getElementById('med-val-'+orcId).textContent=v>0?fmt(v*orc.vunit):'—';
+  const target = document.getElementById('med-val-'+orcId);
+  if(target) target.textContent=v>0?fmt(v*orc.vunit):'—';
 }
 
 export function loadMedItems(state){
-  const obraId=document.getElementById('f-med-obra').value;
+  const obraId=document.getElementById('f-med-obra')?.value;
+  if(!obraId) return;
   const itens=state.orc.filter(x=>x.obraId===obraId);
-  document.getElementById('med-items-list').innerHTML=itens.length?
+  safeInner('med-items-list', itens.length?
     `<table style="width:100%;border-collapse:collapse;font-size:13px">
       <thead><tr style="background:var(--navy);color:#fff">
         <th style="padding:8px 12px;text-align:left">Item</th>
@@ -58,15 +68,19 @@ export function loadMedItems(state){
         </tr>`).join('')}
       </tbody>
     </table>`
-    :'<div style="color:var(--muted);padding:16px">Nenhum item de orçamento para esta obra.</div>';
+    :'<div style="color:var(--muted);padding:16px">Nenhum item de orçamento para esta obra.</div>');
 }
 
 export function printMedicao(state, id){
-  const m=state.medicoes.find(x=>x.id===id);if(!m)return;
+  const m=state.medicoes.find(x=>x.id===id);
+  if(!m) return;
   const totalMed=m.itens.reduce((a,x)=>a+x.valorMed,0);
   const win=window.open('','_blank');
+  
+  const engSig = state.engSig || ''; 
+  
   win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-    <title>Medição ${m.num} — ${obraName(m.obraId)}</title>
+    <title>Medição ${m.num} — ${obraName(state, m.obraId)}</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
       body{font-family:'DM Sans',sans-serif;padding:40px;max-width:800px;margin:0 auto;color:#1e293b}
@@ -84,12 +98,12 @@ export function printMedicao(state, id){
     </style></head><body>
     <div class="hdr">
       <div>
-        ${state.empresaLogo?`<img src="${state.empresaLogo}" class="logo-img">`:''}
-        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#0f2744">${state.empresaNome || 'EJH ENGENHARIA'}</div>
+        ${state.logoData?`<img src="${state.logoData}" class="logo-img">`:''}
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#0f2744">${state.empNome || 'EJH ENGENHARIA'}</div>
         <div style="font-size:12px;color:#64748b;margin-top:2px">Boletim de Medição</div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:13px"><strong>Obra:</strong> ${obraName(m.obraId)}</div>
+        <div style="font-size:13px"><strong>Obra:</strong> ${obraName(state, m.obraId)}</div>
         <div style="font-size:13px"><strong>Medição nº:</strong> ${m.num}</div>
         <div style="font-size:13px"><strong>Período:</strong> ${m.periodo}</div>
         <div style="font-size:13px"><strong>Emissão:</strong> ${fmtD(m.data)}</div>
@@ -97,7 +111,7 @@ export function printMedicao(state, id){
     </div>
     <table>
       <thead><tr><th>Item</th><th>Un.</th><th>Qtd Contrat.</th><th>V. Unitário</th><th>Qtd. Medida</th><th>Valor</th></tr></thead>
-      <tbody>${m.itens.map((it,i)=>`<tr>
+      <tbody>${m.itens.map((it)=>`<tr>
         <td>${it.item}</td><td style="text-align:center">${it.un}</td>
         <td style="text-align:center">${it.qtd}</td>
         <td style="text-align:right">${fmt(it.vunit)}</td>
@@ -113,7 +127,7 @@ export function printMedicao(state, id){
       <div style="border-top:2px solid #0f2744;padding-top:8px;text-align:center;font-size:12px">
         ${engSig?`<img src="${engSig}" style="height:64px;margin-bottom:4px;display:block;margin-left:auto;margin-right:auto" alt="Assinatura">`:'<div style="height:64px"></div>'}
         <div>${m.resp || state.engNome || 'Responsável Técnico'}</div>
-        <div style="color:#64748b">${state.engRegistro || 'Responsável Técnico'} — ${new Date().toLocaleDateString('pt-BR')}</div>
+        <div style="color:#64748b">${state.engRegistro || ''} — ${new Date().toLocaleDateString('pt-BR')}</div>
       </div>
       <div style="border-top:2px solid #0f2744;padding-top:8px;text-align:center;font-size:12px">
         ${m.assinatura?.dataUrl?`<img src="${m.assinatura.dataUrl}" style="height:64px;margin-bottom:4px;display:block;margin-left:auto;margin-right:auto" alt="Assinatura contratante">`:'<div style="height:64px"></div>'}
@@ -128,24 +142,26 @@ export function printMedicao(state, id){
 }
 
 export function colherAssinatura(state, medId){
-  document.getElementById('sig-cli-med-id').value=medId;
-  clearSig('cli');
-  document.getElementById('sig-cli-nome').value='';
-  // Mostra assinatura prévia se já existir
-  if(cliSigs[medId]){
-    document.getElementById('sig-cli-nome').value=cliSigs[medId].nome||'';
-  }
-  document.getElementById('modal-assinatura-cliente').classList.add('open');
-  setTimeout(()=>initSigPad('sig-cli-canvas','sig-cli-wrap','sig-cli-ph','cli'),100);
+  const m = state.medicoes.find(x=>x.id===medId);
+  if(!m) return;
+  const inputId = document.getElementById('sig-cli-med-id');
+  if(inputId) inputId.value=medId;
+  const inputNome = document.getElementById('sig-cli-nome');
+  if(inputNome) inputNome.value = m.assinatura?.nome || '';
+  
+  openModal('modal-assinatura-cliente');
+  if(window.initSigPad) setTimeout(()=>window.initSigPad('sig-cli-canvas','sig-cli-wrap','sig-cli-ph','cli'),100);
 }
 
 export function renderMedicoes(state){
-  document.getElementById('list-medicoes').innerHTML=state.medicoes.map(m=>{
+  const list = document.getElementById('list-medicoes');
+  if(!list) return;
+  list.innerHTML=state.medicoes.map(m=>{
     const totalMed=m.itens.reduce((a,x)=>a+x.valorMed,0);
     return `<div class="medicao-card">
       <div class="medicao-header">
         <div>
-          <div class="medicao-title">Medição nº ${m.num} — ${obraName(m.obraId)}</div>
+          <div class="medicao-title">Medição nº ${m.num} — ${obraName(state, m.obraId)}</div>
           <div style="font-size:12px;opacity:.7;margin-top:2px">Período: ${m.periodo} • Emissão: ${fmtD(m.data)}</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
@@ -155,7 +171,7 @@ export function renderMedicoes(state){
         </div>
       </div>
       <div class="medicao-body">
-        <table>
+        <div class="table-wrap"><table>
           <thead><tr><th>Item</th><th>Un.</th><th>Qtd Total</th><th>V.Unit.</th><th>Qtd. Medida</th><th>Valor Medição</th></tr></thead>
           <tbody>
             ${m.itens.map((it,i)=>`<tr style="background:${i%2===0?'#f8faff':'#fff'}">
@@ -171,23 +187,11 @@ export function renderMedicoes(state){
             <td colspan="5" style="padding:10px 15px;text-align:right;font-weight:700">TOTAL DA MEDIÇÃO</td>
             <td style="padding:10px 15px;text-align:right;font-weight:800;font-size:15px;color:var(--navy)">${fmt(totalMed)}</td>
           </tr></tfoot>
-        </table>
+        </table></div>
         <div style="padding:16px 20px;font-size:12px;color:var(--muted);border-top:1px solid var(--border)">
-          Responsável Técnico: <strong>${m.resp}</strong> • ID: ${m.id}
+          Responsável Técnico: <strong>${m.resp || 'Não informado'}</strong> • ID: ${m.id}
         </div>
       </div>
     </div>`;
-  }).join('')||'<div style="color:var(--muted);padding:20px">Nenhuma medição gerada ainda.</div>';
+  }).join('')||'<div style="color:var(--muted);padding:20px;text-align:center">Nenhuma medição gerada ainda.</div>';
 }
-
-export function getImpMed(state){    return document.getElementById('f-imp-med').value==='sim'; }
-
-export function addSigButton(state){
-  const footer=document.querySelector('.sidebar-footer');
-  if(footer&&!document.getElementById('btn-sig-footer')){
-    footer.innerHTML='v4.1 • EJH Engenharia<br><button id="btn-sig-footer" onclick="openSigModal()" style="margin-top:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);border-radius:7px;padding:4px 10px;font-size:11px;cursor:pointer;width:100%">✍️ Minha Assinatura</button>';
-  }
-}
-
-
-

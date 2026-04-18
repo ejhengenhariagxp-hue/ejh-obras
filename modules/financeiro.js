@@ -1,5 +1,7 @@
-﻿// modules/financeiro.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge } from '../utils.js';
+// modules/financeiro.js
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName } from '../utils.js';
+
+let _finLimit = 20;
 
 export function addFin(state){
   const desc=document.getElementById('f-fin-desc').value.trim();
@@ -16,25 +18,39 @@ export function addFin(state){
   }
   document.getElementById('f-fin-desc').style.border='';
   document.getElementById('f-fin-valor').style.border='';
-  state.fin.push({id:'FIN-'+pad(state.counters.fin),
-    tipo:document.getElementById('f-fin-tipo').value,
-    obraId:document.getElementById('f-fin-obra').value,
-    data:document.getElementById('f-fin-data').value,
-    desc:desc,
-    cat:document.getElementById('f-fin-cat').value,
-    valor:valor,
-    obs:document.getElementById('f-fin-obs').value,
+  
+  state.fin.push({
+    id:    'FIN-'+pad(state.counters.fin),
+    tipo:   document.getElementById('f-fin-tipo').value,
+    obraId: document.getElementById('f-fin-obra').value,
+    data:   document.getElementById('f-fin-data').value,
+    desc:   desc,
+    cat:    document.getElementById('f-fin-cat').value,
+    status: document.getElementById('f-fin-status').value, // Novo campo
+    valor:  valor,
+    obs:    document.getElementById('f-fin-obs').value,
   });
-  state.counters.fin++;closeModal('modal-fin');return true;showToast('✅ Lançamento registrado!');
+  state.counters.fin++;
+  closeModal('modal-fin');
+  showToast('✅ Lançamento registrado!');
+  return true;
 }
 
-export function delFin(state, id){if(confirm('Excluir este lançamento?')){state.fin=state.fin.filter(x=>x.id!==id);_finLimit=20;render()}}
+export function delFin(state, id){
+  if(confirm('Excluir este lançamento?')){
+    state.fin=state.fin.filter(x=>x.id!==id);
+    _finLimit=20;
+    return true;
+  }
+  return false;
+}
 
 export function openModalFin(state, tipo){
-  populateSelects();
-  document.getElementById('f-fin-tipo').value=tipo;
-  document.getElementById('fin-modal-title').textContent=(tipo==='Receita'?'💚 Nova Receita':'🔴 Nova Despesa');
-  document.getElementById('modal-fin').classList.add('open');
+  popularSelectsObras(state);
+  if(document.getElementById('f-fin-tipo')) document.getElementById('f-fin-tipo').value=tipo;
+  if(document.getElementById('fin-modal-title')) document.getElementById('fin-modal-title').textContent=(tipo==='Receita'?'💚 Nova Receita':'🔴 Nova Despesa');
+  if(document.getElementById('f-fin-data')) document.getElementById('f-fin-data').value = new Date().toISOString().split('T')[0];
+  openModal('modal-fin');
 }
 
 export function renderFinanceiro(state){
@@ -50,7 +66,7 @@ export function renderFinanceiro(state){
   }
 
   // Novo Dashboard Avançado
-  renderDashFinAvancado();
+  renderDashFinAvancado(state);
 
   const renderObraRow = o => {
     const r=state.fin.filter(x=>x.obraId===o.id&&x.tipo==='Receita').reduce((a,x)=>a+x.valor,0);
@@ -68,14 +84,14 @@ export function renderFinanceiro(state){
   // Por categoria R1 (Projetos)
   const tbR1 = document.getElementById('tbody-fin-r1');
   if(tbR1) {
-    const obrasR1 = state.obras.filter(o => o.tipo === 'projeto');
+    const obrasR1 = state.obras.filter(o => o.tipo === 'R1' || o.tipo === 'projeto');
     tbR1.innerHTML = obrasR1.map(renderObraRow).join('') || '<tr><td colspan="5" style="color:var(--muted);padding:10px">Nenhum R1 (Projeto) encontrado.</td></tr>';
   }
 
   // Por categoria R2 (Obras)
   const tbR2 = document.getElementById('tbody-fin-r2');
   if(tbR2) {
-    const obrasR2 = state.obras.filter(o => o.tipo !== 'projeto'); // Default to R2 to support legacy
+    const obrasR2 = state.obras.filter(o => o.tipo === 'R2' || o.tipo === 'obra' || !o.tipo);
     tbR2.innerHTML = obrasR2.map(renderObraRow).join('') || '<tr><td colspan="5" style="color:var(--muted);padding:10px">Nenhum R2 (Obra) encontrado.</td></tr>';
   }
 
@@ -83,24 +99,28 @@ export function renderFinanceiro(state){
   const sortedFin = [...state.fin].sort((a,b)=>b.data.localeCompare(a.data));
   const totalFin = sortedFin.length;
   const visiveisFin = sortedFin.slice(0, _finLimit);
-  const htmlFin = visiveisFin.map(f=>`<tr>
+  const htmlFin = visiveisFin.map(f=>{
+    const s = f.status || 'pago';
+    const sBadge = `<span class="badge" style="background:${s==='pago'?'#f0fdf4':s==='pendente'?'#fef2f2':'#eff6ff'};color:${s==='pago'?'var(--green)':s==='pendente'?'var(--red)':'var(--blue)'}">${s==='pago'?'✅ Pago':s==='pendente'?'⏳ Pendente':'📅 Agendado'}</span>`;
+    
+    return `<tr>
       <td>${fmtD(f.data)}</td>
       <td><span class="badge ${f.tipo==='Receita'?'badge-green':'badge-red'}">${f.tipo}</span></td>
-      <td>${obraName(f.obraId)}</td>
+      <td style="font-size:12px">${obraName(state, f.obraId)}</td>
       <td style="font-weight:500">${f.desc}</td>
-      <td><span class="badge badge-blue">${f.cat}</span></td>
+      <td><span class="badge badge-blue" style="font-size:10px">${f.cat}</span></td>
+      <td>${sBadge}</td>
       <td style="font-weight:700;color:${f.tipo==='Receita'?'var(--green)':'var(--red)'}">${f.tipo==='Receita'?'+':'-'}${fmt(f.valor)}</td>
       <td><button class="btn btn-outline btn-xs" onclick="delFin('${f.id}')" style="color:var(--red);border-color:var(--red)">✕</button></td>
-    </tr>`).join('');
+    </tr>`}).join('');
+  
   safeInner('tbody-fin', htmlFin);
-  if(totalFin > _finLimit){
-    const el=document.getElementById('tbody-fin');
-    if(el) el.insertAdjacentHTML('afterend',
-      `<tr id="fin-ver-mais"><td colspan="7" style="text-align:center;padding:12px">
-        <button class="btn btn-outline btn-sm" onclick="_finLimit+=20;renderFinanceiro()">Ver mais (${totalFin-_finLimit} restantes)</button>
-      </td></tr>`);
-  } else {
-    const old=document.getElementById('fin-ver-mais'); if(old) old.remove();
+  
+  const verMaisWrap = document.getElementById('fin-ver-mais-wrap');
+  if(totalFin > _finLimit && verMaisWrap){
+    verMaisWrap.innerHTML = `<button class="btn btn-outline btn-sm" onclick="window._state.finLimit+=20; renderAtiva()">Ver mais (${totalFin-_finLimit} restantes)</button>`;
+  } else if (verMaisWrap) {
+    verMaisWrap.innerHTML = '';
   }
 }
 
@@ -111,29 +131,25 @@ export function renderDashFinAvancado(state) {
   const now = new Date();
   const yearNow = now.getFullYear();
   const yearLast = yearNow - 1;
-  const monthNow = now.getMonth() + 1; // 1-12
+  const monthNow = now.getMonth() + 1;
 
-  // Filtros por Categoria e Ano
   const finR1 = state.fin.filter(f => {
     const o = state.obras.find(x => x.id === f.obraId);
-    return o && o.tipo === 'projeto';
+    return o && (o.tipo === 'R1' || o.tipo === 'projeto');
   });
   const finR2 = state.fin.filter(f => {
     const o = state.obras.find(x => x.id === f.obraId);
-    return o && (o.tipo === 'R2' || !o.tipo);
+    return o && (o.tipo === 'R2' || o.tipo === 'obra' || !o.tipo);
   });
 
   const sum = (arr, year, tipo) => arr.filter(f => f.data.startsWith(year) && (!tipo || f.tipo === tipo)).reduce((a,x) => a + x.valor, 0);
 
-  const r1Rec = sum(finR1, yearNow, 'Receita');
-  const r2Rec = sum(finR2, yearNow, 'Receita');
+  const r1Rec = sum(finR1, String(yearNow), 'Receita');
+  const r2Rec = sum(finR2, String(yearNow), 'Receita');
   
-  // Média Anual (YTD)
-  const totalRecYTD = state.fin.filter(f => f.data.startsWith(yearNow) && f.tipo === 'Receita').reduce((a,x) => a+x.valor, 0);
+  const totalRecYTD = state.fin.filter(f => f.data.startsWith(String(yearNow)) && f.tipo === 'Receita').reduce((a,x) => a+x.valor, 0);
   const avgMensal = totalRecYTD / monthNow;
 
-  // YoY Comparison (Full Year vs Full Year or YTD vs YTD?)
-  // Vamos fazer YTD vs Same Period Last Year para ser mais justo
   const lastYearSamePeriod = state.fin.filter(f => {
     const y = parseInt(f.data.substring(0,4));
     const m = parseInt(f.data.substring(5,7));
@@ -169,6 +185,3 @@ export function renderDashFinAvancado(state) {
     </div>
   `;
 }
-
-
-

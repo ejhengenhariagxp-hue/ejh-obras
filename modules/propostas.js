@@ -42,6 +42,7 @@ export function openPropProjeto(state){
       }
     } catch(e){}
   }
+  if(document.getElementById('f-pp-id')) document.getElementById('f-pp-id').value='';
   window.modoGlobalProjeto=false;
   window.projServicos=PRECO_PROJETOS.map(p=>({...p,qtd:0,incluso:false}));
   window.projExtras=[];
@@ -71,6 +72,7 @@ export function openPropObra(state){
       }
     } catch(e){}
   }
+  if(document.getElementById('f-po-id')) document.getElementById('f-po-id').value='';
   window.obraItens=[];
   renderObraItens();
   document.getElementById('f-po-data').value=new Date().toISOString().split('T')[0];
@@ -301,12 +303,23 @@ export function saveProposta(state, tipo){
     }
   }catch(e){ showToast('⚠️ Erro: '+e.message); console.error(e); return false; }
   
-  state.propostas.push(proposta);
-  state.counters.prop++;
+  const editId = tipo === 'projeto' ? document.getElementById('f-pp-id')?.value : document.getElementById('f-po-id')?.value;
+  
+  if (editId) {
+    const idx = state.propostas.findIndex(x => x.id === editId);
+    if (idx !== -1) {
+      state.propostas[idx] = { ...state.propostas[idx], ...proposta };
+      showToast('✅ Proposta atualizada!');
+    }
+  } else {
+    state.propostas.push(proposta);
+    state.counters.prop++;
+    showToast('✅ Proposta salva! Veja em Propostas.');
+  }
+  
   try{localStorage.setItem('ejh_propostas_bak',JSON.stringify(state.propostas));}catch(e){}
   try{localStorage.removeItem('rascunho_proposta');}catch(e){}
 
-  showToast('✅ Proposta salva! Veja em Propostas.');
   setTimeout(()=>{
     try{
       document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -326,6 +339,52 @@ export function delProposta(state, id){
     return true;
   }
   return false;
+}
+
+export function editProposta(state, id) {
+  const p = state.propostas.find(x => x.id === id);
+  if (!p) return;
+
+  if (p.tipo === 'projeto') {
+    document.getElementById('f-pp-id').value = p.id;
+    document.getElementById('f-pp-cliente').value = p.cliente || '';
+    document.getElementById('f-pp-empreend').value = p.empreend || '';
+    document.getElementById('f-pp-area').value = p.area || '';
+    document.getElementById('f-pp-data').value = p.data || '';
+    document.getElementById('f-pp-val').value = p.validade || '30';
+    document.getElementById('f-pp-prazo').value = p.prazo || '';
+    document.getElementById('f-pp-desc').value = p.desconto || 0;
+    document.getElementById('f-pp-obs').value = p.obs || '';
+    
+    // Carregar itens
+    window.projServicos = PRECO_PROJETOS.map(def => {
+      const match = (p.itens || []).find(it => it.id === def.id);
+      return match ? { ...def, ...match, incluso: true } : { ...def, incluso: false, qtd: 0 };
+    });
+    // Itens extras
+    window.projExtras = (p.itens || []).filter(it => it.id === 'CUSTOM' || it.id === 'EXT');
+    
+    renderProjServicos();
+    renderProjExtras();
+    calcPropProjeto(state);
+    openModal('modal-proposta-projeto');
+  } else {
+    document.getElementById('f-po-id').value = p.id;
+    document.getElementById('f-po-cliente').value = p.cliente || '';
+    document.getElementById('f-po-empreend').value = p.empreend || '';
+    document.getElementById('f-po-area').value = p.area || '';
+    document.getElementById('f-po-data').value = p.data || '';
+    document.getElementById('f-po-prazo').value = p.prazo || '';
+    document.getElementById('f-po-bdi').value = p.bdi || 25;
+    document.getElementById('f-po-desc').value = p.desconto || 0;
+    document.getElementById('f-po-escopo').value = p.escopo || '';
+    if (document.getElementById('f-po-tipo')) document.getElementById('f-po-tipo').value = p.tipoObra || 'obra';
+    
+    window.obraItens = [...(p.itens || [])];
+    renderObraItens();
+    calcPropostaObra(state);
+    openModal('modal-proposta-obra');
+  }
 }
 
 export function printProposta(state, id){
@@ -560,6 +619,9 @@ export function renderPropostas(state){
         </button>
         <button class="btn btn-outline btn-sm" onclick="colherAssinaturaProposta('${p.id}')" style="${temAssinatura?'color:var(--green);border-color:var(--green)':'color:var(--purple);border-color:var(--purple)'}">
           ✍️ ${temAssinatura?'Ver Assinatura':'Assinar'}
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="editProposta('${p.id}')" style="color:var(--blue);border-color:var(--blue)">
+          ✏️ Editar
         </button>
         <button class="btn btn-outline btn-xs" style="color:var(--red);border-color:var(--red);margin-left:auto" onclick="delProposta('${p.id}')">🗑 Excluir</button>
       </div>
