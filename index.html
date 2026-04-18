@@ -5,7 +5,13 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f2744">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="EJH Obras">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%230f2744'/%3E%3Ctext y='130' x='20' font-size='120'%3E🏗%3C/text%3E%3C/svg%3E">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EJH Engenharia v4.2 — Gestão de Obras v4.2</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <!-- Firebase — defer não bloqueia o app mas garante carregamento antes do uso -->
@@ -37,19 +43,17 @@
     <div id="user-initials" style="width:28px;height:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0"></div>
     <div class="user-name" id="user-name"></div>
     <span style="font-size:14px" title="Sincronizado na nuvem">☁✓</span>
-    <button class="user-btn" onclick="iaTrocarChave()" title="Configurar chave Anthropic">🤖</button>
     <button class="user-btn" onclick="fbLogout()" title="Sair">↩</button>
   </div>
   <div class="user-bar" id="login-bar">
     <span class="sync-dot" id="sync-dot"></span>
     <span style="font-size:11px;color:rgba(255,255,255,.45);flex:1">Dados locais</span>
-    <button class="user-btn" onclick="iaTrocarChave()" title="Configurar chave Anthropic" style="background:rgba(168,85,247,.35);color:#fff">🤖</button>
     <button class="user-btn" onclick="abrirLogin()" style="background:rgba(37,99,235,.35);color:#fff">☁ Login</button>
   </div>
   <div class="nav">
     <div class="nav-group">Principal</div>
     <div class="nav-item active" onclick="nav('dashboard',this)"><span class="nav-icon">📊</span><span>Dashboard</span></div>
-    <div class="nav-item" onclick="nav('obras',this)"><span class="nav-icon">🏗</span><span>R1 / R2</span></div>
+    <div class="nav-item" onclick="nav('obras',this)"><span class="nav-icon">🏗</span><span>Projetos e Obras</span></div>
     <div class="nav-group">Execução</div>
     <div class="nav-item" onclick="nav('orcamento',this)"><span class="nav-icon">💰</span><span>Orçamento</span></div>
     <div class="nav-item" onclick="nav('empreita',this)"><span class="nav-icon">🤝</span><span>Empreita M.O.</span></div>
@@ -60,11 +64,9 @@
     <div class="nav-item" onclick="nav('tabelas',this)"><span class="nav-icon">📐</span><span>SINAPI / SICOR-MG</span></div>
     <div class="nav-item" onclick="nav('medicao',this)"><span class="nav-icon">📏</span><span>Medição</span></div>
     <div class="nav-item" onclick="nav('importar',this)"><span class="nav-icon">📥</span><span>Importar Orçamento</span></div>
-    <div class="nav-item" onclick="nav('captura',this)"><span class="nav-icon">🤖</span><span>Captura IA</span></div>
     <div class="nav-group">Propostas & Relatório</div>
     <div class="nav-item" onclick="nav('propostas',this)"><span class="nav-icon">📝</span><span>Propostas</span></div>
     <div class="nav-item" onclick="nav('relatorio',this)"><span class="nav-icon">📄</span><span>Relatório</span></div>
-    <div class="nav-item" onclick="openModal('modal-ia-config')"><span class="nav-icon">🤖</span><span>IA Inteligente (BETA)</span></div>
     <div class="nav-group">Preferências</div>
     <div class="nav-item" onclick="openModal('modal-settings')"><span class="nav-icon">⚙️</span><span>Configurações</span></div>
   </div>
@@ -82,6 +84,7 @@
     <div><div class="page-title">Dashboard</div><div class="page-sub" id="dash-date"></div></div>
     <button class="btn btn-primary" onclick="openModal('modal-obra')">＋ Novo Projeto / Obra</button>
   </div>
+  <div id="dash-alerts" style="display:none;margin-bottom:16px"></div>
   <div class="kpi-grid">
     <div class="kpi blue"><div class="kpi-label">Projetos e Obras Ativos</div><div class="kpi-value" id="kpi-total">0</div><div class="kpi-sub">cadastrados</div></div>
     <div class="kpi green"><div class="kpi-label">Orçamento Total</div><div class="kpi-value" id="kpi-orc">R$0</div><div class="kpi-sub">soma dos itens</div></div>
@@ -103,7 +106,9 @@
   <div class="page-hdr">
     <div><div class="page-title">Orçamento</div><div class="page-sub">Orçado × Realizado por Obra</div></div>
     <div class="hdr-actions">
-      <button class="btn btn-outline" onclick="exportJSON()">↑ Exportar</button>
+      <button class="btn btn-outline" onclick="exportJSON()">↑ Backup</button>
+      <button class="btn btn-outline" style="color:var(--green);border-color:var(--green)" onclick="exportarOrcamentoExcel()">📊 Exportar Excel</button>
+      <button class="btn btn-outline" onclick="nav('composicoes',this)">🧱 Composições</button>
       <button class="btn btn-outline" onclick="nav('tabelas',null)">📐 SINAPI/SICOR</button>
       <button class="btn btn-outline" onclick="nav('importar',null)" style="color:var(--blue);border-color:var(--blue)">📥 Importar Planilha</button>
     </div>
@@ -114,7 +119,11 @@
   <div id="orcamento-detalhe" style="display:none">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
        <button class="btn btn-outline btn-sm" onclick="voltarOrcLista()">← Voltar às Obras</button>
-       <button class="btn btn-primary btn-sm" onclick="abrirNovoOrc()">＋ Adicionar Item</button>
+       <div style="display:flex;gap:8px;flex-wrap:wrap">
+         <button class="btn btn-outline btn-sm" style="color:var(--green);border-color:var(--green)" onclick="exportarOrcamentoExcelObra()">📊 Exportar Excel</button>
+         <button class="btn btn-outline btn-sm" onclick="openModal('modal-comp-selecionar')" title="Inserir composição própria">🧱 Inserir Composição</button>
+         <button class="btn btn-primary btn-sm" onclick="openModal('modal-orc')">＋ Item manual</button>
+       </div>
     </div>
     <h3 id="orc-detalhe-nome" style="color:var(--navy); font-family:'Syne',sans-serif; margin-bottom: 14px;"></h3>
     <div class="table-wrap"><table>
@@ -174,7 +183,7 @@
 <!-- FINANCEIRO -->
 <div id="page-financeiro" class="page">
   <div class="page-hdr">
-    <div><div class="page-title">Controle Financeiro</div><div class="page-sub">Receitas, despesas e fluxo por R1 e R2</div></div>
+    <div><div class="page-title">Controle Financeiro</div><div class="page-sub">Receitas, despesas e fluxo por Projeto e Obra</div></div>
     <div class="hdr-actions"><button class="btn btn-green" onclick="openModalFin('Receita')">＋ Receita</button><button class="btn btn-outline" style="color:var(--red);border-color:var(--red)" onclick="openModalFin('Despesa')">＋ Despesa</button></div>
   </div>
   <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
@@ -185,8 +194,8 @@
   <!-- Dashboard Financeiro Avançado (Indicadores e % YoY) -->
   <div id="dash-fin-avancado"></div>
 
-  <div class="section"><div class="section-hdr"><div class="section-title">R1 - Projetos</div></div><div class="table-wrap"><table><thead><tr><th>Projeto (R1)</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="tbody-fin-r1"></tbody></table></div></div>
-  <div class="section"><div class="section-hdr"><div class="section-title">R2 - Obras</div></div><div class="table-wrap"><table><thead><tr><th>Obra (R2)</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="tbody-fin-r2"></tbody></table></div></div>
+  <div class="section"><div class="section-hdr"><div class="section-title">Projetos (Elaboração)</div></div><div class="table-wrap"><table><thead><tr><th>Projeto</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="tbody-fin-r1"></tbody></table></div></div>
+  <div class="section"><div class="section-hdr"><div class="section-title">Obras (Execução)</div></div><div class="table-wrap"><table><thead><tr><th>Obra</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="tbody-fin-r2"></tbody></table></div></div>
   <div class="section"><div class="section-hdr"><div class="section-title">Lançamentos</div></div><div class="table-wrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Obra</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th></th></tr></thead><tbody id="tbody-fin"></tbody></table></div></div>
 </div>
 
@@ -209,11 +218,62 @@
 </div>
 
 <!-- IMPORTAR -->
+
+<!-- ── CHECKLIST NBR ──────────────────────────────────────────────── -->
+<div id="page-checklist" class="page">
+  <div class="page-hdr">
+    <div><div class="page-title">Checklist de Qualidade</div><div class="page-sub">Normas NBR — verificação por etapa</div></div>
+    <div class="hdr-actions">
+      <select id="ck-filtro-obra" onchange="renderAtiva()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:13px">
+        <option value="">Todas as obras</option>
+      </select>
+      <button class="btn btn-primary" onclick="novoChecklist()">＋ Novo Checklist</button>
+    </div>
+  </div>
+  <div id="list-checklist"></div>
+</div>
+
+<!-- ── COMPOSIÇÕES PRÓPRIAS ──────────────────────────────────────────── -->
+<div id="page-composicoes" class="page">
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">🧱 Composições Próprias</div>
+      <div class="page-sub">Crie e reutilize suas composições de serviço em qualquer orçamento</div>
+    </div>
+    <div class="hdr-actions">
+      <button class="btn btn-outline" onclick="nav('orcamento',null)">← Orçamento</button>
+      <button class="btn btn-primary" onclick="openModal('modal-composicao')">＋ Nova Composição</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+    <div class="kpi blue"><div class="kpi-label">Composições</div><div class="kpi-value" id="comp-kpi-total">0</div></div>
+    <div class="kpi green"><div class="kpi-label">Insumos cadastrados</div><div class="kpi-value" id="comp-kpi-insumos">0</div></div>
+    <div class="kpi amber"><div class="kpi-label">Usadas em orçamentos</div><div class="kpi-value" id="comp-kpi-uso">0</div></div>
+  </div>
+
+  <!-- Busca -->
+  <div class="sinapi-search-wrap" style="margin-bottom:14px">
+    <span class="sinapi-search-icon">🔍</span>
+    <input id="comp-search" placeholder="Buscar composição por nome, categoria…" oninput="filtrarComposicoes(this.value)">
+  </div>
+
+  <!-- Lista -->
+  <div id="list-composicoes">
+    <div style="background:var(--card);border-radius:var(--radius);padding:40px;text-align:center;box-shadow:var(--shadow)">
+      <div style="font-size:40px">🧱</div>
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--navy);margin-top:12px">Nenhuma composição ainda</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:6px;margin-bottom:16px">Crie composições com seus próprios insumos, coeficientes e preços</div>
+      <button class="btn btn-primary" onclick="openModal('modal-composicao')">＋ Criar primeira composição</button>
+    </div>
+  </div>
+</div>
 <div id="page-importar" class="page">
   <div class="page-hdr"><div><div class="page-title">Importar Orçamento</div><div class="page-sub">Excel, PDF, CSV ou manual — propaga para Orçamento, Cronograma e Medição</div></div></div>
   <div class="table-wrap" style="padding:16px 20px;margin-bottom:18px">
     <div class="form-grid">
-      <div class="fg"><label>Destino (R1/R2)</label><select id="f-imp-obra"></select></div>
+      <div class="fg"><label>Obra / Projeto destino</label><select id="f-imp-obra"></select></div>
       <div class="fg"><label>Fonte</label><input id="f-imp-fonte" placeholder="Ex: Orçamento do cliente…"></div>
       <div class="fg"><label>Gerar Cronograma?</label><select id="f-imp-cron"><option value="sim">✅ Sim</option><option value="nao">❌ Não</option></select></div>
       <div class="fg"><label>Preparar Medição?</label><select id="f-imp-med"><option value="sim">✅ Sim</option><option value="nao">❌ Não</option></select></div>
@@ -268,8 +328,8 @@
 <!-- PROPOSTAS -->
 <div id="page-propostas" class="page">
   <div class="page-hdr">
-    <div><div class="page-title">Propostas Comerciais</div><div class="page-sub">Propostas para R1 e R2</div></div>
-    <div class="hdr-actions"><button class="btn btn-outline" onclick="openPropProjeto()">📐 Proposta R1 (Projeto)</button><button class="btn btn-primary" onclick="openPropObra()">🏗 Proposta R2 (Obra)</button></div>
+    <div><div class="page-title">Propostas Comerciais</div><div class="page-sub">Propostas de Projeto e Obra</div></div>
+    <div class="hdr-actions"><button class="btn btn-outline" onclick="openPropProjeto()">📐 Proposta de Projeto</button><button class="btn btn-primary" onclick="openPropObra()">🏗 Proposta de Obra</button></div>
   </div>
   <div id="list-propostas"></div>
 </div>
@@ -403,10 +463,10 @@
 
 
 <div class="modal-bg" id="modal-obra"><div class="modal">
-  <div class="modal-title">🏗 Novo R1 / R2 (Projeto ou Obra)</div>
+  <div class="modal-title">🏗 Novo Projeto ou Obra</div>
   <div class="form-grid">
     <div class="form-group"><label>Tipo</label><select id="f-obra-tipo">
-      <option value="R1">R1 - Projeto</option><option value="R2" selected>R2 - Obra</option>
+      <option value="projeto">Elaboração de Projeto</option><option value="obra" selected>Execução de Obra</option>
     </select></div>
     <div class="form-group"><label>Nome</label><input id="f-obra-nome" placeholder="Ex: Residencial Guaxupé"></div>
     <div class="form-group"><label>Cliente</label><input id="f-obra-cliente" placeholder="Nome do cliente"></div>
@@ -429,7 +489,6 @@
 <div class="modal-bg" id="modal-orc"><div class="modal">
   <div class="modal-title">💰 Novo Item de Orçamento</div>
   <div class="form-grid">
-    <input type="hidden" id="f-orc-id">
     <div class="form-group full"><label>Obra</label><select id="f-orc-obra"></select></div>
     <div class="form-group full"><label>Item / Serviço</label><input id="f-orc-item" placeholder="Ex: Fundações em concreto"></div>
     <div class="form-group"><label>Código SINAPI (opcional)</label><input id="f-orc-sinapi" placeholder="Ex: 94966"></div>
@@ -438,10 +497,8 @@
     <div class="form-group"><label>Valor Unitário (R$)</label><input id="f-orc-vunit" type="number" step="0.01" placeholder="0,00"></div>
     <div class="form-group"><label>Realizado (R$)</label><input id="f-orc-real" type="number" step="0.01" placeholder="0,00"></div>
   </div>
-  <div id="orc-ia-loading" style="display:none;text-align:center;padding:12px;color:var(--muted)">⏳ IA analisando…</div>
   <div class="modal-actions">
     <button class="btn btn-outline" onclick="closeModal('modal-orc')">Cancelar</button>
-    <button class="btn btn-secondary" id="orc-ia-btn" onclick="gerarOrcamentoComIA()" style="background:rgba(168,85,247,.2);color:#a855f7">🤖 Gerar com IA</button>
     <button class="btn btn-primary" onclick="addOrc()">Salvar</button>
   </div>
 </div></div>
@@ -486,10 +543,8 @@
       <div class="foto-preview-grid" id="foto-preview"></div>
     </div>
   </div>
-  <div id="dia-ia-loading" style="display:none;text-align:center;padding:12px;color:var(--muted)">⏳ IA analisando fotos…</div>
   <div class="modal-actions">
     <button class="btn btn-outline" onclick="closeModal('modal-diario')">Cancelar</button>
-    <button class="btn btn-secondary" id="dia-ia-btn" onclick="gerarDiarioComFoto()" style="background:rgba(168,85,247,.2);color:#a855f7">🤖 IA a partir da foto</button>
     <button class="btn btn-primary" onclick="addDiario()">Salvar</button>
   </div>
 </div></div>
@@ -538,23 +593,9 @@
     <div class="form-group full"><label>Obra</label><select id="f-fin-obra"></select></div>
     <div class="form-group full"><label>Descrição</label><input id="f-fin-desc" placeholder="Ex: Medição nº 1, Compra de cimento…"></div>
     <div class="form-group"><label>Categoria</label><select id="f-fin-cat">
-      <option>Entrada de Projeto</option><option>Medição</option><option>Adiantamento</option>
-      <option>ART</option><option>Plotagem</option><option>Taxas/Impostos</option>
-      <option>Custo Fixo</option><option>Material</option><option>Mão de obra</option>
-      <option>Mão de Obra</option>
-      <option>Material</option>
-      <option>Equipamento</option>
-      <option>Serviço terceirizado</option>
-      <option>RT / ART / RRT</option>
-      <option>Plotagens / Cópias</option>
-      <option>Taxas / Impostos</option>
-      <option>Gestão de Projeto (Entrada)</option>
-      <option>Outros</option>
-    </select></div>
-    <div class="form-group"><label>Status</label><select id="f-fin-status">
-      <option value="pago">✅ Pago / Recebido</option>
-      <option value="pendente">⏳ Pendente / A vencer</option>
-      <option value="agendado">📅 Agendado / Futuro</option>
+      <option>Medição</option><option>Adiantamento</option><option>Material</option>
+      <option>Mão de obra</option><option>Equipamento</option><option>Serviço terceirizado</option>
+      <option>Imposto/taxa</option><option>Outros</option>
     </select></div>
     <div class="form-group"><label>Valor (R$)</label><input id="f-fin-valor" type="number" step="0.01" placeholder="0,00"></div>
     <div class="form-group full"><label>Observações</label><input id="f-fin-obs" placeholder="Nota fiscal, referência…"></div>
@@ -639,7 +680,6 @@
     </button>
   </div>
   <div class="form-grid">
-    <input type="hidden" id="f-pp-id">
     <div class="form-group full"><label>Cliente</label><input id="f-pp-cliente" placeholder="Nome do cliente"></div>
     <div class="form-group full"><label>Empreendimento / Descrição</label><input id="f-pp-empreend" placeholder="Ex: Residência unifamiliar — Guaxupé/MG"></div>
     <div class="form-group"><label>Área (m²)</label><input id="f-pp-area" type="number" placeholder="0"></div>
@@ -690,7 +730,6 @@
 <div class="modal-bg" id="modal-proposta-obra"><div class="modal modal-wide">
   <div class="modal-title">🏗 Proposta de Orçamento de Obra</div>
   <div class="form-grid">
-    <input type="hidden" id="f-po-id">
     <div class="form-group full"><label>Cliente</label><input id="f-po-cliente" placeholder="Nome do cliente"></div>
     <div class="form-group full"><label>Obra / Empreendimento</label><input id="f-po-empreend" placeholder="Ex: Construção de galpão — Pq. Industrial"></div>
     <div class="form-group"><label>Área (m²)</label><input id="f-po-area" type="number" placeholder="0"></div>
@@ -754,6 +793,94 @@
   <div class="modal-actions">
     <button class="btn btn-outline" onclick="closeModal('modal-sinapi-import')">Cancelar</button>
     <button class="btn btn-primary" onclick="importSinapi()">Importar</button>
+  </div>
+</div></div>
+
+
+<!-- Modal Checklist -->
+<div class="modal-bg" id="modal-checklist"><div class="modal">
+  <div class="modal-title">✅ Novo Checklist de Qualidade</div>
+  <div class="form-grid">
+    <div class="form-group full"><label>Obra</label><select id="f-ck-obra"></select></div>
+    <div class="form-group full"><label>Etapa / Fase</label><input id="f-ck-etapa" placeholder="Ex: Fundações, Estrutura, Cobertura…"></div>
+    <div class="form-group"><label>Data de Inspeção</label><input id="f-ck-data" type="date"></div>
+    <div class="form-group"><label>Responsável</label><input id="f-ck-resp" placeholder="Nome do fiscal/engenheiro"></div>
+    <div class="form-group full">
+      <label>Templates NBR prontos</label>
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('ck-template-wrap').style.display='block';renderTemplatesNBR()">📋 Ver templates NBR</button>
+      <div id="ck-template-wrap" style="display:none;margin-top:10px;background:#f8faff;border-radius:10px;padding:12px;max-height:200px;overflow-y:auto">
+        <div id="ck-templates-list"></div>
+      </div>
+    </div>
+    <div class="form-group full">
+      <label>Itens de verificação (um por linha)</label>
+      <textarea id="ck-itens-custom" style="min-height:120px;font-size:12.5px" placeholder="Verificar prumo da alvenaria&#10;Checar espessura das juntas&#10;Confirmar vergas e contravergas…"></textarea>
+    </div>
+    <div class="form-group full"><label>Observações</label><input id="f-ck-obs" placeholder="Notas gerais da inspeção"></div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-outline" onclick="closeModal('modal-checklist')">Cancelar</button>
+    <button class="btn btn-primary" onclick="addChecklist()">Criar Checklist</button>
+  </div>
+</div></div>
+
+
+<!-- Modal Nova Composição -->
+<div class="modal-bg" id="modal-composicao"><div class="modal modal-wide">
+  <div class="modal-title">🧱 Nova Composição de Serviço</div>
+  <div class="form-grid">
+    <div class="form-group full"><label>Nome da Composição</label><input id="f-comp-nome" placeholder="Ex: Fundação em radier c/ lastro de brita 10cm"></div>
+    <div class="form-group"><label>Categoria</label><select id="f-comp-cat">
+      <option value="Fundações">Fundações</option>
+      <option value="Estrutura">Estrutura / Concreto</option>
+      <option value="Alvenaria">Alvenaria</option>
+      <option value="Cobertura">Cobertura</option>
+      <option value="Hidráulico">Instalações Hidráulicas</option>
+      <option value="Elétrico">Instalações Elétricas</option>
+      <option value="Revestimento">Revestimento / Acabamento</option>
+      <option value="Pintura">Pintura</option>
+      <option value="Serviços">Serviços Gerais</option>
+      <option value="Outros">Outros</option>
+    </select></div>
+    <div class="form-group"><label>Unidade da Composição</label><input id="f-comp-un" placeholder="m², m³, m, vb, un…" value="m²"></div>
+    <div class="form-group"><label>Código Próprio (opcional)</label><input id="f-comp-cod" placeholder="Ex: COMP-001"></div>
+    <div class="form-group full"><label>Descrição técnica</label><textarea id="f-comp-desc" placeholder="Descreva os serviços inclusos, especificações técnicas, normas…" style="height:60px"></textarea></div>
+  </div>
+
+  <div style="margin:16px 0 10px;display:flex;justify-content:space-between;align-items:center">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--navy);font-size:14px">Insumos / Serviços da Composição</div>
+    <button class="btn btn-outline btn-sm" onclick="addInsumoComp()">＋ Adicionar insumo</button>
+  </div>
+  <div id="comp-insumos-lista" style="margin-bottom:10px"></div>
+
+  <div style="background:#f0f9ff;border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
+    <span style="font-size:13px;color:var(--muted)">Custo unitário total da composição:</span>
+    <span id="comp-total-label" style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--navy)">R$ 0,00</span>
+  </div>
+
+  <div class="modal-actions">
+    <button class="btn btn-outline" onclick="closeModal('modal-composicao')">Cancelar</button>
+    <button class="btn btn-primary" onclick="salvarComposicao()">💾 Salvar Composição</button>
+  </div>
+</div></div>
+
+<!-- Modal Selecionar Composição para inserir no orçamento -->
+<div class="modal-bg" id="modal-comp-selecionar"><div class="modal">
+  <div class="modal-title">🧱 Inserir Composição no Orçamento</div>
+  <div class="form-grid">
+    <div class="form-group full"><label>Composição</label>
+      <select id="f-csel-comp" onchange="preencherDadosComposicao()">
+        <option value="">Selecione a composição...</option>
+      </select>
+    </div>
+    <div id="f-csel-preview" style="display:none;grid-column:1/-1;background:#f8faff;border-radius:10px;padding:12px;font-size:12.5px;color:var(--navy)"></div>
+    <div class="form-group"><label>Quantidade</label><input id="f-csel-qtd" type="number" step="0.01" placeholder="0" value="1" oninput="calcTotalComposicaoSel()"></div>
+    <div class="form-group"><label>Valor unitário (R$)</label><input id="f-csel-vunit" type="number" step="0.01" readonly style="background:#f8faff;font-weight:700"></div>
+    <div class="form-group"><label>Total</label><input id="f-csel-total" type="number" step="0.01" readonly style="background:#f0fdf4;font-weight:700;color:var(--green)"></div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-outline" onclick="closeModal('modal-comp-selecionar')">Cancelar</button>
+    <button class="btn btn-primary" onclick="inserirComposicaoNoOrcamento()">✅ Inserir no Orçamento</button>
   </div>
 </div></div>
 
@@ -945,37 +1072,6 @@
   <div class="modal-actions">
     <button class="btn btn-outline" onclick="closeModal('modal-assinatura-cliente')">Cancelar</button>
     <button class="btn btn-green" onclick="saveCliSig()">✅ Confirmar Assinatura</button>
-  </div>
-</div></div>
-
-<!-- Modal Configurar IA (Anthropic) -->
-<div class="modal-bg" id="modal-ia-config"><div class="modal" style="max-width:480px">
-  <div class="modal-title">🤖 Configurar IA (Anthropic)</div>
-  <div style="background:#fef3c7;border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:13px;color:#78350f">
-    <strong>⚡ IA Nativa no Browser</strong><br>
-    Sua chave será salva apenas neste dispositivo para garantir sua privacidade.
-  </div>
-  
-  <div style="margin-bottom:16px">
-    <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--navy);font-size:13.5px;margin-bottom:6px">
-      1️⃣ Obtenha sua chave
-    </div>
-    <a href="https://console.anthropic.com/" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;font-size:13px">
-      🔗 Criar Chave em console.anthropic.com
-    </a>
-  </div>
-
-  <div class="form-group full">
-    <label>2️⃣ Cole sua API Key aqui</label>
-    <input type="password" id="set-ia-key" placeholder="sk-ant-api03-..." style="font-family:monospace;font-size:12px">
-    <div style="font-size:11px;color:var(--muted);margin-top:6px">
-      A chave começa com <code>sk-ant-</code>. Nunca compartilhe sua chave.
-    </div>
-  </div>
-
-  <div class="modal-actions">
-    <button class="btn btn-outline" onclick="closeModal('modal-ia-config')">Cancelar</button>
-    <button class="btn btn-primary" onclick="saveIaConfig()">💾 Salvar Chave</button>
   </div>
 </div></div>
 

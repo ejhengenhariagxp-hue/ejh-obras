@@ -85,14 +85,15 @@ export function toggleFab() {
   const m = document.getElementById('fab-menu');
   const b = document.getElementById('fab-btn');
   if (!m) return;
-  const open = m.classList.toggle('open');
-  if (b) { b.classList.toggle('open', open); b.textContent = open ? '✕' : '＋'; }
+  const open = m.style.display === 'flex';
+  m.style.display = open ? 'none' : 'flex';
+  if (b) b.textContent = open ? '＋' : '✕';
 }
 export function closeFab() {
   const m = document.getElementById('fab-menu');
   const b = document.getElementById('fab-btn');
-  if (m) m.classList.remove('open');
-  if (b) { b.classList.remove('open'); b.textContent = '＋'; }
+  if (m) m.style.display = 'none';
+  if (b) b.textContent = '＋';
 }
 
 export function popularSelectsObras(state, ids) {
@@ -138,12 +139,6 @@ export function verificarAvisosObra(o) {
   if (dias < 0)  return { tipo:'vencida', dias: Math.abs(dias), proxima };
   if (dias <= 5) return { tipo:'proxima', dias, proxima };
   return null;
-}
-
-export function obraName(state, id) {
-  if (!state || !Array.isArray(state.obras)) return id || '—';
-  const o = state.obras.find(x => x.id === id);
-  return o ? o.nome : id || '—';
 }
 
 export function showSaveIndicator() {

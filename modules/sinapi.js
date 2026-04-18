@@ -1,8 +1,6 @@
-// modules/sinapi.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras } from '../utils.js';
+﻿// modules/sinapi.js
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge } from '../utils.js';
 
-let currentTabelaSource = 'sinapi';
-let selectedSinapiItem = null;
 
 const SINAPI = [
   // Serviços preliminares
@@ -48,6 +46,8 @@ const SINAPI = [
   {cod:"73861",cat:"Demolição",desc:"Remoção e carga de entulho",un:"m³",preco:28.50},
 ];
 
+const SINAPI_CATS = [...new Set(SINAPI.map(x=>x.cat))];
+
 const SICOR = [
   // Serviços preliminares
   {cod:"S001",cat:"Serviços Preliminares",desc:"Limpeza e preparo do terreno",un:"m²",preco:4.80,fonte:"SICOR-MG"},
@@ -90,19 +90,36 @@ const SICOR = [
   {cod:"S073",cat:"Acabamentos",desc:"Louças e metais sanitários (M.O.)",un:"pt",preco:85.00,fonte:"SICOR-MG"},
 ];
 
+const PRECO_PROJETOS = [
+  {id:"ARQ", nome:"Projeto Arquitetônico",           un:"m²",  preco:35.00,  desc:"Planta baixa, cortes, fachadas, perspectiva, memoriais e aprovação"},
+  {id:"EST", nome:"Projeto Estrutural",               un:"m²",  preco:28.00,  desc:"Cálculo estrutural, detalhamento de armaduras, formas e locação — com ART"},
+  {id:"HID", nome:"Projeto Hidrossanitário",          un:"m²",  preco:12.00,  desc:"Projeto de água fria/quente, esgoto sanitário e águas pluviais — com ART"},
+  {id:"ELE", nome:"Projeto Elétrico",                un:"m²",  preco:14.00,  desc:"Instalações elétricas residenciais/comerciais e quadro de cargas — com ART"},
+  {id:"PREV",nome:"PPCI / Incêndio",                 un:"m²",  preco:8.00,   desc:"Projeto de prevenção e combate a incêndio conforme normas do CBMMG"},
+  {id:"AR2", nome:"Regularização / Prefeitura",      un:"vb",  preco:1800.00,desc:"Processo administrativo de regularização e obtenção de Habite-se"},
+  {id:"TOP", nome:"Topografia",                      un:"vb",  preco:2200.00,desc:"Levantamento planialtimétrico georreferenciado com locação de divisas"},
+  {id:"SOLO",nome:"Sondagem SPT",                    un:"furo",preco:1800.00,desc:"Sondagem a percussão com relatório de resistência (NSTP)"},
+  {id:"GER", nome:"Gerenciamento de Obra",            un:"mês", preco:1200.00,desc:"Controle de custos, cronograma, compras e gestão de contratos"},
+  {id:"ACO", nome:"Acompanhamento Técnico",           un:"mês", preco:900.00, desc:"Visitas técnicas periódicas para verificação de conformidade do projeto"},
+  {id:"VIS", nome:"Vistoria Técnica",                 un:"vb",  preco:800.00, desc:"Vistoria pontual com emissão de relatório técnico fotográfico"},
+  {id:"LAU", nome:"Laudo de Engenharia",              un:"vb",  preco:1400.00,desc:"Laudo pericial ou de patologia com diagnóstico e recomendações"},
+  {id:"ASB", nome:"Consultoria Técnica",              un:"hr",  preco:280.00, desc:"Assessoria técnica especializada por hora consultada"},
+];
+
 export function renderTabelas(state){
   const src = currentTabelaSource;
   const data = src==='sinapi' ? SINAPI : SICOR;
   const cats = ['Todos',...new Set(data.map(x=>x.cat))];
   const filter = state.sinapiCatFilter||'Todos';
 
-  safeInner('sinapi-filter', cats.map(c=>`
-    <div class="sinapi-tag ${filter===c?'active':''}" onclick="setSinapiCat('${c}')">${c}</div>`).join(''));
+  document.getElementById('sinapi-filter').innerHTML = cats.map(c=>`
+    <div class="sinapi-tag ${filter===c?'active':''}" onclick="setSinapiCat('${c}')">${c}</div>`).join('');
 
+  // Removemos a filtragem por texto aqui, deixando apenas a filtragem por categoria
   let items=data;
   if(filter!=='Todos') items=items.filter(x=>x.cat===filter);
 
-  safeInner('sinapi-list', items.map(s=>`
+  document.getElementById('sinapi-list').innerHTML = items.map(s=>`
     <div class="${src==='sinapi'?'sinapi-item':'sicor-item'}" data-txt="${(s.cod+' '+s.desc).toLowerCase()}">
       <span class="${src==='sinapi'?'sinapi-code':'sicor-code'}">${s.cod}</span>
       <span class="${src==='sinapi'?'sinapi-desc':'sicor-desc'}">${s.desc}
@@ -112,17 +129,36 @@ export function renderTabelas(state){
       ${src==='sicor'?`<span class="sicor-region">MG</span>`:''}
       <span class="${src==='sinapi'?'sinapi-price':'sicor-price'}">${fmt(s.preco)}</span>
       <button class="btn btn-primary btn-xs sinapi-add" onclick="selectTabelaItem('${s.cod}','${src}')">+ Usar</button>
-    </div>`).join('')||'<div style="padding:20px;color:var(--muted)">Nenhum item encontrado.</div>');
+    </div>`).join('')||'<div style="padding:20px;color:var(--muted)">Nenhum item encontrado.</div>';
   
-  const searchInput = document.getElementById('sinapi-search');
-  if(searchInput) filterSinapi(state, searchInput.value||'');
+  // Aplica o filtro atual de busca
+  filterSinapi(document.getElementById('sinapi-search').value||'');
+}
+
+export function renderSinapi(state){
+  // filter tags
+  const cats=['Todos',...SINAPI_CATS];
+  document.getElementById('sinapi-filter').innerHTML=cats.map(c=>`
+    <div class="sinapi-tag ${state.sinapiCatFilter===c?'active':''}" onclick="setSinapiCat('${c}')">${c}</div>`).join('');
+
+  const q=(document.getElementById('sinapi-search').value||'').toLowerCase();
+  let items=SINAPI;
+  if(state.sinapiCatFilter!=='Todos') items=items.filter(x=>x.cat===state.sinapiCatFilter);
+  if(q) items=items.filter(x=>x.cod.includes(q)||x.desc.toLowerCase().includes(q)||x.un.includes(q));
+
+  document.getElementById('sinapi-list').innerHTML=items.map(s=>`
+    <div class="sinapi-item">
+      <span class="sinapi-code">${s.cod}</span>
+      <span class="sinapi-desc">${s.desc}<br><span style="font-size:11px;color:var(--muted)">${s.cat}</span></span>
+      <span class="sinapi-un">${s.un}</span>
+      <span class="sinapi-price">${fmt(s.preco)}</span>
+      <button class="btn btn-primary btn-xs sinapi-add" onclick="selectSinapi('${s.cod}')">+ Usar</button>
+    </div>`).join('')||'<div style="padding:20px;color:var(--muted)">Nenhum item encontrado.</div>';
 }
 
 export function filterSinapi(state, q){
   q = q.toLowerCase();
-  const list = document.getElementById('sinapi-list');
-  if(!list) return;
-  const els = list.children;
+  const els = document.getElementById('sinapi-list').children;
   for(let i=0; i<els.length; i++){
     const el = els[i];
     if(!el.dataset.txt) continue;
@@ -131,26 +167,24 @@ export function filterSinapi(state, q){
   }
 }
 
-export function setSinapiCat(state, c){ 
-  state.sinapiCatFilter=c; 
-  renderTabelas(state); 
-}
+export function setSinapiCat(state, c){ state.sinapiCatFilter=c; renderTabelas(); }
 
 export function setTabelaSrc(state, src){
   currentTabelaSource=src;
   state.tabelaSource=src;
   const tSin=document.getElementById('tab-sinapi'); if(tSin) tSin.classList.toggle('active',src==='sinapi');
   const tSic=document.getElementById('tab-sicor'); if(tSic) tSic.classList.toggle('active',src==='sicor');
-  renderTabelas(state);
+  renderTabelas();
 }
+
+export function selectSinapi(state, cod){ selectTabelaItem(cod,'sinapi'); }
 
 export function selectTabelaItem(state, cod, src){
   const data = src==='sinapi' ? SINAPI : SICOR;
   const s = data.find(x=>x.cod===cod); if(!s) return;
   selectedSinapiItem={...s};
-  popularSelectsObras(state);
-  const field = document.getElementById('f-simp-item');
-  if(field) field.value=`[${s.cod}] ${s.desc} — ${s.un} — ${fmt(s.preco)}`;
+  populateSelects();
+  document.getElementById('f-simp-item').value=`[${s.cod}] ${s.desc} — ${s.un} — ${fmt(s.preco)}`;
   openModal('modal-sinapi-import');
   showToast('✅ Item selecionado — defina a quantidade e a obra');
 }
@@ -158,23 +192,17 @@ export function selectTabelaItem(state, cod, src){
 export function importSinapi(state){
   if(!selectedSinapiItem){showToast('⚠️ Selecione um item SINAPI');return}
   const s=selectedSinapiItem;
-  state.orc.push({
-    id:'ORC-'+pad(state.counters.orc),
-    obraId:document.getElementById('f-simp-obra')?.value,
-    item:s.desc,
-    sinapi:s.cod,
-    un:s.un,
-    qtd:+document.getElementById('f-simp-qtd')?.value||1,
+  state.orc.push({id:'ORC-'+pad(state.counters.orc),
+    obraId:document.getElementById('f-simp-obra').value,
+    item:s.desc,sinapi:s.cod,un:s.un,
+    qtd:+document.getElementById('f-simp-qtd').value||1,
     vunit:s.preco,
-    real:+document.getElementById('f-simp-real')?.value||0,
+    real:+document.getElementById('f-simp-real').value||0,
   });
   state.counters.orc++;
-  closeModal('modal-sinapi-import');
-  selectedSinapiItem=null;
-  showToast('✅ Item importado para orçamento!');
-  return true;
+  closeModal('modal-sinapi-import');selectedSinapiItem=null;
+  return true;showToast('✅ Item SINAPI importado para orçamento!');
 }
-
 
 
 

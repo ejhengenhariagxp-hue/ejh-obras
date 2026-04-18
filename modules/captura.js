@@ -1,6 +1,5 @@
 // modules/captura.js
 import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge } from '../utils.js';
-import { iaCall } from '../services.js';
 
 var capResultadoAtual = null;
 var capArquivos = [];
@@ -30,63 +29,38 @@ export function renderCaptura(state){
   renderHistoricoCaptura(state);
 }
 
-async function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    var reader = new FileReader();
-    reader.onload = () => resolve({
-      type: file.type.includes('pdf') ? 'document' : 'image',
-      media_type: file.type,
-      data: reader.result.split(',')[1]
-    });
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
 export async function capProcessarIA(state){
-  var texto = document.getElementById('cap-texto')?.value?.trim();
-  var obraId = document.getElementById('cap-obra-sel')?.value;
-  if(!texto && capArquivos.length === 0){ showToast('⚠️ Cole texto ou anexe arquivos primeiro'); return; }
-  
-  var btn = document.getElementById('cap-btn-processar');
-  var loading = document.getElementById('cap-loading');
-  if(btn) btn.disabled = true;
-  if(loading) loading.style.display = 'flex';
-  document.getElementById('cap-resultado').style.display = 'none';
-
-  try {
-    var obra = state.obras.find(function(o){ return o.id === obraId; });
-    var obraCtx = obra ? ('Obra: '+obra.nome+' | Cliente: '+obra.cliente+' | Área: '+obra.area+'m²') : 'Obra não selecionada';
-    
-    var system = 'Você é assistente especializado em gestão de obras no Brasil.\n' +
-      'Analise o texto/imagem/PDF e identifique registros para o sistema.\n' +
-      'Classifique em: diario, pendencia, orcamento, financeiro, medicao, alteracao, material, geral.\n' +
-      'RESPONDA APENAS com JSON válido:\n' +
-      '{"resumo":"resumo curto","registros":[{"tipo":"tipo","titulo":"titulo","descricao":"desc","data":"YYYY-MM-DD ou null","valor":numero_ou_null}],"sugestoes":["sugestao"]}';
-
-    var userContent = [{ type: 'text', text: 'Contexto: ' + obraCtx + '\n\nConteúdo: ' + (texto || '(Anexo)') }];
-    
-    // Processar arquivos em paralelo
-    var filesData = await Promise.all(capArquivos.map(fileToBase64));
-    filesData.forEach(function(f) {
-      if (f.type === 'image') {
-        userContent.push({ type: 'image', source: { type: 'base64', media_type: f.media_type, data: f.data } });
-      } else {
-        userContent.push({ type: 'document', source: { type: 'base64', media_type: f.media_type, data: f.data } });
-      }
+  var texto=document.getElementById('cap-texto')?.value?.trim();
+  var obraId=document.getElementById('cap-obra-sel')?.value;
+  if(!texto){showToast('⚠️ Cole algum texto primeiro');return;}
+  var btn=document.getElementById('cap-btn-processar');
+  var loading=document.getElementById('cap-loading');
+  if(btn)btn.disabled=true;
+  if(loading)loading.style.display='flex';
+  document.getElementById('cap-resultado').style.display='none';
+  try{
+    var obra=state.obras.find(function(o){return o.id===obraId;});
+    var obraCtx=obra?('Obra: '+obra.nome+' | Cliente: '+obra.cliente+' | Área: '+obra.area+'m²'):'Obra não selecionada';
+    var system='Você é assistente especializado em gestão de obras de construção civil no Brasil.\n'+
+      'Analise o texto e identifique registros para o sistema de gestão.\n'+
+      'Classifique em: diario, pendencia, orcamento, financeiro, medicao, alteracao, material, geral.\n'+
+      'RESPONDA APENAS com JSON válido:\n'+
+      '{"resumo":"frase resumo","registros":[{"tipo":"tipo","titulo":"titulo","descricao":"desc","data":"YYYY-MM-DD ou null","valor":numero_ou_null,"etapa":"etapa ou null","urgente":false,"confirmar":true}],"sugestoes":["sugestao"]}';
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:system,
+        messages:[{role:'user',content:'Obra: '+obraCtx+'\n\nTexto:\n'+texto}]})
     });
-
-    var raw = await iaCall(system, userContent, 2500);
-    var resultado = JSON.parse(raw.replace(/```json|```/g, '').trim());
-    
-    capResultadoAtual = { ...resultado, obraId: obraId, textoOriginal: texto, ts: Date.now() };
-    capRenderResultado(state, resultado, obraId);
-  } catch(e) {
-    showToast('❌ Erro: ' + e.message);
-    console.error('Captura erro:', e);
-  } finally {
-    if(btn) btn.disabled = false;
-    if(loading) loading.style.display = 'none';
+    var data=await resp.json();
+    var raw=data.content?.map(function(c){return c.text||'';}).join('').replace(/```json|```/g,'').trim();
+    var resultado=JSON.parse(raw);
+    capResultadoAtual={...resultado,obraId:obraId,textoOriginal:texto,ts:Date.now()};
+    capRenderResultado(resultado,obraId);
+  }catch(e){
+    showToast('❌ Erro: '+e.message);console.error('Captura erro:',e);
+  }finally{
+    if(btn)btn.disabled=false;
+    if(loading)loading.style.display='none';
   }
 }
 
@@ -144,17 +118,7 @@ export function capConfirmarTodos(state){
     if(!state.counters.fin)state.counters.fin=1;
     if(reg.tipo==='financeiro'){
       if(!Array.isArray(state.fin))state.fin=[];
-      state.fin.push({
-        id: 'FIN-'+pad(state.counters.fin),
-        obraId: obraId,
-        tipo: valor>0?'Receita':'Despesa',
-        data: data,
-        desc: titulo,
-        cat: 'Outros',
-        valor: Math.abs(valor),
-        obs: desc,
-        status: 'Pago' // Compatibilidade com novo campo
-      });
+      state.fin.push({id:'FIN-'+pad(state.counters.fin),obraId:obraId,tipo:valor>0?'Receita':'Despesa',data:data,desc:titulo,cat:'Outros',valor:Math.abs(valor),obs:desc});
       state.counters.fin++;
     }else if(reg.tipo==='orcamento'||reg.tipo==='material'){
       if(!Array.isArray(state.orc))state.orc=[];
