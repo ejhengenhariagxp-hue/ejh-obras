@@ -8,7 +8,7 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
          fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA } from './services.js';
 import { addObra, delObra, renderObras, registrarMedicaoRapida } from './modules/obras.js';
-import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe } from './modules/orcamento.js';
+import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js';
 import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, renderDiario } from './modules/diario.js';
 import { addFin, delFin, openModalFin, renderFinanceiro } from './modules/financeiro.js';

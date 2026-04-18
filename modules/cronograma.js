@@ -1,6 +1,8 @@
 // modules/cronograma.js
 import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName } from '../utils.js';
 
+let cronView = 'tabela';
+
 export function addCron(state){
   const etapa=document.getElementById('f-cron-etapa').value.trim();
   if(!etapa){

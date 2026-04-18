@@ -85,15 +85,14 @@ export function toggleFab() {
   const m = document.getElementById('fab-menu');
   const b = document.getElementById('fab-btn');
   if (!m) return;
-  const open = m.style.display === 'flex';
-  m.style.display = open ? 'none' : 'flex';
-  if (b) b.textContent = open ? '＋' : '✕';
+  const open = m.classList.toggle('open');
+  if (b) { b.classList.toggle('open', open); b.textContent = open ? '✕' : '＋'; }
 }
 export function closeFab() {
   const m = document.getElementById('fab-menu');
   const b = document.getElementById('fab-btn');
-  if (m) m.style.display = 'none';
-  if (b) b.textContent = '＋';
+  if (m) m.classList.remove('open');
+  if (b) { b.classList.remove('open'); b.textContent = '＋'; }
 }
 
 export function popularSelectsObras(state, ids) {

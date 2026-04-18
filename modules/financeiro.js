@@ -3,6 +3,8 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, 
 
 let _finLimit = 20;
 
+let _finLimit = 20;
+
 export function addFin(state){
   const desc=document.getElementById('f-fin-desc').value.trim();
   const valor=+document.getElementById('f-fin-valor').value||0;

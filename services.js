@@ -12,6 +12,7 @@ const FB_CONFIG = {
 const STORAGE_KEY = 'ejh_obras_v4';
 const PROPS_BAK   = 'ejh_propostas_bak';
 const IA_MODEL    = 'claude-sonnet-4-20250514';
+const IA_KEY_STORAGE = 'ejh_anthropic_key';
 
 export let fbUser = null;
 export let fbConfigured = false;
@@ -142,6 +143,22 @@ export async function iaCall(system, userContent, maxTokens=1500) {
   }
   const d = await r.json();
   return d.content?.map(c => c.text || '').join('') || '';
+}
+
+// Helper: converte File (foto/PDF) em bloco multimodal base64 da Anthropic.
+export async function fileToIaBlock(file) {
+  const b64 = await new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => res(String(fr.result).split(',')[1] || '');
+    fr.onerror = () => rej(new Error('Falha lendo ' + file.name));
+    fr.readAsDataURL(file);
+  });
+  const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+  if (isPdf) {
+    return { type:'document', source:{ type:'base64', media_type:'application/pdf', data: b64 } };
+  }
+  const mt = file.type && file.type.startsWith('image/') ? file.type : 'image/jpeg';
+  return { type:'image', source:{ type:'base64', media_type: mt, data: b64 } };
 }
 
 export async function gerarOrcamentoIA(descricao) {
