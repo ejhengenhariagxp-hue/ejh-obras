@@ -12,10 +12,7 @@ const FB_CONFIG = {
 const STORAGE_KEY = 'ejh_obras_v4';
 const PROPS_BAK   = 'ejh_propostas_bak';
 const IA_MODEL    = 'claude-sonnet-4-20250514';
-
-// URL do proxy Cloudflare Worker (ver worker/README.md).
-// Se não configurado, a IA mostra mensagem de erro clara.
-const IA_PROXY_URL = 'https://ejh-obras-ia.ejhengenhariagxp.workers.dev';
+const IA_KEY_STORAGE = 'ejh_anthropic_key';
 
 export let fbUser = null;
 export let fbConfigured = false;
@@ -108,26 +105,60 @@ export async function fbLoadData(cur) {
   } catch(e) { console.warn('fbLoad:', e.message); return cur; }
 }
 
-// ── Anthropic IA (via Cloudflare Worker proxy) ───────────────────────
-// `user` pode ser string OU array multimodal (texto + imagens + PDFs).
-// Exemplo multimodal:
+// ── Anthropic IA (chamada direta do browser) ─────────────────────────
+// A chave é armazenada em localStorage (colada pelo usuário no 1º uso).
+// Usa o header `anthropic-dangerous-direct-browser-access` — oficial da
+// Anthropic para ambientes trusted (app de uso interno, 1 usuário).
+//
+// `user` pode ser string OU array multimodal (texto + imagens + PDFs):
 //   [{type:'text', text:'analise'},
 //    {type:'image', source:{type:'base64', media_type:'image/jpeg', data:'...'}},
 //    {type:'document', source:{type:'base64', media_type:'application/pdf', data:'...'}}]
+
+export function getIaKey() {
+  return localStorage.getItem(IA_KEY_STORAGE) || '';
+}
+export function setIaKey(k) {
+  if (k) localStorage.setItem(IA_KEY_STORAGE, k.trim());
+  else   localStorage.removeItem(IA_KEY_STORAGE);
+}
+export function hasIaKey() { return !!getIaKey(); }
+
+function ensureIaKey() {
+  let k = getIaKey();
+  if (k) return k;
+  k = prompt(
+    'Cole sua chave da Anthropic (sk-ant-...).\n' +
+    'Pegue em https://console.anthropic.com/ → API Keys.\n' +
+    'Fica salva só no seu navegador.'
+  );
+  if (!k || !k.trim()) throw new Error('Chave Anthropic obrigatória.');
+  setIaKey(k);
+  return getIaKey();
+}
+
 export async function iaCall(system, user, maxTokens=1500) {
-  if (!IA_PROXY_URL || IA_PROXY_URL.includes('SEU-USUARIO')) {
-    throw new Error('IA não configurada. Veja worker/README.md para deploy do proxy.');
-  }
+  const key = ensureIaKey();
   const content = typeof user === 'string' ? user : user;
-  const r = await fetch(IA_PROXY_URL, {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
     body: JSON.stringify({
       model: IA_MODEL, max_tokens: maxTokens,
       system, messages: [{ role:'user', content }]
     })
   });
-  if (!r.ok) { const e=await r.json().catch(()=>({})); throw new Error(e.error?.message||e.error||'IA error '+r.status); }
+  if (!r.ok) {
+    const e = await r.json().catch(()=>({}));
+    const msg = e.error?.message || ('IA error ' + r.status);
+    if (r.status === 401) { setIaKey(''); throw new Error('Chave Anthropic inválida. Tente de novo.'); }
+    throw new Error(msg);
+  }
   const d = await r.json();
   return d.content?.map(c=>c.text||'').join('') || '';
 }

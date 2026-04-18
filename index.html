@@ -37,11 +37,13 @@
     <div id="user-initials" style="width:28px;height:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0"></div>
     <div class="user-name" id="user-name"></div>
     <span style="font-size:14px" title="Sincronizado na nuvem">☁✓</span>
+    <button class="user-btn" onclick="iaTrocarChave()" title="Configurar chave Anthropic">🤖</button>
     <button class="user-btn" onclick="fbLogout()" title="Sair">↩</button>
   </div>
   <div class="user-bar" id="login-bar">
     <span class="sync-dot" id="sync-dot"></span>
     <span style="font-size:11px;color:rgba(255,255,255,.45);flex:1">Dados locais</span>
+    <button class="user-btn" onclick="iaTrocarChave()" title="Configurar chave Anthropic" style="background:rgba(168,85,247,.35);color:#fff">🤖</button>
     <button class="user-btn" onclick="abrirLogin()" style="background:rgba(37,99,235,.35);color:#fff">☁ Login</button>
   </div>
   <div class="nav">

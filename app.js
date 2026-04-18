@@ -6,7 +6,8 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
          popularSelectsObras, modalidadeIcon, verificarAvisosObra,
          toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js';
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
-         fbSaveData, fbLoadData, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA } from './services.js';
+         fbSaveData, fbLoadData, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA,
+         getIaKey, setIaKey, hasIaKey } from './services.js';
 import { addObra, delObra, renderObras, registrarMedicaoRapida } from './modules/obras.js';
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe } from './modules/orcamento.js';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js';
@@ -368,6 +369,20 @@ window.addEventListener('DOMContentLoaded', () => {
   G.capDescartarResultado = () => capDescartarResultado(state);
   G.capProcessarArquivo = (input) => capProcessarArquivo(state, input);
   G.capToggleCard = (i, checked) => capToggleCard(state, i, checked);
+  // IA: trocar/remover chave Anthropic
+  G.iaTrocarChave = () => {
+    const atual = getIaKey();
+    const nova = prompt(
+      'Chave Anthropic (sk-ant-...). Deixe em branco pra remover.\n' +
+      'Pegue em https://console.anthropic.com/ → API Keys.',
+      atual ? atual.slice(0, 12) + '…' : ''
+    );
+    if (nova === null) return;
+    if (nova.startsWith('sk-ant-')) { setIaKey(nova); showToast('✅ Chave salva'); }
+    else if (nova === '') { setIaKey(''); showToast('🗑 Chave removida'); }
+    else showToast('⚠️ Chave inválida (deve começar com sk-ant-)');
+  };
+  G.hasIaKey = hasIaKey;
 
   // Firebase
   fbInit(user => {
