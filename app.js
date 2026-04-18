@@ -15,7 +15,7 @@ import { addFin, delFin, openModalFin, renderFinanceiro } from './modules/financ
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes } from './modules/medicoes.js';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita } from './modules/empreita.js';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
-         saveProposta, delProposta, printProposta, compartilharWhatsApp,
+         saveProposta, delProposta, editProposta, printProposta, compartilharWhatsApp,
          colherAssinaturaProposta, importFromOrcamento, addObraItem,
          addProjServico, addProjExtra, toggleModoGlobal, renderPropostas } from './modules/propostas.js';
 import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js';

@@ -44,13 +44,14 @@ export function addEmpPag(state){
 }
 
 export function renderEmpreita(state){
-  const total=state.empreitas.reduce((a,x)=>a+x.valor,0);
-  const pago=state.empreitas.reduce((a,x)=>a+(x.pagamentos||[]).reduce((b,p)=>b+p.valor,0),0);
-  document.getElementById('emp-kpi-total').textContent=state.empreitas.length;
+  const data = state.empreita || [];
+  const total=data.reduce((a,x)=>a+x.valor,0);
+  const pago=data.reduce((a,x)=>a+(x.pagamentos||[]).reduce((b,p)=>b+p.valor,0),0);
+  document.getElementById('emp-kpi-total').textContent=data.length;
   document.getElementById('emp-kpi-valor').textContent=fmt(total);
   document.getElementById('emp-kpi-pago').textContent=fmt(pago);
 
-  document.getElementById('list-empreita').innerHTML=state.empreitas.map(e=>{
+  document.getElementById('list-empreita').innerHTML=data.map(e=>{
     const pago=(e.pagamentos||[]).reduce((a,p)=>a+p.valor,0);
     const saldo=e.valor-pago;
     const pct=e.valor>0?Math.min(100,(pago/e.valor*100)).toFixed(0):0;
@@ -60,7 +61,7 @@ export function renderEmpreita(state){
       <div class="empreita-header">
         <div>
           <div class="empreita-title">${e.nome} <span style="font-weight:400;opacity:.8">— ${e.tipo}</span></div>
-          <div style="font-size:12px;opacity:.7;margin-top:2px">📍 ${obraName(e.obraId)}${e.tel?' • 📞 '+e.tel:''}</div>
+          <div style="font-size:12px;opacity:.7;margin-top:2px">📍 ${obraName(state, e.obraId)}${e.tel?' • 📞 '+e.tel:''}</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
           <span class="empreita-badge">${e.status}</span>
