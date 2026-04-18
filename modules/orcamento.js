@@ -3,6 +3,38 @@
 // ══════════════════════════════════════════════════════════════════════
 
 import { fmt, fmtD, pad, safeInner, showToast, openModal, closeModal } from '../utils.js';
+import { iaCall } from '../services.js';
+
+export async function gerarOrcamentoComIA(state) {
+  const item = document.getElementById('f-orc-item')?.value?.trim();
+  if (!item) { showToast('⚠️ Descreva o item/serviço'); return; }
+  const btn = document.getElementById('orc-ia-btn');
+  const loading = document.getElementById('orc-ia-loading');
+  if (btn) btn.disabled = true;
+  if (loading) loading.style.display = 'block';
+  try {
+    const system = 'Você é orçamentista experiente no Brasil (MG). Analise a descrição do item e preencha:\n' +
+      '- SINAPI: código SINAPI-MG mais relevante (se aplicável)\n' +
+      '- un: unidade (m³, m², kg, vb, h, un…)\n' +
+      '- qtd: quantidade estimada (baseado na obra)\n' +
+      '- vunit: valor unitário em R$ (tabela SINAPI MG atual)\n' +
+      'RESPONDA APENAS JSON: {"sinapi":"","un":"","qtd":0,"vunit":0}';
+    const obra = state?.obras?.find(o => o.id === document.getElementById('f-orc-obra')?.value);
+    const ctx = obra ? `Obra: ${obra.nome} | Área: ${obra.area}m² | Tipo: ${obra.modalidade}` : '';
+    const resp = await iaCall(system, `${ctx}\n\nItem: ${item}`, 500);
+    const data = JSON.parse(resp.replace(/```json|```/g, '').trim());
+    if (data.sinapi) document.getElementById('f-orc-sinapi').value = data.sinapi;
+    if (data.un) document.getElementById('f-orc-un').value = data.un;
+    if (data.qtd) document.getElementById('f-orc-qtd').value = data.qtd;
+    if (data.vunit) document.getElementById('f-orc-vunit').value = data.vunit;
+    showToast('✅ Preenchido pela IA!');
+  } catch (e) {
+    showToast('❌ Erro: ' + e.message);
+  } finally {
+    if (btn) btn.disabled = false;
+    if (loading) loading.style.display = 'none';
+  }
+}
 
 export function addOrc(state) {
   const obraId = document.getElementById('f-orc-obra')?.value;

@@ -9,9 +9,9 @@ import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
          fbSaveData, fbLoadData, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA,
          getIaKey, setIaKey, hasIaKey } from './services.js';
 import { addObra, delObra, renderObras, registrarMedicaoRapida } from './modules/obras.js';
-import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe } from './modules/orcamento.js';
+import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js';
-import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, renderDiario } from './modules/diario.js';
+import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, renderDiario, gerarDiarioComFoto } from './modules/diario.js';
 import { addFin, delFin, openModalFin, renderFinanceiro, renderDashFinAvancado } from './modules/financeiro.js';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes } from './modules/medicoes.js';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita } from './modules/empreita.js';
@@ -302,6 +302,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // Orçamento
   G.addOrc  = () => { if(addOrc(state)) renderAtiva(); };
   G.delOrc  = id => { if(delOrc(state,id)) renderAtiva(); };
+  G.gerarOrcamentoComIA = () => gerarOrcamentoComIA(state);
   G.abrirOrcamentoObra = id => abrirOrcamentoObra(state,id);
   G.voltarOrcLista = () => voltarOrcLista();
   // Cronograma
@@ -317,6 +318,7 @@ window.addEventListener('DOMContentLoaded', () => {
   G.delDiario  = id => { if(delDiario(state,id)) renderAtiva(); };
   G.handleFotos = inp => handleFotos(state, inp);
   G.removePendingFoto = i => { removePendingFoto(state, i); };
+  G.gerarDiarioComFoto = () => gerarDiarioComFoto(state);
   // Financeiro
   G.openModalFin = tipo => openModalFin(state, tipo);
   G.addFin = () => { if(addFin(state)) renderAtiva(); };

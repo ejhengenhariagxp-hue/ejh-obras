@@ -436,8 +436,10 @@
     <div class="form-group"><label>Valor Unitário (R$)</label><input id="f-orc-vunit" type="number" step="0.01" placeholder="0,00"></div>
     <div class="form-group"><label>Realizado (R$)</label><input id="f-orc-real" type="number" step="0.01" placeholder="0,00"></div>
   </div>
+  <div id="orc-ia-loading" style="display:none;text-align:center;padding:12px;color:var(--muted)">⏳ IA analisando…</div>
   <div class="modal-actions">
     <button class="btn btn-outline" onclick="closeModal('modal-orc')">Cancelar</button>
+    <button class="btn btn-secondary" id="orc-ia-btn" onclick="gerarOrcamentoComIA()" style="background:rgba(168,85,247,.2);color:#a855f7">🤖 Gerar com IA</button>
     <button class="btn btn-primary" onclick="addOrc()">Salvar</button>
   </div>
 </div></div>
@@ -482,8 +484,10 @@
       <div class="foto-preview-grid" id="foto-preview"></div>
     </div>
   </div>
+  <div id="dia-ia-loading" style="display:none;text-align:center;padding:12px;color:var(--muted)">⏳ IA analisando fotos…</div>
   <div class="modal-actions">
     <button class="btn btn-outline" onclick="closeModal('modal-diario')">Cancelar</button>
+    <button class="btn btn-secondary" id="dia-ia-btn" onclick="gerarDiarioComFoto()" style="background:rgba(168,85,247,.2);color:#a855f7">🤖 IA a partir da foto</button>
     <button class="btn btn-primary" onclick="addDiario()">Salvar</button>
   </div>
 </div></div>
