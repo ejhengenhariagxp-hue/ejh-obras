@@ -148,3 +148,8 @@ export function showSaveIndicator() {
   el.textContent = '💾 Salvo';
   setTimeout(() => { el.style.opacity = '0.4'; el.textContent = ''; }, 2000);
 }
+
+export function obraName(state, id) {
+  const o = state?.obras?.find(x => x.id === id);
+  return o ? o.nome : (id || '—');
+}

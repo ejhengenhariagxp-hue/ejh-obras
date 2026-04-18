@@ -313,16 +313,16 @@ window.addEventListener('DOMContentLoaded', () => {
   G.delCron  = id => { if(delCron(state,id)) renderAtiva(); };
   G.saveCronEdit = () => { if(saveCronEdit(state)) renderAtiva(); };
   G.openCronEdit = (id) => openCronEdit(state,id);
-  G.setCronView  = v => setCronView(v);
+  G.setCronView  = v => setCronView(state, v);
   G.renderGantt  = () => renderGantt(state);
   // Diário
   G.openModalDiario = () => openModalDiario(state);
   G.addDiario  = () => { if(addDiario(state)) renderAtiva(); };
   G.delDiario  = id => { if(delDiario(state,id)) renderAtiva(); };
-  G.handleFotos = inp => handleFotos(inp);
-  G.removePendingFoto = i => removePendingFoto(i);
+  G.handleFotos = inp => handleFotos(state, inp);
+  G.removePendingFoto = i => removePendingFoto(state, i);
   // Financeiro
-  G.openModalFin = tipo => openModalFin(tipo);
+  G.openModalFin = tipo => openModalFin(state, tipo);
   G.addFin = () => { if(addFin(state)) renderAtiva(); };
   G.delFin = id => { if(delFin(state,id)) renderAtiva(); };
   // Medições
@@ -330,7 +330,7 @@ window.addEventListener('DOMContentLoaded', () => {
   G.updateMedVal = (a,b,c) => updateMedVal(state,a,b,c);
   G.loadMedItems = () => loadMedItems(state);
   G.printMedicao = id => printMedicao(state,id);
-  G.colherAssinatura = id => colherAssinatura(id);
+  G.colherAssinatura = id => colherAssinatura(state, id);
   // Empreita
   G.addEmpreita = () => { if(addEmpreita(state)) renderAtiva(); };
   G.delEmpreita = id => { if(delEmpreita(state,id)) renderAtiva(); };
@@ -369,8 +369,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // Captura
   G.capProcessarIA = () => capProcessarIA(state);
   G.capConfirmarTodos = () => { capConfirmarTodos(state); renderAtiva(); };
-  G.capLimpar = () => capLimpar();
-  G.capDescartarResultado = () => capDescartarResultado();
+  G.capLimpar = () => capLimpar(state);
+  G.capDescartarResultado = () => capDescartarResultado(state);
 
   // ── Excel Export ────────────────────────────────────────────────────
   G.exportarOrcamentoExcel      = () => exportarOrcamentoExcel(state);
