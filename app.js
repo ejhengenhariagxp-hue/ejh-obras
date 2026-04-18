@@ -8,15 +8,15 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
          fbSaveData, fbLoadData, saveIaKey, getIaKey, setIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA } from './services.js';
 import { addObra, delObra, renderObras, registrarMedicaoRapida } from './modules/obras.js';
-import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js';
+import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, openEditOrc, gerarOrcamentoComIA } from './modules/orcamento.js';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js';
 import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, renderDiario, gerarDiarioComFoto } from './modules/diario.js';
 import { addFin, delFin, openModalFin, renderFinanceiro } from './modules/financeiro.js';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes } from './modules/medicoes.js';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita } from './modules/empreita.js';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
-         saveProposta, delProposta, printProposta, compartilharWhatsApp,
-         colherAssinaturaProposta, importFromOrcamento, addObraItem,
+         saveProposta, delProposta, editProposta, printProposta, compartilharWhatsApp,
+         colherAssinaturaProposta, saveCliSig, importFromOrcamento, addObraItem,
          addProjServico, addProjExtra, toggleModoGlobal, renderPropostas } from './modules/propostas.js';
 import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js';
 import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js';
