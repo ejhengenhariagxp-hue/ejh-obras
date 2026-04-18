@@ -336,6 +336,9 @@ G.cancelImport = () => {
 G.confirmImport = () => {
   showToast('⚠️ Função em desenvolvimento');
 };
+G.importManual = () => {
+  showToast('⚠️ Função em desenvolvimento');
+};
 
 window.addEventListener('load', () => {
   initFields();
