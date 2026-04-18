@@ -7,25 +7,52 @@ export function addOrc(state) {
   if (!obraId) { showToast('⚠️ Selecione uma obra'); return false; }
   if (!item)   { showToast('⚠️ Informe o item/serviço'); if(document.getElementById('f-orc-item')) document.getElementById('f-orc-item').focus(); return false; }
 
-  state.orc.push({
-    id:     'ORC-'+pad(state.counters.orc),
+  const editId = document.getElementById('f-orc-id')?.value;
+  
+  const data = {
     obraId, item,
     sinapi: document.getElementById('f-orc-sinapi')?.value || '',
     un:     document.getElementById('f-orc-un')?.value || 'vb',
     qtd:   +document.getElementById('f-orc-qtd')?.value || 0,
     vunit: +document.getElementById('f-orc-vunit')?.value || 0,
     real:  +document.getElementById('f-orc-real')?.value || 0,
-  });
-  state.counters.orc++;
-  closeModal('modal-orc');
-  showToast('✅ Item adicionado!');
+  };
+
+  if (editId) {
+    const idx = state.orc.findIndex(x => x.id === editId);
+    if (idx !== -1) {
+      state.orc[idx] = { ...state.orc[idx], ...data };
+      showToast('✅ Item atualizado!');
+    }
+  } else {
+    state.orc.push({
+      id: 'ORC-'+pad(state.counters.orc),
+      ...data
+    });
+    state.counters.orc++;
+    showToast('✅ Item adicionado!');
+  }
   return true;
 }
 
 export function delOrc(state, id) {
   if (!confirm('Excluir este item do orçamento?')) return false;
-  state.orc = state.orc.filter(x => x.id !== id);
   return true;
+}
+
+export function openEditOrc(state, id) {
+  const x = state.orc.find(i => i.id === id);
+  if (!x) return;
+  const elId = document.getElementById('f-orc-id');
+  if(elId) elId.value = x.id;
+  if(document.getElementById('f-orc-obra')) document.getElementById('f-orc-obra').value = x.obraId;
+  if(document.getElementById('f-orc-item')) document.getElementById('f-orc-item').value = x.item;
+  if(document.getElementById('f-orc-sinapi')) document.getElementById('f-orc-sinapi').value = x.sinapi || '';
+  if(document.getElementById('f-orc-un')) document.getElementById('f-orc-un').value = x.un || 'vb';
+  if(document.getElementById('f-orc-qtd')) document.getElementById('f-orc-qtd').value = x.qtd;
+  if(document.getElementById('f-orc-vunit')) document.getElementById('f-orc-vunit').value = x.vunit;
+  if(document.getElementById('f-orc-real')) document.getElementById('f-orc-real').value = x.real || 0;
+  openModal('modal-orc');
 }
 
 export function renderOrc(state) {
@@ -104,7 +131,12 @@ export function renderOrcDetalhe(state, obraId) {
       <td style="color:${dev>10?'var(--red)':dev<-10?'var(--green)':'var(--muted)'}">
         ${dev>0?'+':''}${dev.toFixed(1)}%
       </td>
-      <td><button onclick="delOrc('${x.id}')" class="btn btn-outline btn-xs" style="color:var(--red);border-color:var(--red)">✕</button></td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button onclick="openEditOrc('${x.id}')" class="btn btn-outline btn-xs" style="color:var(--blue);border-color:var(--blue)">✏️</button>
+          <button onclick="delOrc('${x.id}')" class="btn btn-outline btn-xs" style="color:var(--red);border-color:var(--red)">✕</button>
+        </div>
+      </td>
     </tr>`;
   }).join('');
   

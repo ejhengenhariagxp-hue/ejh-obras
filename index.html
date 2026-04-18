@@ -111,7 +111,7 @@
   <div id="orcamento-detalhe" style="display:none">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
        <button class="btn btn-outline btn-sm" onclick="voltarOrcLista()">← Voltar às Obras</button>
-       <button class="btn btn-primary btn-sm" onclick="openModal('modal-orc')">＋ Adicionar Item</button>
+       <button class="btn btn-primary btn-sm" onclick="abrirNovoOrc()">＋ Adicionar Item</button>
     </div>
     <h3 id="orc-detalhe-nome" style="color:var(--navy); font-family:'Syne',sans-serif; margin-bottom: 14px;"></h3>
     <div class="table-wrap"><table>
@@ -426,6 +426,7 @@
 <div class="modal-bg" id="modal-orc"><div class="modal">
   <div class="modal-title">💰 Novo Item de Orçamento</div>
   <div class="form-grid">
+    <input type="hidden" id="f-orc-id">
     <div class="form-group full"><label>Obra</label><select id="f-orc-obra"></select></div>
     <div class="form-group full"><label>Item / Serviço</label><input id="f-orc-item" placeholder="Ex: Fundações em concreto"></div>
     <div class="form-group"><label>Código SINAPI (opcional)</label><input id="f-orc-sinapi" placeholder="Ex: 94966"></div>
@@ -631,6 +632,7 @@
     </button>
   </div>
   <div class="form-grid">
+    <input type="hidden" id="f-pp-id">
     <div class="form-group full"><label>Cliente</label><input id="f-pp-cliente" placeholder="Nome do cliente"></div>
     <div class="form-group full"><label>Empreendimento / Descrição</label><input id="f-pp-empreend" placeholder="Ex: Residência unifamiliar — Guaxupé/MG"></div>
     <div class="form-group"><label>Área (m²)</label><input id="f-pp-area" type="number" placeholder="0"></div>
@@ -681,6 +683,7 @@
 <div class="modal-bg" id="modal-proposta-obra"><div class="modal modal-wide">
   <div class="modal-title">🏗 Proposta de Orçamento de Obra</div>
   <div class="form-grid">
+    <input type="hidden" id="f-po-id">
     <div class="form-group full"><label>Cliente</label><input id="f-po-cliente" placeholder="Nome do cliente"></div>
     <div class="form-group full"><label>Obra / Empreendimento</label><input id="f-po-empreend" placeholder="Ex: Construção de galpão — Pq. Industrial"></div>
     <div class="form-group"><label>Área (m²)</label><input id="f-po-area" type="number" placeholder="0"></div>
