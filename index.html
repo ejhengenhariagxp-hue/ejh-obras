@@ -168,6 +168,7 @@
     <div><div class="page-title">Cronograma</div><div class="page-sub">Etapas, avanço físico e Gráfico de Gantt</div></div>
     <div class="hdr-actions">
       <div class="view-toggle"><button class="view-btn active" id="btn-tabela" onclick="setCronView('tabela')">☰ Tabela</button><button class="view-btn" id="btn-gantt" onclick="setCronView('gantt')">📊 Gantt</button></div>
+      <button class="btn btn-outline" onclick="window.print()" style="color:#16a34a;border-color:#16a34a">🖨 PDF</button>
       <button class="btn btn-primary" onclick="openModal('modal-cron')">＋ Etapa</button>
     </div>
   </div>
@@ -198,7 +199,7 @@
 <div id="page-financeiro" class="page">
   <div class="page-hdr">
     <div><div class="page-title">Controle Financeiro</div><div class="page-sub">Receitas, despesas e fluxo por R1 e R2</div></div>
-    <div class="hdr-actions"><button class="btn btn-green" onclick="openModalFin('Receita')">＋ Receita</button><button class="btn btn-outline" style="color:var(--red);border-color:var(--red)" onclick="openModalFin('Despesa')">＋ Despesa</button></div>
+    <div class="hdr-actions"><button class="btn btn-outline" onclick="window.print()" style="color:#16a34a;border-color:#16a34a">🖨 PDF</button><button class="btn btn-green" onclick="openModalFin('Receita')">＋ Receita</button><button class="btn btn-outline" style="color:var(--red);border-color:var(--red)" onclick="openModalFin('Despesa')">＋ Despesa</button></div>
   </div>
   <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
     <div class="kpi green"><div class="kpi-label">Receitas</div><div class="kpi-value" id="fin-kpi-rec">R$0</div></div>
