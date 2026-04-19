@@ -26,8 +26,12 @@ import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescart
 import { novaComposicao, addInsumoComp, renderInsumosComp, calcTotalComp,
          salvarComposicao, delComposicao, renderComposicoes, filtrarComposicoes,
          popularSelectComposicoes, preencherDadosComposicao, calcTotalComposicaoSel,
-         inserirComposicaoNoOrcamento, editarComposicao } from './modules/composicoes.js';
-import { exportarOrcamentoExcel, exportarOrcamentoExcelObra } from './modules/excel_export.js';
+         inserirComposicaoNoOrcamento, editarComposicao,
+         abrirCopiaSinapi, _setCopiaSrc, _filtrarCopiaSinapi, _copiarDeSinapi } from './modules/composicoes.js';
+import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js';
+import { importExcel, importCSV, importPDF, importManual, applyMapping,
+         _selectSheet, _updateImportItem, _removeImportItem, addImportRow,
+         cancelImport, confirmImport } from './modules/importar.js';
 
 // ── Estado global ────────────────────────────────────────────────────
 const DEFAULT_STATE = {
@@ -349,6 +353,24 @@ G.abrirInserirComposicaoObra = () => {
 // Exportar Excel
 G.exportarOrcamentoExcel = () => exportarOrcamentoExcel(state);
 G.exportarOrcamentoExcelObra = () => exportarOrcamentoExcelObra(state);
+G.exportarMedicoesExcel = () => exportarMedicoesExcel(state);
+// Copiar SINAPI -> Composição
+G.abrirCopiaSinapi = () => abrirCopiaSinapi();
+G._setCopiaSrc = src => _setCopiaSrc(src);
+G._filtrarCopiaSinapi = q => _filtrarCopiaSinapi(q);
+G._copiarDeSinapi = (cod, src) => _copiarDeSinapi(cod, src);
+// Importar Orçamento
+G.importExcel = inp => importExcel(inp);
+G.importCSV = inp => importCSV(inp);
+G.importPDF = inp => importPDF(inp);
+G.importManual = () => importManual();
+G.applyMapping = () => applyMapping();
+G._selectSheet = name => _selectSheet(name);
+G._updateImportItem = (i, f, v) => _updateImportItem(i, f, v);
+G._removeImportItem = i => _removeImportItem(i);
+G.addImportRow = () => addImportRow();
+G.cancelImport = () => cancelImport();
+G.confirmImport = () => { if (confirmImport(state)) renderAtiva(); };
 
 window.addEventListener('load', () => {
   initFields();

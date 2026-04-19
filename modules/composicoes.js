@@ -1,14 +1,118 @@
 // modules/composicoes.js — Composições próprias de serviço
 // ══════════════════════════════════════════════════════════════════════
 import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal } from '../utils.js';
+import { SINAPI, SICOR } from './sinapi.js';
 
 // ── INSUMOS temporários durante edição ────────────────────────────────
 let _insumosAtual = [];
+let _compSinapiOrigem = null;
 
 export function novaComposicao() {
   _insumosAtual = [];
+  _compSinapiOrigem = null;
+  const org = document.getElementById('comp-sinapi-origem');
+  if (org) { org.style.display = 'none'; org.innerHTML = ''; }
   renderInsumosComp();
   openModal('modal-composicao');
+}
+
+export function abrirCopiaSinapi() {
+  const modal = document.getElementById('modal-copiar-sinapi');
+  if (!modal) {
+    const html = `
+      <div class="modal-bg open" id="modal-copiar-sinapi" style="display:flex">
+        <div class="modal modal-wide">
+          <div class="modal-title">📋 Copiar item de tabela de referência</div>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <button type="button" class="btn btn-outline btn-sm" id="tab-copia-sinapi" onclick="_setCopiaSrc('sinapi')">SINAPI</button>
+            <button type="button" class="btn btn-outline btn-sm" id="tab-copia-sicor" onclick="_setCopiaSrc('sicor')">SICOR-MG</button>
+            <input id="copia-sinapi-busca" placeholder="Buscar por código ou descrição..." oninput="_filtrarCopiaSinapi(this.value)" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:7px">
+          </div>
+          <div id="copia-sinapi-lista" style="max-height:420px;overflow:auto;border:1px solid var(--border);border-radius:8px"></div>
+          <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal('modal-copiar-sinapi')">Cancelar</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+  }
+  window._copiaSinapiSrc = 'sinapi';
+  _renderCopiaSinapiLista();
+  openModal('modal-copiar-sinapi');
+}
+
+export function _setCopiaSrc(src) {
+  window._copiaSinapiSrc = src;
+  const sin = document.getElementById('tab-copia-sinapi');
+  const sic = document.getElementById('tab-copia-sicor');
+  if (sin) sin.classList.toggle('btn-primary', src === 'sinapi');
+  if (sic) sic.classList.toggle('btn-primary', src === 'sicor');
+  _renderCopiaSinapiLista();
+}
+
+export function _filtrarCopiaSinapi(q) {
+  _renderCopiaSinapiLista(q);
+}
+
+function _renderCopiaSinapiLista(q) {
+  const src = window._copiaSinapiSrc || 'sinapi';
+  const data = src === 'sinapi' ? SINAPI : SICOR;
+  const ql = (q || '').toLowerCase().trim();
+  const items = ql
+    ? data.filter(x => (x.cod + ' ' + x.desc + ' ' + x.cat).toLowerCase().includes(ql))
+    : data;
+  const el = document.getElementById('copia-sinapi-lista');
+  if (!el) return;
+  if (!items.length) {
+    el.innerHTML = '<div style="padding:20px;color:var(--muted);text-align:center">Nenhum item encontrado.</div>';
+    return;
+  }
+  el.innerHTML = items.map(s => `
+    <div style="display:grid;grid-template-columns:80px 1fr 50px 100px 80px;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);align-items:center;font-size:12.5px">
+      <span style="font-family:monospace;background:#f1f5f9;padding:2px 6px;border-radius:6px;font-size:11px">${s.cod}</span>
+      <span>${s.desc}<br><span style="font-size:11px;color:var(--muted)">${s.cat}</span></span>
+      <span style="text-align:center">${s.un}</span>
+      <span style="text-align:right;font-weight:700">${fmt(s.preco)}</span>
+      <button type="button" class="btn btn-primary btn-xs" onclick="_copiarDeSinapi('${s.cod}','${src}')">Copiar</button>
+    </div>`).join('');
+}
+
+export function _copiarDeSinapi(cod, src) {
+  const data = src === 'sinapi' ? SINAPI : SICOR;
+  const s = data.find(x => x.cod === cod);
+  if (!s) return;
+  _compSinapiOrigem = { ...s, src };
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+  setVal('f-comp-nome', s.desc);
+  setVal('f-comp-cat', _mapCatToComp(s.cat));
+  setVal('f-comp-un', s.un);
+  setVal('f-comp-cod', (src === 'sinapi' ? 'SINAPI-' : 'SICOR-') + s.cod);
+  setVal('f-comp-desc', `Baseado em ${src.toUpperCase()} ${s.cod}. Ajuste os preços conforme a região.`);
+  _insumosAtual = [{
+    desc: s.desc + ' (base ' + src.toUpperCase() + ' ' + s.cod + ')',
+    un: s.un,
+    coef: 1,
+    preco: s.preco,
+  }];
+  renderInsumosComp();
+  const org = document.getElementById('comp-sinapi-origem');
+  if (org) {
+    org.style.display = 'block';
+    org.innerHTML = `<b>Origem:</b> ${src.toUpperCase()} ${s.cod} — ${fmt(s.preco)}/${s.un}<br>
+      <span style="font-size:11px;color:var(--muted)">Ajuste o coeficiente e o preço do insumo abaixo para adaptar à sua região.</span>`;
+  }
+  closeModal('modal-copiar-sinapi');
+  showToast(`✅ Item ${src.toUpperCase()} ${s.cod} copiado como base`);
+}
+
+function _mapCatToComp(cat) {
+  const map = {
+    'Fundações':'Fundações','Estrutura':'Estrutura','Estrutura Metálica':'Estrutura',
+    'Alvenaria':'Alvenaria','Cobertura':'Cobertura','Revestimentos':'Revestimento',
+    'Instalações':'Hidráulico','Acabamentos':'Pintura','Demolição':'Serviços',
+    'Serviços Preliminares':'Serviços',
+  };
+  return map[cat] || 'Outros';
 }
 
 export function addInsumoComp() {

@@ -480,8 +480,30 @@
       <option>Cobertura</option><option>Hidráulico</option><option>Elétrico</option>
       <option>Revestimento</option><option>Pintura</option><option>Serviços</option><option>Outros</option>
     </select></div>
-    <div class="form-group"><label>Unidade</label><input id="f-comp-un" placeholder="m³, m², kg..." value="m³"></div>
+    <div class="form-group"><label>Unidade</label><select id="f-comp-un">
+      <option value="m³">m³ (metro cúbico)</option>
+      <option value="m²">m² (metro quadrado)</option>
+      <option value="m">m (metro linear)</option>
+      <option value="ml">ml (metro linear)</option>
+      <option value="kg">kg (quilograma)</option>
+      <option value="t">t (tonelada)</option>
+      <option value="un">un (unidade)</option>
+      <option value="pç">pç (peça)</option>
+      <option value="cj">cj (conjunto)</option>
+      <option value="h">h (hora)</option>
+      <option value="vb">vb (verba)</option>
+      <option value="l">l (litro)</option>
+      <option value="sc">sc (saco)</option>
+    </select></div>
     <div class="form-group"><label>Código Próprio (opcional)</label><input id="f-comp-cod" placeholder="Ex: EJH-001"></div>
+    <div class="form-group full" style="background:#f0f9ff;border:1px dashed var(--blue);border-radius:8px;padding:10px">
+      <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-weight:700;color:var(--navy)">📋 Copiar de tabela SINAPI (opcional)</span>
+        <button type="button" onclick="abrirCopiaSinapi()" class="btn btn-outline btn-xs" style="color:var(--blue);border-color:var(--blue)">Buscar SINAPI</button>
+      </label>
+      <div style="font-size:11.5px;color:var(--muted)">Use um item SINAPI como base e ajuste os preços conforme sua região.</div>
+      <div id="comp-sinapi-origem" style="display:none;margin-top:8px;padding:8px;background:var(--card);border-radius:6px;font-size:12px"></div>
+    </div>
     <div class="form-group full"><label>Descrição Técnica</label><textarea id="f-comp-desc" placeholder="Detalhes técnicos, especificações..." rows="2"></textarea></div>
     <div class="form-group full">
       <label style="display:flex;justify-content:space-between;align-items:center">
