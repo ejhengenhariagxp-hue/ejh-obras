@@ -55,6 +55,7 @@
     <div class="nav-item" onclick="nav('empreita',this)"><span class="nav-icon">🤝</span><span>Empreita M.O.</span></div>
     <div class="nav-item" onclick="nav('cronograma',this)"><span class="nav-icon">📅</span><span>Cronograma</span></div>
     <div class="nav-item" onclick="nav('diario',this)"><span class="nav-icon">📋</span><span>Diário de Obra</span></div>
+    <div class="nav-item" onclick="nav('captura',this)"><span class="nav-icon">📡</span><span>Comunicação da Obra</span></div>
     <div class="nav-group">Financeiro & Técnico</div>
     <div class="nav-item" onclick="nav('financeiro',this)"><span class="nav-icon">🏦</span><span>Financeiro</span></div>
     <div class="nav-item" onclick="nav('tabelas',this)"><span class="nav-icon">📐</span><span>SINAPI / SICOR-MG</span></div>
@@ -336,8 +337,8 @@
 <div id="page-captura" class="page">
   <div class="page-hdr">
     <div>
-      <div class="page-title">📲 Captura Rápida</div>
-      <div class="page-sub">Cole mensagens do WhatsApp, email ou texto livre — a IA organiza automaticamente</div>
+      <div class="page-title">📡 Central de Comunicação da Obra</div>
+      <div class="page-sub">WhatsApp, e-mail, anotação de campo — a IA classifica e distribui em Diário, Pendências, Orçamento, Financeiro e Cronograma</div>
     </div>
     <div class="hdr-actions">
       <select id="cap-obra-sel" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
@@ -362,12 +363,17 @@
       style="width:100%;padding:14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:10px;color:#fff;font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;box-sizing:border-box"
       oninput="capAnalisarPreview()"></textarea>
 
-    <!-- Upload de foto/PDF -->
+    <!-- Upload de foto/PDF + limpar WhatsApp -->
     <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
       <label style="cursor:pointer;padding:8px 14px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:8px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px">
         📎 Anexar foto/PDF
         <input type="file" id="cap-arquivo" accept="image/*,.pdf" multiple style="display:none" onchange="capProcessarArquivo(this)">
       </label>
+      <button type="button" onclick="capLimparWhatsApp()"
+        style="padding:8px 14px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:8px;font-size:12.5px;font-weight:600;color:#fff;cursor:pointer"
+        title="Remove timestamps e nomes de remetentes do WhatsApp">
+        🧹 Limpar formato WhatsApp
+      </button>
       <div id="cap-arquivos-preview" style="display:flex;gap:6px;flex-wrap:wrap"></div>
     </div>
 
@@ -414,13 +420,18 @@
 
   <!-- HISTÓRICO DE CAPTURAS -->
   <div style="margin-top:24px">
-    <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
-      <span>📚 Histórico de capturas</span>
-      <select id="cap-hist-filtro" onchange="renderHistoricoCaptura()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px">
-        <option value="">Todas as obras</option>
-      </select>
+    <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <span>📚 Histórico de comunicações</span>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-outline btn-xs" id="cap-tab-hist" onclick="capSetView('hist')">Lista</button>
+        <button class="btn btn-outline btn-xs" id="cap-tab-timeline" onclick="capSetView('timeline')">Timeline</button>
+        <select id="cap-hist-filtro" onchange="renderHistoricoCaptura()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px">
+          <option value="">Todas as obras</option>
+        </select>
+      </div>
     </div>
     <div id="cap-historico"></div>
+    <div id="cap-timeline" style="display:none"></div>
   </div>
 </div>
 </main>

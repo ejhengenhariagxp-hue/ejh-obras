@@ -1,9 +1,10 @@
-// modules/captura.js
+// modules/captura.js — Central de Comunicação da Obra
 import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge } from '../utils.js';
 import { iaCall } from '../services.js';
 
 var capResultadoAtual = null;
 var capArquivos = [];
+var capView = 'hist';
 var CAP_TIPOS={
   diario:   {label:'Diário de Obra',    icon:'📋',cor:'#2563eb',bg:'#eff6ff'},
   pendencia:{label:'Pendência',          icon:'⚠️',cor:'#d97706',bg:'#fffbeb'},
@@ -12,8 +13,29 @@ var CAP_TIPOS={
   medicao:  {label:'Medição',            icon:'📏',cor:'#059669',bg:'#f0fdf4'},
   alteracao:{label:'Alteração Projeto',  icon:'📐',cor:'#dc2626',bg:'#fef2f2'},
   material: {label:'Material',           icon:'🧱',cor:'#ca8a04',bg:'#fefce8'},
+  cronograma:{label:'Cronograma',        icon:'📅',cor:'#0ea5e9',bg:'#f0f9ff'},
   geral:    {label:'Anotação Geral',     icon:'📝',cor:'#64748b',bg:'#f8faff'},
 };
+
+// ── Parser WhatsApp ──────────────────────────────────────────────────
+// Remove timestamps e nomes de remetentes das mensagens coladas
+export function capLimparWhatsApp(){
+  var ta = document.getElementById('cap-texto');
+  if(!ta || !ta.value) return;
+  var txt = ta.value;
+  // Formato iOS: [07/04/2024, 14:32:15] Nome: mensagem
+  // Formato Android: 07/04/2024 14:32 - Nome: mensagem
+  var linhas = txt.split(/\r?\n/).map(function(l){
+    return l
+      .replace(/^\[?\d{1,2}\/\d{1,2}\/\d{2,4},?\s*\d{1,2}:\d{2}(?::\d{2})?\]?\s*(?:-\s*)?[^:]{1,40}:\s*/,'')
+      .replace(/^\d{1,2}\/\d{1,2}\/\d{2,4}\s+\d{1,2}:\d{2}\s+-\s+[^:]{1,40}:\s*/,'')
+      .replace(/\s*<Mídia oculta>\s*/gi,'')
+      .replace(/\s*<Media omitted>\s*/gi,'')
+      .replace(/\s*\(arquivo anexado\)\s*/gi,'');
+  }).filter(function(l){ return l.trim().length > 0; });
+  ta.value = linhas.join('\n');
+  showToast('🧹 Formato WhatsApp removido');
+}
 
 export function renderCaptura(state){
   var sel=document.getElementById('cap-obra-sel');
@@ -59,10 +81,11 @@ export async function capProcessarIA(state){
     var obraCtx = obra ? ('Obra: '+obra.nome+' | Cliente: '+obra.cliente+' | Área: '+obra.area+'m²') : 'Obra não selecionada';
     
     var system = 'Você é assistente especializado em gestão de obras no Brasil.\n' +
-      'Analise o texto/imagem/PDF e identifique registros para o sistema.\n' +
-      'Classifique em: diario, pendencia, orcamento, financeiro, medicao, alteracao, material, geral.\n' +
+      'Analise o texto/imagem/PDF (inclusive mensagens de WhatsApp) e identifique registros para o sistema.\n' +
+      'Classifique em: diario, pendencia, orcamento, financeiro, medicao, alteracao, material, cronograma, geral.\n' +
+      'Um mesmo texto pode gerar MÚLTIPLOS registros (ex: concretagem = diario + pendencia de material).\n' +
       'RESPONDA APENAS com JSON válido:\n' +
-      '{"resumo":"resumo curto","registros":[{"tipo":"tipo","titulo":"titulo","descricao":"desc","data":"YYYY-MM-DD ou null","valor":numero_ou_null}],"sugestoes":["sugestao"]}';
+      '{"resumo":"resumo curto","registros":[{"tipo":"tipo","titulo":"titulo","descricao":"desc","data":"YYYY-MM-DD ou null","valor":numero_ou_null,"urgente":bool,"confirmar":true}],"sugestoes":["sugestao"]}';
 
     var userContent = [{ type: 'text', text: 'Contexto: ' + obraCtx + '\n\nConteúdo: ' + (texto || '(Anexo)') }];
     
@@ -160,6 +183,11 @@ export function capConfirmarTodos(state){
       if(!Array.isArray(state.orc))state.orc=[];
       state.orc.push({id:'ORC-'+pad(state.counters.orc),obraId:obraId,item:titulo,sinapi:'',un:'vb',qtd:1,vunit:valor||0,real:0});
       state.counters.orc++;
+    }else if(reg.tipo==='cronograma'){
+      if(!Array.isArray(state.cron))state.cron=[];
+      if(!state.counters.cron)state.counters.cron=1;
+      state.cron.push({id:'CRN-'+pad(state.counters.cron),obraId:obraId,etapa:titulo,inicio:data,fim:'',prev:100,conc:0,obs:desc});
+      state.counters.cron++;
     }else{
       if(!Array.isArray(state.diario))state.diario=[];
       var icon=(CAP_TIPOS[reg.tipo]||CAP_TIPOS.geral).icon;
@@ -207,10 +235,60 @@ export function capProcessarArquivo(state, input){
   });
 }
 
+export function capSetView(v){
+  capView = v;
+  var h = document.getElementById('cap-historico');
+  var t = document.getElementById('cap-timeline');
+  var tbH = document.getElementById('cap-tab-hist');
+  var tbT = document.getElementById('cap-tab-timeline');
+  if(h) h.style.display = v==='hist' ? 'block':'none';
+  if(t) t.style.display = v==='timeline' ? 'block':'none';
+  if(tbH) tbH.classList.toggle('btn-primary', v==='hist');
+  if(tbT) tbT.classList.toggle('btn-primary', v==='timeline');
+  if(v==='timeline' && window._state) renderTimelineCaptura(window._state);
+}
+
+export function renderTimelineCaptura(state){
+  var filtro = document.getElementById('cap-hist-filtro')?.value || '';
+  var lista = Array.isArray(state.capturas) ? state.capturas.slice() : [];
+  if(filtro) lista = lista.filter(function(c){ return c.obraId===filtro; });
+  lista.sort(function(a,b){ return b.ts - a.ts; });
+  var el = document.getElementById('cap-timeline');
+  if(!el) return;
+  if(!lista.length){ el.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">Sem comunicações nesta obra ainda</div>'; return; }
+  // Agrupar por dia
+  var grupos = {};
+  lista.forEach(function(c){
+    var dt = new Date(c.ts);
+    var key = dt.toISOString().split('T')[0];
+    (grupos[key] = grupos[key] || []).push(c);
+  });
+  var keys = Object.keys(grupos).sort().reverse();
+  el.innerHTML = keys.map(function(k){
+    var dia = new Date(k+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric',weekday:'long'});
+    return '<div style="margin-bottom:18px">'+
+      '<div style="font-family:\'Syne\',sans-serif;font-weight:700;color:var(--navy);font-size:13px;padding:6px 10px;background:#f1f5f9;border-radius:6px;margin-bottom:8px;display:inline-block">📅 '+dia+'</div>'+
+      grupos[k].map(function(c){
+        var obra = state.obras.find(function(o){ return o.id===c.obraId; });
+        var hora = new Date(c.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+        return '<div style="border-left:3px solid var(--blue);padding:10px 14px;margin-left:14px;margin-bottom:8px;background:var(--card);border-radius:0 8px 8px 0;box-shadow:var(--shadow)">'+
+          '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">'+
+            '<span style="font-weight:700;font-size:12.5px;color:var(--navy)">🏗 '+(obra?obra.nome:c.obraId||'—')+'</span>'+
+            '<span style="font-size:11px;color:var(--muted)">⏱ '+hora+' • '+(c.salvos||0)+'/'+(c.registros||0)+' registros</span>'+
+          '</div>'+
+          '<div style="font-size:12.5px;color:var(--text)">'+(c.resumo||'Comunicação processada')+'</div>'+
+          (c.textoOriginal?'<div style="font-size:11px;color:var(--muted);margin-top:6px;font-style:italic;border-left:2px solid var(--border);padding-left:8px">"'+c.textoOriginal.substring(0,160)+(c.textoOriginal.length>160?'...':'')+'"</div>':'')+
+        '</div>';
+      }).join('')+
+    '</div>';
+  }).join('');
+}
+
 export function renderHistoricoCaptura(state){
   var filtro=document.getElementById('cap-hist-filtro')?.value||'';
   var lista=Array.isArray(state.capturas)?state.capturas:[];
   if(filtro)lista=lista.filter(function(c){return c.obraId===filtro;});
+  if(capView==='timeline'){ renderTimelineCaptura(state); return; }
   var el=document.getElementById('cap-historico');
   if(!el)return;
   if(!lista.length){el.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">Nenhuma captura realizada ainda</div>';return;}

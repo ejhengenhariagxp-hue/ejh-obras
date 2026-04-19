@@ -22,7 +22,7 @@ import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
 import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js';
 import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js';
 import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js';
-import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo } from './modules/captura.js';
+import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js';
 import { novaComposicao, addInsumoComp, renderInsumosComp, calcTotalComp,
          salvarComposicao, delComposicao, renderComposicoes, filtrarComposicoes,
          popularSelectComposicoes, preencherDadosComposicao, calcTotalComposicaoSel,
@@ -326,6 +326,10 @@ G.capLimpar = () => capLimpar();
 G.capDescartarResultado = () => capDescartarResultado();
 G.capToggleCard = (i,ck) => capToggleCard(state,i,ck);
 G.capProcessarArquivo = (inp) => capProcessarArquivo(state,inp);
+G.capLimparWhatsApp = () => capLimparWhatsApp();
+G.capSetView = v => capSetView(v);
+G.renderHistoricoCaptura = () => renderHistoricoCaptura(state);
+G.renderTimelineCaptura = () => renderTimelineCaptura(state);
 // Composições próprias
 G.novaComposicao = () => novaComposicao();
 G.addInsumoComp = () => addInsumoComp();
