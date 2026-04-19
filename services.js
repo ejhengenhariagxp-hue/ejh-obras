@@ -12,6 +12,7 @@ const FB_CONFIG = {
 const STORAGE_KEY = 'ejh_obras_v4';
 const PROPS_BAK   = 'ejh_propostas_bak';
 const IA_MODEL    = 'claude-sonnet-4-20250514';
+const IA_KEY_STORAGE = 'anthropic_api_key';
 
 export let fbUser = null;
 export let fbConfigured = false;
@@ -164,4 +165,13 @@ export async function gerarRelatorioIA(dadosObras, contexto = '') {
     `Contexto: ${contexto}\n\n${dadosObras}\n\nData: ${new Date().toLocaleDateString('pt-BR')}`,
     1000);
 }
+
+export function getIaKey() {
+  return localStorage.getItem(IA_KEY_STORAGE) || '';
+}
+export function setIaKey(k) {
+  if (k) localStorage.setItem(IA_KEY_STORAGE, k.trim());
+  else   localStorage.removeItem(IA_KEY_STORAGE);
+}
+export function hasIaKey() { return !!getIaKey(); }
 

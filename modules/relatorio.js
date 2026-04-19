@@ -184,13 +184,13 @@ export function gerarTextoRelatorio(state, obraId){
 
 export function gerarRelatorioWpp(state){
   const obraId=document.getElementById('rel-obra-sel')?.value||'';
-  const msg=gerarTextoRelatorio(obraId);
+  const msg=gerarTextoRelatorio(state, obraId);
   window.open('https://api.whatsapp.com/send?text='+encodeURIComponent(msg),'_blank');
 }
 
 export function gerarRelatorioEmail(state){
   const obraId=document.getElementById('rel-obra-sel')?.value||'';
-  const msg=gerarTextoRelatorio(obraId);
+  const msg=gerarTextoRelatorio(state, obraId);
   const subject='Relatório de Obras — EJH Engenharia — '+new Date().toLocaleDateString('pt-BR');
   // Convert markdown-like to plain text
   const body=msg.replace(/\*/g,'').replace(/_/g,'');

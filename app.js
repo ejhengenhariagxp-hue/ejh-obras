@@ -6,11 +6,12 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
          popularSelectsObras, modalidadeIcon, verificarAvisosObra,
          toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js';
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
-         fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA } from './services.js';
+         fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA,
+         getIaKey, setIaKey, hasIaKey } from './services.js';
 import { addObra, delObra, renderObras, registrarMedicaoRapida } from './modules/obras.js';
-import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe } from './modules/orcamento.js';
+import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js';
-import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, renderDiario } from './modules/diario.js';
+import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, renderDiario, gerarDiarioComFoto } from './modules/diario.js';
 import { addFin, delFin, openModalFin, renderFinanceiro } from './modules/financeiro.js';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes } from './modules/medicoes.js';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita } from './modules/empreita.js';
@@ -230,12 +231,25 @@ G.saveIaConfig = () => {
   if(!key) { showToast('⚠️ Cole sua chave'); return; }
   saveIaKey(key); closeModal('modal-ia-config'); showToast('✅ Chave salva!');
 };
+G.iaTrocarChave = () => {
+  const atual = getIaKey();
+  const nova = prompt(
+    'Chave Anthropic (sk-ant-...). Deixe em branco pra remover.\n' +
+    'Pegue em https://console.anthropic.com/ → API Keys.',
+    atual ? atual.slice(0, 12) + '…' : ''
+  );
+  if (nova === null) return;
+  if (nova.startsWith('sk-ant-')) { setIaKey(nova); showToast('✅ Chave salva'); }
+  else if (nova === '') { setIaKey(''); showToast('🗑 Chave removida'); }
+  else showToast('⚠️ Chave inválida (deve começar com sk-ant-)');
+};
 G.initSigPad = initSigPad;
 G.addObra = () => { if(addObra(state)) renderAtiva(); };
 G.delObra = id => { if(delObra(state,id)) renderAtiva(); };
 G.registrarMedicaoRapida = id => { if(registrarMedicaoRapida(state,id)) renderAtiva(); };
 G.addOrc = () => { if(addOrc(state)) renderAtiva(); };
 G.delOrc = id => { if(delOrc(state,id)) renderAtiva(); };
+G.gerarOrcamentoComIA = () => gerarOrcamentoComIA(state);
 G.openEditOrc = id => openEditOrc(state, id);
 G.abrirNovoOrc = () => {
   const el = document.getElementById('f-orc-id');
@@ -256,6 +270,7 @@ G.addDiario = () => { if(addDiario(state)) renderAtiva(); };
 G.delDiario = id => { if(delDiario(state,id)) renderAtiva(); };
 G.handleFotos = inp => handleFotos(state, inp);
 G.removePendingFoto = i => removePendingFoto(state, i);
+G.gerarDiarioComFoto = () => gerarDiarioComFoto(state);
 G.openModalFin = tipo => openModalFin(state, tipo);
 G.addFin = () => { if(addFin(state)) renderAtiva(); };
 G.delFin = id => { if(delFin(state,id)) renderAtiva(); };
