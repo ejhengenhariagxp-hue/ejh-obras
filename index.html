@@ -58,6 +58,7 @@
     <div class="nav-group">Financeiro & Técnico</div>
     <div class="nav-item" onclick="nav('financeiro',this)"><span class="nav-icon">🏦</span><span>Financeiro</span></div>
     <div class="nav-item" onclick="nav('tabelas',this)"><span class="nav-icon">📐</span><span>SINAPI / SICOR-MG</span></div>
+    <div class="nav-item" onclick="nav('composicoes',this)"><span class="nav-icon">🧱</span><span>Composições</span></div>
     <div class="nav-item" onclick="nav('medicao',this)"><span class="nav-icon">📏</span><span>Medição</span></div>
     <div class="nav-item" onclick="nav('importar',this)"><span class="nav-icon">📥</span><span>Importar Orçamento</span></div>
     <div class="nav-group">Propostas & Relatório</div>
@@ -102,18 +103,23 @@
   <div class="page-hdr">
     <div><div class="page-title">Orçamento</div><div class="page-sub">Orçado × Realizado por Obra</div></div>
     <div class="hdr-actions">
+      <button class="btn btn-outline" onclick="exportarOrcamentoExcel()" style="color:#16a34a;border-color:#16a34a">📊 Exportar Excel</button>
       <button class="btn btn-outline" onclick="exportJSON()">↑ Exportar</button>
       <button class="btn btn-outline" onclick="nav('tabelas',null)">📐 SINAPI/SICOR</button>
       <button class="btn btn-outline" onclick="nav('importar',null)" style="color:var(--blue);border-color:var(--blue)">📥 Importar Planilha</button>
     </div>
   </div>
-  
+
   <div id="orcamento-lista-obras" class="cards-grid"></div>
-  
+
   <div id="orcamento-detalhe" style="display:none">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
        <button class="btn btn-outline btn-sm" onclick="voltarOrcLista()">← Voltar às Obras</button>
-       <button class="btn btn-primary btn-sm" onclick="abrirNovoOrc()">＋ Adicionar Item</button>
+       <div style="display:flex;gap:8px;flex-wrap:wrap">
+         <button class="btn btn-outline btn-sm" onclick="exportarOrcamentoExcelObra()" style="color:#16a34a;border-color:#16a34a">📊 Exportar Excel</button>
+         <button class="btn btn-outline btn-sm" onclick="abrirInserirComposicaoObra()" style="color:#7c3aed;border-color:#7c3aed">🧱 Inserir Composição</button>
+         <button class="btn btn-primary btn-sm" onclick="abrirNovoOrc()">＋ Adicionar Item</button>
+       </div>
     </div>
     <h3 id="orc-detalhe-nome" style="color:var(--navy); font-family:'Syne',sans-serif; margin-bottom: 14px;"></h3>
     <div class="table-wrap"><table>
@@ -122,6 +128,24 @@
       <tfoot><tr><td colspan="4" style="text-align:right">TOTAIS DA OBRA</td><td id="tfoot-orc-tot"></td><td id="tfoot-orc-real"></td><td id="tfoot-orc-dev"></td><td></td></tr></tfoot>
     </table></div>
   </div>
+</div>
+
+<!-- COMPOSIÇÕES -->
+<div id="page-composicoes" class="page">
+  <div class="page-hdr">
+    <div><div class="page-title">Composições Próprias</div><div class="page-sub">Monte serviços com seus próprios insumos, coeficientes e preços</div></div>
+    <button class="btn btn-primary" onclick="novaComposicao()">＋ Nova Composição</button>
+  </div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi blue"><div class="kpi-label">Composições</div><div class="kpi-value" id="comp-kpi-total">0</div><div class="kpi-sub">cadastradas</div></div>
+    <div class="kpi teal"><div class="kpi-label">Total de Insumos</div><div class="kpi-value" id="comp-kpi-insumos">0</div><div class="kpi-sub">na biblioteca</div></div>
+    <div class="kpi green"><div class="kpi-label">Em Uso</div><div class="kpi-value" id="comp-kpi-uso">0</div><div class="kpi-sub">em orçamentos</div></div>
+  </div>
+  <div style="margin-bottom:14px">
+    <input id="f-comp-filtro" placeholder="🔍 Buscar por nome, categoria ou código..." oninput="filtrarComposicoes(this.value)"
+      style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:10px;font-size:13.5px;font-family:'DM Sans',sans-serif;background:var(--card);color:var(--text)">
+  </div>
+  <div id="list-composicoes"></div>
 </div>
 
 <!-- EMPREITA -->
@@ -442,6 +466,55 @@
     <button class="btn btn-outline" onclick="closeModal('modal-orc')">Cancelar</button>
     <button class="btn btn-secondary" id="orc-ia-btn" onclick="gerarOrcamentoComIA()" style="background:rgba(168,85,247,.2);color:#a855f7">🤖 Gerar com IA</button>
     <button class="btn btn-primary" onclick="addOrc()">Salvar</button>
+  </div>
+</div></div>
+
+<!-- Composição nova/editar -->
+<div class="modal-bg" id="modal-composicao"><div class="modal modal-wide">
+  <div class="modal-title">🧱 Nova Composição</div>
+  <div class="form-grid">
+    <div class="form-group full"><label>Nome do Serviço</label><input id="f-comp-nome" placeholder="Ex: Concreto armado fck25 lançado"></div>
+    <div class="form-group"><label>Categoria</label><select id="f-comp-cat">
+      <option>Fundações</option><option>Estrutura</option><option>Alvenaria</option>
+      <option>Cobertura</option><option>Hidráulico</option><option>Elétrico</option>
+      <option>Revestimento</option><option>Pintura</option><option>Serviços</option><option>Outros</option>
+    </select></div>
+    <div class="form-group"><label>Unidade</label><input id="f-comp-un" placeholder="m³, m², kg..." value="m³"></div>
+    <div class="form-group"><label>Código Próprio (opcional)</label><input id="f-comp-cod" placeholder="Ex: EJH-001"></div>
+    <div class="form-group full"><label>Descrição Técnica</label><textarea id="f-comp-desc" placeholder="Detalhes técnicos, especificações..." rows="2"></textarea></div>
+    <div class="form-group full">
+      <label style="display:flex;justify-content:space-between;align-items:center">
+        <span>Insumos (coeficientes × preços)</span>
+        <button onclick="addInsumoComp()" class="btn btn-outline btn-xs" style="color:var(--blue);border-color:var(--blue)">＋ Adicionar insumo</button>
+      </label>
+      <div id="comp-insumos-lista" style="margin-top:10px;padding:10px;background:#fafbff;border:1px solid var(--border);border-radius:8px;min-height:60px"></div>
+      <div style="margin-top:10px;padding:10px;background:#f0f9ff;border-radius:8px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-weight:700;color:var(--navy)">Custo unitário total:</span>
+        <span id="comp-total-label" style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--navy)">R$ 0,00</span>
+      </div>
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-outline" onclick="closeModal('modal-composicao')">Cancelar</button>
+    <button class="btn btn-primary" onclick="salvarComposicao()">Salvar Composição</button>
+  </div>
+</div></div>
+
+<!-- Inserir Composição no Orçamento -->
+<div class="modal-bg" id="modal-comp-selecionar"><div class="modal">
+  <div class="modal-title">🧱 Inserir Composição no Orçamento</div>
+  <div class="form-grid">
+    <div class="form-group full"><label>Composição</label>
+      <select id="f-csel-comp" onchange="preencherDadosComposicao()"></select>
+    </div>
+    <div id="f-csel-preview" style="display:none;grid-column:1/-1;padding:12px;background:#fafbff;border-radius:8px;font-size:12.5px"></div>
+    <div class="form-group"><label>Quantidade</label><input id="f-csel-qtd" type="number" step="0.01" min="0" value="1" oninput="calcTotalComposicaoSel()"></div>
+    <div class="form-group"><label>Valor Unit. (R$)</label><input id="f-csel-vunit" type="number" step="0.01" readonly style="background:#f1f5f9"></div>
+    <div class="form-group full"><label>Total (R$)</label><input id="f-csel-total" type="number" step="0.01" readonly style="background:#f1f5f9;font-weight:700"></div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-outline" onclick="closeModal('modal-comp-selecionar')">Cancelar</button>
+    <button class="btn btn-primary" onclick="inserirComposicaoNoOrcamento()">Inserir no Orçamento</button>
   </div>
 </div></div>
 

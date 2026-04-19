@@ -23,12 +23,17 @@ import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi }
 import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js';
 import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js';
 import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo } from './modules/captura.js';
+import { novaComposicao, addInsumoComp, renderInsumosComp, calcTotalComp,
+         salvarComposicao, delComposicao, renderComposicoes, filtrarComposicoes,
+         popularSelectComposicoes, preencherDadosComposicao, calcTotalComposicaoSel,
+         inserirComposicaoNoOrcamento, editarComposicao } from './modules/composicoes.js';
+import { exportarOrcamentoExcel, exportarOrcamentoExcelObra } from './modules/excel_export.js';
 
 // ── Estado global ────────────────────────────────────────────────────
 const DEFAULT_STATE = {
   obras:[], orc:[], cron:[], diario:[], fin:[],
-  medicoes:[], empreita:[], propostas:[], checklists:[], capturas:[],
-  counters:{ obra:1, orc:1, cron:1, dia:1, fin:1, med:1, emp:1, prop:1, ck:1 },
+  medicoes:[], empreita:[], propostas:[], checklists:[], capturas:[], composicoes:[],
+  counters:{ obra:1, orc:1, cron:1, dia:1, fin:1, med:1, emp:1, prop:1, ck:1, comp:1 },
   engNome:'', engRegistro:'', engCrea:'', engSig:'',
   relatorioRodape:'', logoData:'', sinapiMes:'',
   tabelaSource:'sinapi', sinapiCatFilter:'Todos',
@@ -38,7 +43,7 @@ export let state = loadState(DEFAULT_STATE);
 window._state = state;
 
 function initFields() {
-  ['obras','orc','cron','diario','fin','medicoes','empreita','propostas','checklists','capturas']
+  ['obras','orc','cron','diario','fin','medicoes','empreita','propostas','checklists','capturas','composicoes']
     .forEach(k => { if (!Array.isArray(state[k])) state[k] = []; });
   if (!state.counters) state.counters = { ...DEFAULT_STATE.counters };
   Object.keys(DEFAULT_STATE.counters).forEach(k => {
@@ -61,6 +66,7 @@ const PAGE_RENDER_MAP = {
   'relatorio':  () => renderReport(state),
   'checklist':  () => renderChecklist(state),
   'captura':    () => renderCaptura(state),
+  'composicoes':() => renderComposicoes(state),
   'importar':   () => {},
 };
 
@@ -316,6 +322,33 @@ G.capLimpar = () => capLimpar();
 G.capDescartarResultado = () => capDescartarResultado();
 G.capToggleCard = (i,ck) => capToggleCard(state,i,ck);
 G.capProcessarArquivo = (inp) => capProcessarArquivo(state,inp);
+// Composições próprias
+G.novaComposicao = () => novaComposicao();
+G.addInsumoComp = () => addInsumoComp();
+G.renderInsumosComp = () => renderInsumosComp();
+G.calcTotalComp = () => calcTotalComp();
+G.salvarComposicao = () => { if(salvarComposicao(state)) renderAtiva(); };
+G.delComposicao = id => { if(delComposicao(state,id)) renderAtiva(); };
+G.editarComposicao = id => editarComposicao(state, id);
+G.filtrarComposicoes = q => filtrarComposicoes(state, q);
+G.preencherDadosComposicao = () => preencherDadosComposicao(state);
+G.calcTotalComposicaoSel = () => calcTotalComposicaoSel();
+G.inserirComposicaoNoOrcamento = () => { if(inserirComposicaoNoOrcamento(state)) renderAtiva(); };
+G.abrirInserirComposicao = id => {
+  const sel = document.getElementById('f-csel-comp');
+  popularSelectComposicoes(state);
+  if (sel && id) sel.value = id;
+  preencherDadosComposicao(state);
+  openModal('modal-comp-selecionar');
+};
+G.abrirInserirComposicaoObra = () => {
+  if (!window._currentOrcObraId) { showToast('⚠️ Abra o orçamento de uma obra primeiro'); return; }
+  popularSelectComposicoes(state);
+  openModal('modal-comp-selecionar');
+};
+// Exportar Excel
+G.exportarOrcamentoExcel = () => exportarOrcamentoExcel(state);
+G.exportarOrcamentoExcelObra = () => exportarOrcamentoExcelObra(state);
 
 window.addEventListener('load', () => {
   initFields();
