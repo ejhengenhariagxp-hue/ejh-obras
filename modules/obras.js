@@ -97,7 +97,7 @@ export function resetFormObra() {
     'f-obra-fim','f-obra-contrato','f-obra-numcontrato','f-obra-diamed','f-obra-obscontrato'];
   ids.forEach(k => { const el = document.getElementById(k); if (el) el.value = ''; });
   const t = document.getElementById('modal-obra-title');
-  if (t) t.textContent = '🏗 Novo R1 / R2 (Projeto ou Obra)';
+  if (t) t.textContent = '🏗 Nova Atividade';
 }
 
 // Excluir obra

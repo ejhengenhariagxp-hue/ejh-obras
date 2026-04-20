@@ -38,7 +38,7 @@ export function statusBadge(s) {
 }
 
 export function tipoLabel(tipo) {
-  return {'projeto':'Projeto','obra':'Obra','R1':'Projeto','R2':'Obra'}[tipo] || tipo || 'Obra';
+  return {'projeto':'Projeto','obra':'Obra','acompanhamento':'Acompanhamento (RT)','consultoria':'Consultoria','R1':'Projeto','R2':'Obra'}[tipo] || tipo || 'Obra';
 }
 
 export function openModal(id) {
@@ -120,9 +120,9 @@ export function popularSelectsObras(state, ids) {
 }
 
 export function modalidadeIcon(m) {
-  const icons  = { privada:'🏠', financiada:'🏦', publica:'🏛', minha_casa:'🏡', empreita:'🔨', acompanhamento:'🔎' };
-  const labels = { privada:'Privada', financiada:'Financiada (Caixa)', publica:'Pública', minha_casa:'MCMV', empreita:'Empreita Global', acompanhamento:'Acompanhamento (RT)' };
-  const colors = { privada:'#2563eb', financiada:'#0891b2', publica:'#7c3aed', minha_casa:'#059669', empreita:'#d97706', acompanhamento:'#9333ea' };
+  const icons  = { privada:'🏠', financiada:'🏦', publica:'🏛', minha_casa:'🏡', empreita:'🔨' };
+  const labels = { privada:'Privada', financiada:'Financiada (Caixa)', publica:'Pública', minha_casa:'MCMV', empreita:'Empreita Global' };
+  const colors = { privada:'#2563eb', financiada:'#0891b2', publica:'#7c3aed', minha_casa:'#059669', empreita:'#d97706' };
   const icon = icons[m]||'🏠', label = labels[m]||'Privada', color = colors[m]||'#2563eb';
   return `<span title="${label}" style="background:${color}18;color:${color};padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">${icon} ${label}</span>`;
 }

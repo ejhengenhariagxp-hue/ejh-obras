@@ -49,7 +49,7 @@
   <div class="nav">
     <div class="nav-group">Principal</div>
     <div class="nav-item active" onclick="nav('dashboard',this)"><span class="nav-icon">📊</span><span>Dashboard</span></div>
-    <div class="nav-item" onclick="nav('obras',this)"><span class="nav-icon">🏗</span><span>R1 / R2</span></div>
+    <div class="nav-item" onclick="nav('obras',this)"><span class="nav-icon">🏗</span><span>Projetos & Obras</span></div>
     <div class="nav-group">Execução</div>
     <div class="nav-item" onclick="nav('orcamento',this)"><span class="nav-icon">💰</span><span>Orçamento</span></div>
     <div class="nav-item" onclick="nav('empreita',this)"><span class="nav-icon">🤝</span><span>Empreita M.O.</span></div>
@@ -199,7 +199,7 @@
 <!-- FINANCEIRO -->
 <div id="page-financeiro" class="page">
   <div class="page-hdr">
-    <div><div class="page-title">Controle Financeiro</div><div class="page-sub">Receitas, despesas e fluxo por R1 e R2</div></div>
+    <div><div class="page-title">Controle Financeiro</div><div class="page-sub">Receitas, despesas e fluxo por atividade</div></div>
     <div class="hdr-actions"><button class="btn btn-outline" onclick="window.print()" style="color:#16a34a;border-color:#16a34a">🖨 PDF</button><button class="btn btn-green" onclick="openModalFin('Receita')">＋ Receita</button><button class="btn btn-outline" style="color:var(--red);border-color:var(--red)" onclick="openModalFin('Despesa')">＋ Despesa</button></div>
   </div>
   <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
@@ -210,8 +210,8 @@
   <!-- Dashboard Financeiro Avançado (Indicadores e % YoY) -->
   <div id="dash-fin-avancado"></div>
 
-  <div class="section"><div class="section-hdr"><div class="section-title">R1 - Projetos</div></div><div class="table-wrap"><table><thead><tr><th>Projeto (R1)</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="tbody-fin-r1"></tbody></table></div></div>
-  <div class="section"><div class="section-hdr"><div class="section-title">R2 - Obras</div></div><div class="table-wrap"><table><thead><tr><th>Obra (R2)</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="tbody-fin-r2"></tbody></table></div></div>
+  <div class="section"><div class="section-hdr"><div class="section-title">Projetos</div></div><div class="table-wrap"><table><thead><tr><th>Projeto</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="tbody-fin-r1"></tbody></table></div></div>
+  <div class="section"><div class="section-hdr"><div class="section-title">Obras</div></div><div class="table-wrap"><table><thead><tr><th>Obra</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="tbody-fin-r2"></tbody></table></div></div>
   <div class="section"><div class="section-hdr"><div class="section-title">Lançamentos</div></div><div class="table-wrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Obra</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th></th></tr></thead><tbody id="tbody-fin"></tbody></table></div></div>
 </div>
 
@@ -238,7 +238,7 @@
   <div class="page-hdr"><div><div class="page-title">Importar Orçamento</div><div class="page-sub">Excel, PDF, CSV ou manual — propaga para Orçamento, Cronograma e Medição</div></div></div>
   <div class="table-wrap" style="padding:16px 20px;margin-bottom:18px">
     <div class="form-grid">
-      <div class="fg"><label>Destino (R1/R2)</label><select id="f-imp-obra"></select></div>
+      <div class="fg"><label>Destino (Atividade)</label><select id="f-imp-obra"></select></div>
       <div class="fg"><label>Fonte</label><input id="f-imp-fonte" placeholder="Ex: Orçamento do cliente…"></div>
       <div class="fg"><label>Gerar Cronograma?</label><select id="f-imp-cron"><option value="sim">✅ Sim</option><option value="nao">❌ Não</option></select></div>
       <div class="fg"><label>Preparar Medição?</label><select id="f-imp-med"><option value="sim">✅ Sim</option><option value="nao">❌ Não</option></select></div>
@@ -293,8 +293,8 @@
 <!-- PROPOSTAS -->
 <div id="page-propostas" class="page">
   <div class="page-hdr">
-    <div><div class="page-title">Propostas Comerciais</div><div class="page-sub">Propostas para R1 e R2</div></div>
-    <div class="hdr-actions"><button class="btn btn-outline" onclick="openPropProjeto()">📐 Proposta R1 (Projeto)</button><button class="btn btn-primary" onclick="openPropObra()">🏗 Proposta R2 (Obra)</button></div>
+    <div><div class="page-title">Propostas Comerciais</div><div class="page-sub">Propostas comerciais por atividade</div></div>
+    <div class="hdr-actions"><button class="btn btn-outline" onclick="openPropProjeto()">📐 Proposta Projeto</button><button class="btn btn-primary" onclick="openPropObra()">🏗 Proposta Obra</button></div>
   </div>
   <div id="list-propostas"></div>
 </div>
@@ -438,11 +438,14 @@
 
 
 <div class="modal-bg" id="modal-obra"><div class="modal modal-wide">
-  <div class="modal-title" id="modal-obra-title">🏗 Novo R1 / R2 (Projeto ou Obra)</div>
+  <div class="modal-title" id="modal-obra-title">🏗 Nova Atividade</div>
   <input type="hidden" id="f-obra-id">
   <div class="form-grid">
-    <div class="form-group"><label>Tipo</label><select id="f-obra-tipo">
-      <option value="R1">R1 - Projeto</option><option value="R2" selected>R2 - Obra</option>
+    <div class="form-group"><label>Tipo de Atividade</label><select id="f-obra-tipo">
+      <option value="projeto">Projeto</option>
+      <option value="obra" selected>Obra</option>
+      <option value="acompanhamento">Acompanhamento (RT)</option>
+      <option value="consultoria">Consultoria</option>
     </select></div>
     <div class="form-group"><label>Modalidade</label><select id="f-obra-modalidade">
       <option value="privada">🏠 Privada</option>
@@ -450,7 +453,6 @@
       <option value="publica">🏛 Pública</option>
       <option value="minha_casa">🏡 MCMV</option>
       <option value="empreita">🔨 Empreita Global</option>
-      <option value="acompanhamento">🔎 Acompanhamento (RT)</option>
     </select></div>
     <div class="form-group full"><label>Nome</label><input id="f-obra-nome" placeholder="Ex: Residencial Guaxupé"></div>
     <div class="form-group"><label>Cliente</label><input id="f-obra-cliente" placeholder="Nome do cliente"></div>
