@@ -1,5 +1,5 @@
 // modules/diario.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName } from '../utils.js';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName, escapeHtml } from '../utils.js';
 import { iaCall } from '../services.js';
 
 let _diarioLimit = 20;
@@ -7,7 +7,9 @@ let _pendingFotos = [];
 
 export function addDiario(state){
   const obraId = document.getElementById('f-dia-obra')?.value;
+  const data = document.getElementById('f-dia-data')?.value;
   if (!obraId) { showToast('⚠️ Selecione uma obra'); return false; }
+  if (!data) { showToast('⚠️ Selecione uma data'); return false; }
 
   state.diario.push({
     id:     'DIA-'+pad(state.counters.dia),
@@ -36,16 +38,37 @@ export function delDiario(state, id){
   return false;
 }
 
-export function handleFotos(state, input){
+function compressImage(dataUrl, maxWidth = 1280, quality = 0.75) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > maxWidth) {
+        h = (h * maxWidth) / w;
+        w = maxWidth;
+      }
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = dataUrl;
+  });
+}
+
+export async function handleFotos(state, input){
   const files = Array.from(input.files);
-  files.forEach(file=>{
+  for (const file of files) {
     const reader = new FileReader();
-    reader.onload = e => {
-      _pendingFotos.push({dataUrl:e.target.result, name:file.name});
+    reader.onload = async e => {
+      const compressed = await compressImage(e.target.result);
+      _pendingFotos.push({dataUrl:compressed, name:file.name});
       renderFotoPreview();
     };
     reader.readAsDataURL(file);
-  });
+  }
   input.value=''; // permite reusar
 }
 
@@ -60,6 +83,12 @@ export function openModalDiario(state){
   popularSelectsObras(state);
   if(document.getElementById('f-dia-data')) document.getElementById('f-dia-data').value = new Date().toISOString().split('T')[0];
   openModal('modal-diario');
+}
+
+export function cancelarDiario(){
+  _pendingFotos=[];
+  renderFotoPreview();
+  closeModal('modal-diario');
 }
 
 export function renderDiario(state){
@@ -78,8 +107,8 @@ export function renderDiario(state){
         <div style="display:flex;justify-content:space-between">
           <div style="flex:1">
             <div class="diario-date">${fmtD(d.data)} — ${obraName(state, d.obraId)}</div>
-            <div class="diario-body">${d.desc}</div>
-            ${d.ocorr&&d.ocorr!=='Sem ocorrências' && d.ocorr!=='Nenhuma'?`<div style="margin-top:5px;font-size:12px;color:var(--red)">⚠️ ${d.ocorr}</div>`:''}
+            <div class="diario-body">${escapeHtml(d.desc)}</div>
+            ${d.ocorr&&d.ocorr!=='Sem ocorrências' && d.ocorr!=='Nenhuma'?`<div style="margin-top:5px;font-size:12px;color:var(--red)">⚠️ ${escapeHtml(d.ocorr)}</div>`:''}
             <div class="diario-tags">
               <span class="badge badge-blue">${d.equipe}</span>
               <span class="badge badge-amber">${d.clima}</span>

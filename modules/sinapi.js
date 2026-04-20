@@ -4,7 +4,7 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, 
 let currentTabelaSource = 'sinapi';
 let selectedSinapiItem = null;
 
-const SINAPI = [
+export const SINAPI = [
   // Serviços preliminares
   {cod:"73798",cat:"Serviços Preliminares",desc:"Mobilização e desmobilização de canteiro",un:"vb",preco:3200.00},
   {cod:"73800",cat:"Serviços Preliminares",desc:"Tapume em chapa compensada e=10mm",un:"m²",preco:48.50},
@@ -48,7 +48,7 @@ const SINAPI = [
   {cod:"73861",cat:"Demolição",desc:"Remoção e carga de entulho",un:"m³",preco:28.50},
 ];
 
-const SICOR = [
+export const SICOR = [
   // Serviços preliminares
   {cod:"S001",cat:"Serviços Preliminares",desc:"Limpeza e preparo do terreno",un:"m²",preco:4.80,fonte:"SICOR-MG"},
   {cod:"S002",cat:"Serviços Preliminares",desc:"Locação de obra (mão de obra)",un:"m²",preco:2.90,fonte:"SICOR-MG"},

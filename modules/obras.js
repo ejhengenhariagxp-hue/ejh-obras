@@ -2,37 +2,102 @@
 // modules/obras.js — CRUD de obras, validação e renderização
 // ══════════════════════════════════════════════════════════════════════
 
-import { fmt, fmtD, pad, safeInner, showToast, statusBadge, tipoLabel, openModal, closeModal, modalidadeIcon, verificarAvisosObra } from '../utils.js';
+import { fmt, fmtD, pad, safeInner, showToast, statusBadge, tipoLabel, openModal, closeModal, modalidadeIcon, verificarAvisosObra, escapeHtml } from '../utils.js';
+
+const val = id => document.getElementById(id)?.value?.trim() || '';
+const num = id => +document.getElementById(id)?.value || 0;
+
+function lerFormObra() {
+  return {
+    nome:          val('f-obra-nome'),
+    tipo:          val('f-obra-tipo') || 'obra',
+    cliente:       val('f-obra-cliente'),
+    cliTel:        val('f-obra-cli-tel'),
+    cliEmail:      val('f-obra-cli-email'),
+    cliDoc:        val('f-obra-cli-doc'),
+    area:          num('f-obra-area'),
+    endereco:      val('f-obra-end'),
+    rt:            val('f-obra-rt'),
+    crea:          val('f-obra-crea'),
+    inicio:        val('f-obra-inicio'),
+    fim:           val('f-obra-fim'),
+    status:        val('f-obra-status') || 'Em andamento',
+    contrato:      num('f-obra-contrato'),
+    modalidade:    val('f-obra-modalidade') || 'privada',
+    numcontrato:   val('f-obra-numcontrato'),
+    periodicidade: val('f-obra-periodicidade'),
+    diamed:        num('f-obra-diamed'),
+    obscontrato:   val('f-obra-obscontrato'),
+  };
+}
 
 // Salvar obra nova
 export function addObra(state) {
-  const nome = document.getElementById('f-obra-nome')?.value.trim();
-  const cli  = document.getElementById('f-obra-cliente')?.value.trim();
-  if (!nome) { showToast('⚠️ Informe o nome da obra'); if(document.getElementById('f-obra-nome')) document.getElementById('f-obra-nome').focus(); return false; }
-  if (!cli)  { showToast('⚠️ Informe o nome do cliente'); if(document.getElementById('f-obra-cliente')) document.getElementById('f-obra-cliente').focus(); return false; }
+  const dados = lerFormObra();
+  if (!dados.nome) { showToast('⚠️ Informe o nome da obra'); document.getElementById('f-obra-nome')?.focus(); return false; }
+  if (!dados.cliente) { showToast('⚠️ Informe o nome do cliente'); document.getElementById('f-obra-cliente')?.focus(); return false; }
 
   const id = 'OBR-'+pad(state.counters.obra);
-  state.obras.push({
-    id, nome,
-    tipo:         document.getElementById('f-obra-tipo')?.value || 'obra',
-    cliente:      cli,
-    area:        +document.getElementById('f-obra-area')?.value || 0,
-    endereco:     document.getElementById('f-obra-end')?.value || '',
-    inicio:       document.getElementById('f-obra-inicio')?.value || '',
-    fim:          document.getElementById('f-obra-fim')?.value || '',
-    status:       document.getElementById('f-obra-status')?.value || 'Em andamento',
-    contrato:    +document.getElementById('f-obra-contrato')?.value || 0,
-    modalidade:   document.getElementById('f-obra-modalidade')?.value || 'privada',
-    numcontrato:  document.getElementById('f-obra-numcontrato')?.value || '',
-    periodicidade:document.getElementById('f-obra-periodicidade')?.value || '',
-    diamed:      +document.getElementById('f-obra-diamed')?.value || 0,
-    obscontrato:  document.getElementById('f-obra-obscontrato')?.value || '',
-    ultimaMedicao:'', proximaMedicao:''
-  });
+  state.obras.push({ id, ...dados, ultimaMedicao:'', proximaMedicao:'' });
   state.counters.obra++;
   closeModal('modal-obra');
   showToast('✅ Obra cadastrada!');
   return true;
+}
+
+// Abrir formulário para editar obra existente
+export function openEditObra(state, id) {
+  const o = state.obras.find(x => x.id === id);
+  if (!o) { showToast('⚠️ Obra não encontrada'); return; }
+  const set = (k, v) => { const el = document.getElementById(k); if (el) el.value = v ?? ''; };
+  set('f-obra-id', o.id);
+  set('f-obra-tipo', o.tipo);
+  set('f-obra-modalidade', o.modalidade || 'privada');
+  set('f-obra-nome', o.nome);
+  set('f-obra-cliente', o.cliente);
+  set('f-obra-cli-tel', o.cliTel);
+  set('f-obra-cli-email', o.cliEmail);
+  set('f-obra-cli-doc', o.cliDoc);
+  set('f-obra-area', o.area);
+  set('f-obra-end', o.endereco);
+  set('f-obra-rt', o.rt);
+  set('f-obra-crea', o.crea);
+  set('f-obra-inicio', o.inicio);
+  set('f-obra-fim', o.fim);
+  set('f-obra-status', o.status);
+  set('f-obra-contrato', o.contrato);
+  set('f-obra-numcontrato', o.numcontrato);
+  set('f-obra-periodicidade', o.periodicidade);
+  set('f-obra-diamed', o.diamed);
+  set('f-obra-obscontrato', o.obscontrato);
+  const t = document.getElementById('modal-obra-title');
+  if (t) t.textContent = '✏️ Editar ' + o.id;
+  openModal('modal-obra');
+}
+
+// Cria OU atualiza obra, dependendo do campo oculto f-obra-id
+export function salvarObra(state) {
+  const id = document.getElementById('f-obra-id')?.value;
+  if (!id) return addObra(state);
+  const i = state.obras.findIndex(o => o.id === id);
+  if (i < 0) { showToast('⚠️ Obra não encontrada'); return false; }
+  const dados = lerFormObra();
+  if (!dados.nome) { showToast('⚠️ Informe o nome da obra'); return false; }
+  if (!dados.cliente) { showToast('⚠️ Informe o nome do cliente'); return false; }
+  state.obras[i] = { ...state.obras[i], ...dados };
+  closeModal('modal-obra');
+  showToast('✅ Obra atualizada!');
+  return true;
+}
+
+// Reset do form para novo cadastro (limpa id oculto e título)
+export function resetFormObra() {
+  const ids = ['f-obra-id','f-obra-nome','f-obra-cliente','f-obra-cli-tel','f-obra-cli-email',
+    'f-obra-cli-doc','f-obra-area','f-obra-end','f-obra-rt','f-obra-crea','f-obra-inicio',
+    'f-obra-fim','f-obra-contrato','f-obra-numcontrato','f-obra-diamed','f-obra-obscontrato'];
+  ids.forEach(k => { const el = document.getElementById(k); if (el) el.value = ''; });
+  const t = document.getElementById('modal-obra-title');
+  if (t) t.textContent = '🏗 Nova Atividade';
 }
 
 // Excluir obra
@@ -75,14 +140,15 @@ export function renderObras(state) {
     return `<tr>
       <td><span class="badge ${o.tipo==='projeto' || o.tipo==='R1'?'badge-purple':'badge-blue'}">${tipoLabel(o.tipo)}</span></td>
       <td class="td-id">${o.id}</td>
-      <td style="font-weight:600">${o.nome}${avisoHtml}</td>
-      <td>${o.cliente||'—'}</td>
+      <td style="font-weight:600">${escapeHtml(o.nome)}${avisoHtml}</td>
+      <td>${escapeHtml(o.cliente||'—')}</td>
       <td>${(o.area||0).toLocaleString('pt-BR')} m²</td>
       <td>${modalidadeIcon(o.modalidade||'privada')}</td>
       <td>${fmtD(o.inicio)}</td><td>${fmtD(o.fim)}</td>
       <td>${statusBadge(o.status)}</td>
       <td style="white-space:nowrap">
         <button onclick="registrarMedicaoRapida('${o.id}')" class="btn btn-outline btn-xs" style="color:var(--blue);border-color:var(--blue);margin-right:3px" title="Registrar medição">📏</button>
+        <button onclick="openEditObra('${o.id}')" class="btn btn-outline btn-xs" style="color:var(--amber);border-color:var(--amber);margin-right:3px" title="Editar obra">✏️</button>
         <button onclick="delObra('${o.id}')" class="btn btn-outline btn-xs" style="color:var(--red);border-color:var(--red)">✕</button>
       </td>
     </tr>`;

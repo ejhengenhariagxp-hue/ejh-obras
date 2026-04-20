@@ -4,6 +4,7 @@
 export const fmt  = v => (+(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 export const fmtD = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—';
 export const pad  = n => String(n).padStart(3,'0');
+export const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 export function safeInner(id, html) {
   const el = document.getElementById(id);
@@ -38,7 +39,7 @@ export function statusBadge(s) {
 }
 
 export function tipoLabel(tipo) {
-  return {'projeto':'Projeto','obra':'Obra','R1':'Projeto','R2':'Obra'}[tipo] || tipo || 'Obra';
+  return {'projeto':'Projeto','obra':'Obra','acompanhamento':'Acompanhamento (RT)','consultoria':'Consultoria','R1':'Projeto','R2':'Obra'}[tipo] || tipo || 'Obra';
 }
 
 export function openModal(id) {
@@ -85,14 +86,13 @@ export function toggleFab() {
   const m = document.getElementById('fab-menu');
   const b = document.getElementById('fab-btn');
   if (!m) return;
-  const open = m.style.display === 'flex';
-  m.style.display = open ? 'none' : 'flex';
-  if (b) b.textContent = open ? '＋' : '✕';
+  const open = m.classList.toggle('open');
+  if (b) b.textContent = open ? '✕' : '＋';
 }
 export function closeFab() {
   const m = document.getElementById('fab-menu');
   const b = document.getElementById('fab-btn');
-  if (m) m.style.display = 'none';
+  if (m) m.classList.remove('open');
   if (b) b.textContent = '＋';
 }
 

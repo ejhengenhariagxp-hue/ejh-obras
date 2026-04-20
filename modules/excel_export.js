@@ -239,3 +239,45 @@ function gerarAbaObra(state, obra) {
   ];
   return ws;
 }
+
+// ── EXPORTAR MEDIÇÕES ─────────────────────────────────────────────────
+export function exportarMedicoesExcel(state) {
+  if (typeof XLSX === 'undefined') { alert('SheetJS não carregado.'); return; }
+  if (!state.medicoes?.length) { alert('Nenhuma medição cadastrada.'); return; }
+  const wb = XLSX.utils.book_new();
+  const rows = [];
+  rows.push([hdrCell('Nº'), hdrCell('Obra'), hdrCell('Período'), hdrCell('Data'),
+             hdrCell('Responsável'), hdrCell('Item'), hdrCell('Un.'),
+             hdrCell('Qtd Medida'), hdrCell('V.Unit'), hdrCell('Valor Medido')]);
+  state.medicoes.forEach(m => {
+    const obra = state.obras.find(o => o.id === m.obraId);
+    (m.itens || []).forEach(it => {
+      rows.push([
+        cell(m.num, true),
+        cell(obra?.nome || m.obraId),
+        cell(m.periodo || ''),
+        cell(m.data || ''),
+        cell(m.resp || ''),
+        cell(it.item),
+        cell(it.un, false, null, null, 'center'),
+        cell(it.qtdMed, false, null, '#,##0.00', 'right'),
+        cell(it.vunit, false, null, 'R$ #,##0.00', 'right'),
+        cell(it.valorMed, true, 'E8F0FB', 'R$ #,##0.00', 'right'),
+      ]);
+    });
+  });
+  const total = state.medicoes.reduce((a,m)=>a+(m.itens||[]).reduce((b,i)=>b+(i.valorMed||0),0),0);
+  rows.push([]);
+  rows.push([
+    {v:'TOTAL GERAL',t:'s',s:{font:FONTE_HDR,fill:COR_TOTAL,alignment:{horizontal:'right'},border:BORDA}},
+    {v:'',t:'s',s:{fill:COR_TOTAL}},{v:'',t:'s',s:{fill:COR_TOTAL}},{v:'',t:'s',s:{fill:COR_TOTAL}},
+    {v:'',t:'s',s:{fill:COR_TOTAL}},{v:'',t:'s',s:{fill:COR_TOTAL}},{v:'',t:'s',s:{fill:COR_TOTAL}},
+    {v:'',t:'s',s:{fill:COR_TOTAL}},{v:'',t:'s',s:{fill:COR_TOTAL}},
+    {v:total,t:'n',s:{font:FONTE_HDR,fill:COR_TOTAL,numFmt:'R$ #,##0.00',alignment:{horizontal:'right'},border:BORDA}},
+  ]);
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:6},{wch:26},{wch:14},{wch:12},{wch:20},{wch:36},{wch:8},{wch:12},{wch:14},{wch:16}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Medições');
+  const hoje = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, `EJH_Medicoes_${hoje}.xlsx`);
+}
