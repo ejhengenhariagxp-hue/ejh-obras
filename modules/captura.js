@@ -276,8 +276,8 @@ export function renderTimelineCaptura(state){
             '<span style="font-weight:700;font-size:12.5px;color:var(--navy)">🏗 '+(obra?obra.nome:c.obraId||'—')+'</span>'+
             '<span style="font-size:11px;color:var(--muted)">⏱ '+hora+' • '+(c.salvos||0)+'/'+(c.registros||0)+' registros</span>'+
           '</div>'+
-          '<div style="font-size:12.5px;color:var(--text)">'+(c.resumo||'Comunicação processada')+'</div>'+
-          (c.textoOriginal?'<div style="font-size:11px;color:var(--muted);margin-top:6px;font-style:italic;border-left:2px solid var(--border);padding-left:8px">"'+c.textoOriginal.substring(0,160)+(c.textoOriginal.length>160?'...':'')+'"</div>':'')+
+          '<div style="font-size:12.5px;color:var(--text)">'+escapeHtml(c.resumo||'Comunicação processada')+'</div>'+
+          (c.textoOriginal?'<div style="font-size:11px;color:var(--muted);margin-top:6px;font-style:italic;border-left:2px solid var(--border);padding-left:8px">"'+escapeHtml(c.textoOriginal.substring(0,160))+(c.textoOriginal.length>160?'...':'')+'"</div>':'')+
         '</div>';
       }).join('')+
     '</div>';
@@ -296,14 +296,14 @@ export function renderHistoricoCaptura(state){
     var obra=state.obras.find(function(o){return o.id===c.obraId;});
     var dt=new Date(c.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
     return '<div class="hist-item">'+
-      '<div style="font-weight:600;font-size:13px;color:var(--navy)">'+(c.resumo||'Captura processada')+'</div>'+
+      '<div style="font-weight:600;font-size:13px;color:var(--navy)">'+escapeHtml(c.resumo||'Captura processada')+'</div>'+
       '<div class="hist-item-meta">'+
         '<span>🏗 '+(obra?obra.nome:c.obraId||'—')+'</span>'+
         '<span>📅 '+dt+'</span>'+
         '<span style="color:var(--green)">✅ '+(c.salvos||0)+' salvos</span>'+
         '<span style="color:var(--muted)">'+(c.registros||0)+' identificados</span>'+
       '</div>'+
-      (c.textoOriginal?'<div style="font-size:11.5px;color:var(--muted);margin-top:6px;font-style:italic">"'+c.textoOriginal.substring(0,120)+(c.textoOriginal.length>120?'...':'')+'"</div>':'')+
+      (c.textoOriginal?'<div style="font-size:11.5px;color:var(--muted);margin-top:6px;font-style:italic">"'+escapeHtml(c.textoOriginal.substring(0,120))+(c.textoOriginal.length>120?'...':'')+'"</div>':'')+
     '</div>';
   }).join('');
 }

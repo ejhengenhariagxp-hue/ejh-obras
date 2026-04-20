@@ -235,11 +235,11 @@ export function renderComposicoes(state) {
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
           <div style="flex:1">
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">
-              <span style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--navy)">${c.nome}</span>
-              <span style="background:${cor}18;color:${cor};padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700">${c.cat}</span>
-              ${c.cod?`<span style="background:#f1f5f9;color:var(--muted);padding:2px 8px;border-radius:8px;font-size:11px">${c.cod}</span>`:''}
+              <span style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--navy)">${escapeHtml(c.nome)}</span>
+              <span style="background:${cor}18;color:${cor};padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700">${escapeHtml(c.cat)}</span>
+              ${c.cod?`<span style="background:#f1f5f9;color:var(--muted);padding:2px 8px;border-radius:8px;font-size:11px">${escapeHtml(c.cod)}</span>`:''}
             </div>
-            ${c.desc?`<div style="font-size:12px;color:var(--muted)">${c.desc}</div>`:''}
+            ${c.desc?`<div style="font-size:12px;color:var(--muted)">${escapeHtml(c.desc)}</div>`:''}
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--navy)">${c.vunit.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</div>
@@ -250,7 +250,7 @@ export function renderComposicoes(state) {
       <!-- Insumos expandidos -->
       <div style="padding:10px 18px;background:#fafbff;font-size:12px;color:var(--muted)">
         ${c.insumos.slice(0,4).map(ins =>
-          `<span style="display:inline-block;margin-right:12px;margin-bottom:4px">• ${ins.desc} (${ins.coef}${ins.un} × ${ins.preco.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})})</span>`
+          `<span style="display:inline-block;margin-right:12px;margin-bottom:4px">• ${escapeHtml(ins.desc)} (${ins.coef}${escapeHtml(ins.un)} × ${ins.preco.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})})</span>`
         ).join('')}
         ${c.insumos.length>4?`<span style="color:var(--blue)">+${c.insumos.length-4} mais</span>`:''}
       </div>

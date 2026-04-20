@@ -85,6 +85,12 @@ export function openModalDiario(state){
   openModal('modal-diario');
 }
 
+export function cancelarDiario(){
+  _pendingFotos=[];
+  renderFotoPreview();
+  closeModal('modal-diario');
+}
+
 export function renderDiario(state){
   const sorted = [...state.diario].sort((a,b)=>b.data.localeCompare(a.data));
   const total = sorted.length;
