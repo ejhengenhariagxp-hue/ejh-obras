@@ -8,7 +8,7 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
          fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA,
          getIaKey, setIaKey, hasIaKey } from './services.js';
-import { addObra, delObra, renderObras, registrarMedicaoRapida } from './modules/obras.js';
+import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js';
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js';
 import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, renderDiario, gerarDiarioComFoto } from './modules/diario.js';
@@ -256,6 +256,9 @@ G.iaTrocarChave = () => {
 G.initSigPad = initSigPad;
 G.addObra = () => { if(addObra(state)) renderAtiva(); };
 G.delObra = id => { if(delObra(state,id)) renderAtiva(); };
+G.openEditObra = id => openEditObra(state, id);
+G.salvarObra = () => { if(salvarObra(state)) renderAtiva(); };
+G.resetFormObra = () => resetFormObra();
 G.registrarMedicaoRapida = id => { if(registrarMedicaoRapida(state,id)) renderAtiva(); };
 G.addOrc = () => { if(addOrc(state)) renderAtiva(); };
 G.delOrc = id => { if(delOrc(state,id)) renderAtiva(); };

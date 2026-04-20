@@ -81,7 +81,7 @@
 <div id="page-dashboard" class="page active">
   <div class="page-hdr">
     <div><div class="page-title">Dashboard</div><div class="page-sub" id="dash-date"></div></div>
-    <button class="btn btn-primary" onclick="openModal('modal-obra')">＋ Novo Projeto / Obra</button>
+    <button class="btn btn-primary" onclick="resetFormObra();openModal('modal-obra')">＋ Novo Projeto / Obra</button>
   </div>
   <div class="kpi-grid">
     <div class="kpi blue"><div class="kpi-label">Projetos e Obras Ativos</div><div class="kpi-value" id="kpi-total">0</div><div class="kpi-sub">cadastrados</div></div>
@@ -95,7 +95,7 @@
 
 <!-- OBRAS -->
 <div id="page-obras" class="page">
-  <div class="page-hdr"><div><div class="page-title">Obras e Projetos</div><div class="page-sub">Gestão de Projetos e Obras</div></div><button class="btn btn-primary" onclick="openModal('modal-obra')">＋ Novo Projeto / Obra</button></div>
+  <div class="page-hdr"><div><div class="page-title">Obras e Projetos</div><div class="page-sub">Gestão de Projetos e Obras</div></div><button class="btn btn-primary" onclick="resetFormObra();openModal('modal-obra')">＋ Novo Projeto / Obra</button></div>
   <div class="table-wrap"><table><thead><tr><th>Tipo</th><th>ID</th><th>Nome</th><th>Cliente</th><th>Área</th><th>Início</th><th>Fim</th><th>Status</th><th></th></tr></thead><tbody id="tbody-obras"></tbody></table></div>
 </div>
 
@@ -437,26 +437,50 @@
 </main>
 
 
-<div class="modal-bg" id="modal-obra"><div class="modal">
-  <div class="modal-title">🏗 Novo R1 / R2 (Projeto ou Obra)</div>
+<div class="modal-bg" id="modal-obra"><div class="modal modal-wide">
+  <div class="modal-title" id="modal-obra-title">🏗 Novo R1 / R2 (Projeto ou Obra)</div>
+  <input type="hidden" id="f-obra-id">
   <div class="form-grid">
     <div class="form-group"><label>Tipo</label><select id="f-obra-tipo">
       <option value="R1">R1 - Projeto</option><option value="R2" selected>R2 - Obra</option>
     </select></div>
-    <div class="form-group"><label>Nome</label><input id="f-obra-nome" placeholder="Ex: Residencial Guaxupé"></div>
+    <div class="form-group"><label>Modalidade</label><select id="f-obra-modalidade">
+      <option value="privada">🏠 Privada</option>
+      <option value="financiada">🏦 Financiada (Caixa)</option>
+      <option value="publica">🏛 Pública</option>
+      <option value="minha_casa">🏡 MCMV</option>
+      <option value="empreita">🔨 Empreita Global</option>
+      <option value="acompanhamento">🔎 Acompanhamento (RT)</option>
+    </select></div>
+    <div class="form-group full"><label>Nome</label><input id="f-obra-nome" placeholder="Ex: Residencial Guaxupé"></div>
     <div class="form-group"><label>Cliente</label><input id="f-obra-cliente" placeholder="Nome do cliente"></div>
+    <div class="form-group"><label>Telefone do cliente</label><input id="f-obra-cli-tel" placeholder="(35) 9 ____-____"></div>
+    <div class="form-group"><label>Email do cliente</label><input id="f-obra-cli-email" type="email" placeholder="cliente@email.com"></div>
+    <div class="form-group"><label>CPF/CNPJ</label><input id="f-obra-cli-doc" placeholder="000.000.000-00"></div>
     <div class="form-group"><label>Área (m²)</label><input id="f-obra-area" type="number" placeholder="250"></div>
     <div class="form-group full"><label>Endereço</label><input id="f-obra-end" placeholder="Rua, nº — Cidade/UF"></div>
+    <div class="form-group"><label>Responsável Técnico (RT)</label><input id="f-obra-rt" placeholder="Nome do engenheiro"></div>
+    <div class="form-group"><label>CREA / CAU</label><input id="f-obra-crea" placeholder="CREA-MG 000000"></div>
     <div class="form-group"><label>Data de Início</label><input id="f-obra-inicio" type="date"></div>
     <div class="form-group"><label>Previsão de Término</label><input id="f-obra-fim" type="date"></div>
     <div class="form-group"><label>Status</label><select id="f-obra-status">
       <option>Em andamento</option><option>Planejada</option><option>Paralisada</option><option>Concluída</option>
     </select></div>
     <div class="form-group"><label>Valor Contrato (R$)</label><input id="f-obra-contrato" type="number" step="0.01" placeholder="0,00"></div>
+    <div class="form-group"><label>Nº Contrato</label><input id="f-obra-numcontrato" placeholder="CT-2025-001"></div>
+    <div class="form-group"><label>Periodicidade de Medição</label><select id="f-obra-periodicidade">
+      <option value="">(Sem ciclo definido)</option>
+      <option value="semanal">Semanal</option>
+      <option value="quinzenal">Quinzenal</option>
+      <option value="mensal">Mensal</option>
+      <option value="por_pl">Por PL (Caixa)</option>
+    </select></div>
+    <div class="form-group"><label>Dia da Medição</label><input id="f-obra-diamed" type="number" min="1" max="31" placeholder="Ex: 15"></div>
+    <div class="form-group full"><label>Observações do Contrato</label><textarea id="f-obra-obscontrato" placeholder="Observações, cláusulas importantes..." rows="2"></textarea></div>
   </div>
   <div class="modal-actions">
     <button class="btn btn-outline" onclick="closeModal('modal-obra')">Cancelar</button>
-    <button class="btn btn-primary" onclick="addObra()">Salvar</button>
+    <button class="btn btn-primary" id="btn-salvar-obra" onclick="salvarObra()">Salvar</button>
   </div>
 </div></div>
 
