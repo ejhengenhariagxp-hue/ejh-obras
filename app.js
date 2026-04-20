@@ -79,7 +79,7 @@ let _lastHash = '';
 function calcHash(s) {
   const str = JSON.stringify({obras:s.obras,orc:s.orc,cron:s.cron,fin:s.fin,
     medicoes:s.medicoes,empreita:s.empreita,propostas:s.propostas,
-    checklists:s.checklists,capturas:s.capturas});
+    checklists:s.checklists,capturas:s.capturas,composicoes:s.composicoes});
   let h = 0;
   for (let i = 0; i < str.length; i++) { h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
   return h.toString(36);

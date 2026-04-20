@@ -1,5 +1,5 @@
 // modules/cronograma.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName } from '../utils.js';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName, escapeHtml } from '../utils.js';
 
 export function addCron(state){
   const etapa=document.getElementById('f-cron-etapa').value.trim();
@@ -73,7 +73,7 @@ export function renderCron(state){
               '<span class="badge badge-blue">🔨 Em execução</span>';
     return `<tr>
       <td class="td-id">${x.id}</td><td>${obraName(state, x.obraId)}</td>
-      <td style="font-weight:500">${x.etapa}</td>
+      <td style="font-weight:500">${escapeHtml(x.etapa)}</td>
       <td>${fmtD(x.inicio)}</td><td>${fmtD(x.fim)}</td>
       <td>${x.prev}%</td>
       <td><div style="display:flex;align-items:center;gap:9px">

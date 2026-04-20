@@ -1,5 +1,5 @@
 // modules/diario.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName } from '../utils.js';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName, escapeHtml } from '../utils.js';
 import { iaCall } from '../services.js';
 
 let _diarioLimit = 20;
@@ -7,7 +7,9 @@ let _pendingFotos = [];
 
 export function addDiario(state){
   const obraId = document.getElementById('f-dia-obra')?.value;
+  const data = document.getElementById('f-dia-data')?.value;
   if (!obraId) { showToast('⚠️ Selecione uma obra'); return false; }
+  if (!data) { showToast('⚠️ Selecione uma data'); return false; }
 
   state.diario.push({
     id:     'DIA-'+pad(state.counters.dia),
@@ -99,8 +101,8 @@ export function renderDiario(state){
         <div style="display:flex;justify-content:space-between">
           <div style="flex:1">
             <div class="diario-date">${fmtD(d.data)} — ${obraName(state, d.obraId)}</div>
-            <div class="diario-body">${d.desc}</div>
-            ${d.ocorr&&d.ocorr!=='Sem ocorrências' && d.ocorr!=='Nenhuma'?`<div style="margin-top:5px;font-size:12px;color:var(--red)">⚠️ ${d.ocorr}</div>`:''}
+            <div class="diario-body">${escapeHtml(d.desc)}</div>
+            ${d.ocorr&&d.ocorr!=='Sem ocorrências' && d.ocorr!=='Nenhuma'?`<div style="margin-top:5px;font-size:12px;color:var(--red)">⚠️ ${escapeHtml(d.ocorr)}</div>`:''}
             <div class="diario-tags">
               <span class="badge badge-blue">${d.equipe}</span>
               <span class="badge badge-amber">${d.clima}</span>

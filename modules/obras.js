@@ -2,7 +2,7 @@
 // modules/obras.js — CRUD de obras, validação e renderização
 // ══════════════════════════════════════════════════════════════════════
 
-import { fmt, fmtD, pad, safeInner, showToast, statusBadge, tipoLabel, openModal, closeModal, modalidadeIcon, verificarAvisosObra } from '../utils.js';
+import { fmt, fmtD, pad, safeInner, showToast, statusBadge, tipoLabel, openModal, closeModal, modalidadeIcon, verificarAvisosObra, escapeHtml } from '../utils.js';
 
 const val = id => document.getElementById(id)?.value?.trim() || '';
 const num = id => +document.getElementById(id)?.value || 0;
@@ -140,8 +140,8 @@ export function renderObras(state) {
     return `<tr>
       <td><span class="badge ${o.tipo==='projeto' || o.tipo==='R1'?'badge-purple':'badge-blue'}">${tipoLabel(o.tipo)}</span></td>
       <td class="td-id">${o.id}</td>
-      <td style="font-weight:600">${o.nome}${avisoHtml}</td>
-      <td>${o.cliente||'—'}</td>
+      <td style="font-weight:600">${escapeHtml(o.nome)}${avisoHtml}</td>
+      <td>${escapeHtml(o.cliente||'—')}</td>
       <td>${(o.area||0).toLocaleString('pt-BR')} m²</td>
       <td>${modalidadeIcon(o.modalidade||'privada')}</td>
       <td>${fmtD(o.inicio)}</td><td>${fmtD(o.fim)}</td>

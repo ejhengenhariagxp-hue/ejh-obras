@@ -1,5 +1,5 @@
 ﻿// modules/empreita.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName } from '../utils.js';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName, escapeHtml } from '../utils.js';
 
 let _empSigCanvas = { cliente: null, empreiteiro: null };
 let _empSigDrawing = { cliente: false, empreiteiro: false };
@@ -52,6 +52,8 @@ export function resetFormEmpreita() {
 
 export function addEmpreita(state){
   const id='EMP-'+pad(state.counters.emp);
+  const valor=+document.getElementById('f-emp-valor').value||0;
+  if(valor<=0){showToast('⚠️ O valor deve ser maior que zero');return false;}
   const { itens, customizado } = obterItensSelecionados();
   const sigs = obterAssinaturas();
   state.empreitas.push({
@@ -61,7 +63,7 @@ export function addEmpreita(state){
     tipo:document.getElementById('f-emp-tipo').value,
     desc:document.getElementById('f-emp-desc').value,
     itens: itens, itensCustom: customizado,
-    valor:+document.getElementById('f-emp-valor').value||0,
+    valor,
     area:+document.getElementById('f-emp-area').value||0,
     inicio:document.getElementById('f-emp-inicio').value,
     prazo:+document.getElementById('f-emp-prazo').value||0,
@@ -113,7 +115,7 @@ export function renderEmpreita(state){
     return `<div class="empreita-card">
       <div class="empreita-header">
         <div>
-          <div class="empreita-title">${e.nome} <span style="font-weight:400;opacity:.8">— ${e.tipo}</span></div>
+          <div class="empreita-title">${escapeHtml(e.nome)} <span style="font-weight:400;opacity:.8">— ${escapeHtml(e.tipo)}</span></div>
           <div style="font-size:12px;opacity:.7;margin-top:2px">📍 ${obraName(state, e.obraId)}${e.tel?' • 📞 '+e.tel:''}</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
@@ -123,7 +125,7 @@ export function renderEmpreita(state){
         </div>
       </div>
       <div class="empreita-body">
-        ${e.desc?`<div style="font-size:13px;color:var(--muted);margin-bottom:12px;font-style:italic">${e.desc}</div>`:''}
+        ${e.desc?`<div style="font-size:13px;color:var(--muted);margin-bottom:12px;font-style:italic">${escapeHtml(e.desc)}</div>`:''}
         <div class="empreita-grid" style="margin-bottom:14px">
           <div class="empreita-stat"><div class="empreita-stat-val">${fmt(e.valor)}</div><div class="empreita-stat-lbl">Valor Global</div></div>
           <div class="empreita-stat"><div class="empreita-stat-val" style="color:var(--green)">${fmt(pago)}</div><div class="empreita-stat-lbl">Total Pago</div></div>

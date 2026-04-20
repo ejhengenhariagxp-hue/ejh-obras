@@ -4,6 +4,7 @@
 export const fmt  = v => (+(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 export const fmtD = d => d ? new Date(d+'T12:00:00').toLocaleDateString('pt-BR') : '—';
 export const pad  = n => String(n).padStart(3,'0');
+export const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 export function safeInner(id, html) {
   const el = document.getElementById(id);
