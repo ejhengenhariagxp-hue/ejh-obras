@@ -120,6 +120,17 @@ export function addInsumoComp() {
   renderInsumosComp();
 }
 
+export function setInsumoField(i, field, value) {
+  if (!_insumosAtual[i]) return;
+  _insumosAtual[i][field] = (field === 'coef' || field === 'preco') ? +value : value;
+  if (field === 'coef' || field === 'preco') calcTotalComp();
+}
+
+export function removeInsumoAt(i) {
+  _insumosAtual.splice(i, 1);
+  renderInsumosComp();
+}
+
 export function renderInsumosComp() {
   const el = document.getElementById('comp-insumos-lista');
   if (!el) return;
@@ -137,19 +148,19 @@ export function renderInsumosComp() {
     </div>
     ${_insumosAtual.map((ins, i) => `
     <div style="display:grid;grid-template-columns:2fr 60px 80px 100px 36px;gap:6px;margin-bottom:6px;align-items:center">
-      <input value="${ins.desc}" placeholder="Ex: Concreto usinado fck25 MPa"
-        oninput="_insumosAtual[${i}].desc=this.value"
+      <input value="${escapeHtml(ins.desc)}" placeholder="Ex: Concreto usinado fck25 MPa"
+        oninput="setInsumoField(${i},'desc',this.value)"
         style="padding:6px 9px;border:1px solid var(--border);border-radius:7px;font-size:12.5px;font-family:'DM Sans',sans-serif;background:var(--card);color:var(--text)">
-      <input value="${ins.un}" placeholder="m³"
-        oninput="_insumosAtual[${i}].un=this.value"
+      <input value="${escapeHtml(ins.un)}" placeholder="m³"
+        oninput="setInsumoField(${i},'un',this.value)"
         style="padding:6px 7px;border:1px solid var(--border);border-radius:7px;font-size:12.5px;text-align:center;font-family:'DM Sans',sans-serif;background:var(--card);color:var(--text)">
       <input type="number" value="${ins.coef}" step="0.001" min="0"
-        oninput="_insumosAtual[${i}].coef=+this.value;calcTotalComp()"
+        oninput="setInsumoField(${i},'coef',this.value)"
         style="padding:6px 7px;border:1px solid var(--border);border-radius:7px;font-size:12.5px;text-align:right;font-family:'DM Sans',sans-serif;background:var(--card);color:var(--text)">
       <input type="number" value="${ins.preco}" step="0.01" min="0"
-        oninput="_insumosAtual[${i}].preco=+this.value;calcTotalComp()"
+        oninput="setInsumoField(${i},'preco',this.value)"
         style="padding:6px 7px;border:1px solid var(--border);border-radius:7px;font-size:12.5px;text-align:right;font-family:'DM Sans',sans-serif;background:var(--card);color:var(--text)">
-      <button onclick="_insumosAtual.splice(${i},1);renderInsumosComp()"
+      <button onclick="removeInsumoAt(${i})"
         style="padding:6px;background:transparent;border:1px solid var(--red);border-radius:7px;color:var(--red);cursor:pointer;font-size:14px;line-height:1">×</button>
     </div>`).join('')}
   `;

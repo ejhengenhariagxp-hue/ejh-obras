@@ -27,7 +27,8 @@ import { novaComposicao, addInsumoComp, renderInsumosComp, calcTotalComp,
          salvarComposicao, delComposicao, renderComposicoes, filtrarComposicoes,
          popularSelectComposicoes, preencherDadosComposicao, calcTotalComposicaoSel,
          inserirComposicaoNoOrcamento, editarComposicao,
-         abrirCopiaSinapi, _setCopiaSrc, _filtrarCopiaSinapi, _copiarDeSinapi } from './modules/composicoes.js';
+         abrirCopiaSinapi, _setCopiaSrc, _filtrarCopiaSinapi, _copiarDeSinapi,
+         setInsumoField, removeInsumoAt } from './modules/composicoes.js';
 import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js';
 import { importExcel, importCSV, importPDF, importManual, applyMapping,
          _selectSheet, _updateImportItem, _removeImportItem, addImportRow,
@@ -341,6 +342,8 @@ G.novaComposicao = () => novaComposicao();
 G.addInsumoComp = () => addInsumoComp();
 G.renderInsumosComp = () => renderInsumosComp();
 G.calcTotalComp = () => calcTotalComp();
+G.setInsumoField = (i, f, v) => setInsumoField(i, f, v);
+G.removeInsumoAt = i => removeInsumoAt(i);
 G.salvarComposicao = () => { if(salvarComposicao(state)) renderAtiva(); };
 G.delComposicao = id => { if(delComposicao(state,id)) renderAtiva(); };
 G.editarComposicao = id => editarComposicao(state, id);
