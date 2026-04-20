@@ -1,21 +1,74 @@
 ﻿// modules/empreita.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge } from '../utils.js';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName } from '../utils.js';
 
+let _empSigCanvas = { cliente: null, empreiteiro: null };
+let _empSigDrawing = { cliente: false, empreiteiro: false };
+
+
+export function initSignaturePad(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let drawing = false;
+  canvas.addEventListener('mousedown', () => { drawing = true; ctx.beginPath(); ctx.moveTo(event.offsetX, event.offsetY); });
+  canvas.addEventListener('mousemove', () => { if (drawing) { ctx.lineTo(event.offsetX, event.offsetY); ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.stroke(); } });
+  canvas.addEventListener('mouseup', () => { drawing = false; });
+  canvas.addEventListener('mouseout', () => { drawing = false; });
+}
+
+export function initSignaturePads() {
+  initSignaturePad('f-emp-sig-cliente');
+  initSignaturePad('f-emp-sig-empreiteiro');
+}
+
+export function limparAssinatura(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
+export function obterItensSelecionados() {
+  const checked = Array.from(document.querySelectorAll('#f-emp-itens-check input[type="checkbox"]:checked')).map(el => el.value);
+  const custom = document.getElementById('f-emp-itens-custom')?.value?.trim() || '';
+  return { itens: checked, customizado: custom };
+}
+
+export function obterAssinaturas() {
+  return {
+    cliente: document.getElementById('f-emp-sig-cliente')?.toDataURL('image/png') || '',
+    empreiteiro: document.getElementById('f-emp-sig-empreiteiro')?.toDataURL('image/png') || ''
+  };
+}
+
+export function resetFormEmpreita() {
+  const ids = ['f-emp-obra','f-emp-nome','f-emp-tel','f-emp-tipo','f-emp-desc','f-emp-valor','f-emp-area','f-emp-inicio','f-emp-prazo','f-emp-pgto','f-emp-status','f-emp-itens-custom'];
+  ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.querySelectorAll('#f-emp-itens-check input[type="checkbox"]').forEach(el => el.checked = false);
+  limparAssinatura('f-emp-sig-cliente');
+  limparAssinatura('f-emp-sig-empreiteiro');
+}
 
 export function addEmpreita(state){
   const id='EMP-'+pad(state.counters.emp);
+  const { itens, customizado } = obterItensSelecionados();
+  const sigs = obterAssinaturas();
   state.empreitas.push({
     id, obraId:document.getElementById('f-emp-obra').value,
     nome:document.getElementById('f-emp-nome').value||'Empreiteiro',
     tel:document.getElementById('f-emp-tel').value,
     tipo:document.getElementById('f-emp-tipo').value,
     desc:document.getElementById('f-emp-desc').value,
+    itens: itens, itensCustom: customizado,
     valor:+document.getElementById('f-emp-valor').value||0,
     area:+document.getElementById('f-emp-area').value||0,
     inicio:document.getElementById('f-emp-inicio').value,
     prazo:+document.getElementById('f-emp-prazo').value||0,
     pgto:document.getElementById('f-emp-pgto').value,
     status:document.getElementById('f-emp-status').value,
+    sigCliente: sigs.cliente,
+    sigEmpreiteiro: sigs.empreiteiro,
     pagamentos:[],
   });
   state.counters.emp++;
@@ -44,7 +97,7 @@ export function addEmpPag(state){
 }
 
 export function renderEmpreita(state){
-  const data = state.empreita || [];
+  const data = state.empreitas || [];
   const total=data.reduce((a,x)=>a+x.valor,0);
   const pago=data.reduce((a,x)=>a+(x.pagamentos||[]).reduce((b,p)=>b+p.valor,0),0);
   document.getElementById('emp-kpi-total').textContent=data.length;

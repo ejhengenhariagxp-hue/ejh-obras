@@ -36,16 +36,37 @@ export function delDiario(state, id){
   return false;
 }
 
-export function handleFotos(state, input){
+function compressImage(dataUrl, maxWidth = 1280, quality = 0.75) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > maxWidth) {
+        h = (h * maxWidth) / w;
+        w = maxWidth;
+      }
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = dataUrl;
+  });
+}
+
+export async function handleFotos(state, input){
   const files = Array.from(input.files);
-  files.forEach(file=>{
+  for (const file of files) {
     const reader = new FileReader();
-    reader.onload = e => {
-      _pendingFotos.push({dataUrl:e.target.result, name:file.name});
+    reader.onload = async e => {
+      const compressed = await compressImage(e.target.result);
+      _pendingFotos.push({dataUrl:compressed, name:file.name});
       renderFotoPreview();
     };
     reader.readAsDataURL(file);
-  });
+  }
   input.value=''; // permite reusar
 }
 

@@ -14,7 +14,7 @@ import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, 
 import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, renderDiario, gerarDiarioComFoto } from './modules/diario.js';
 import { addFin, delFin, openModalFin, renderFinanceiro } from './modules/financeiro.js';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes } from './modules/medicoes.js';
-import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita } from './modules/empreita.js';
+import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
          saveProposta, delProposta, editProposta, printProposta, compartilharWhatsApp,
          colherAssinaturaProposta, importFromOrcamento, addObraItem,
@@ -294,8 +294,10 @@ G.printMedicao = id => printMedicao(state, id);
 G.colherAssinatura = id => colherAssinatura(state, id);
 G.addEmpreita = () => { if(addEmpreita(state)) renderAtiva(); };
 G.delEmpreita = id => { if(delEmpreita(state,id)) renderAtiva(); };
+G.abrirModalEmpreita = () => { resetFormEmpreita(); openModal('modal-empreita'); setTimeout(initSignaturePads, 100); };
 G.openEmpPag = id => openEmpPag(state,id);
 G.addEmpPag = () => { if(addEmpPag(state)) renderAtiva(); };
+G.limparAssinatura = id => limparAssinatura(id);
 G.openPropProjeto = () => openPropProjeto(state);
 G.openPropObra = () => openPropObra(state);
 G.calcPropProjeto = () => calcPropProjeto(state);
