@@ -11,7 +11,7 @@ import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
 import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js';
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js';
-import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, renderDiario, gerarDiarioComFoto } from './modules/diario.js';
+import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js';
 import { addFin, delFin, openModalFin, renderFinanceiro } from './modules/financeiro.js';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes } from './modules/medicoes.js';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js';
@@ -279,6 +279,7 @@ G.openCronEdit = id => openCronEdit(state,id);
 G.setCronView = v => setCronView(v);
 G.renderGantt = () => renderGantt(state);
 G.openModalDiario = () => openModalDiario(state);
+G.cancelarDiario = () => cancelarDiario();
 G.addDiario = () => { if(addDiario(state)) renderAtiva(); };
 G.delDiario = id => { if(delDiario(state,id)) renderAtiva(); };
 G.handleFotos = inp => handleFotos(state, inp);
