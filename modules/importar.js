@@ -1,13 +1,27 @@
-// modules/importar.js — Importar orçamento (Excel/CSV/JSON/Manual)
+// modules/importar.js — Importar orçamento (Excel/CSV/JSON/Manual/PDF)
 import { fmt, pad, showToast } from '../utils.js';
+import { iaCall } from '../services.js';
 
 let _importItens = [];
 let _rawData = [];
 let _currentSheet = null;
 
 function parseNum(v) {
-  if (v == null) return 0;
-  const s = String(v).replace(/R\$\s*/gi, '').replace(/\./g, '').replace(',', '.').trim();
+  if (v == null || v === '') return 0;
+  if (typeof v === 'number') return isNaN(v) ? 0 : v;
+  let s = String(v).replace(/R\$\s*/gi, '').trim();
+  // Formato BR ("1.234,56"): remove pontos (milhar) e troca vírgula por ponto
+  // Formato US ("1,234.56"): remove vírgulas (milhar) mantém ponto decimal
+  // Formato simples ("1234.56" ou "1234,56"): trata cada caso
+  const hasComma = s.includes(',');
+  const hasDot = s.includes('.');
+  if (hasComma && hasDot) {
+    // Detecta qual é decimal pelo que vem por último
+    if (s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g, '').replace(',', '.');
+    else s = s.replace(/,/g, '');
+  } else if (hasComma) {
+    s = s.replace(',', '.');
+  }
   const n = parseFloat(s);
   return isNaN(n) ? 0 : n;
 }
@@ -159,8 +173,48 @@ export function importCSV(input) {
 }
 
 export function importPDF(input) {
-  showToast('⚠️ Importação de PDF requer lib pdf.js — use Excel, CSV ou cole manual');
+  const file = input.files[0];
+  if (!file) return;
   input.value = '';
+  if (file.size > 10 * 1024 * 1024) {
+    showToast('⚠️ PDF maior que 10MB. Tente um arquivo menor ou use Excel/CSV');
+    return;
+  }
+  showToast('🤖 Analisando PDF com IA...', 8000);
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const b64 = e.target.result.split(',')[1];
+      const system = 'Você extrai itens de orçamentos de obra a partir de PDFs. ' +
+        'Retorne APENAS JSON válido no formato: ' +
+        '{"itens":[{"item":"descrição do serviço","un":"un/m²/m³/kg/vb","qtd":numero,"vunit":numero,"etapa":"fase ou grupo"}]}. ' +
+        'Valores numéricos em formato JS (ponto decimal). Ignore cabeçalhos, totais gerais e linhas de subtotal. ' +
+        'Se o documento não for um orçamento, retorne {"itens":[]}.';
+      const content = [
+        { type:'text', text:'Extraia todos os itens deste orçamento.' },
+        { type:'document', source:{ type:'base64', media_type:'application/pdf', data:b64 } }
+      ];
+      const raw = await iaCall(system, content, 4000);
+      const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+      const itens = Array.isArray(parsed.itens) ? parsed.itens : [];
+      if (!itens.length) {
+        showToast('⚠️ Nenhum item identificado no PDF');
+        return;
+      }
+      _importItens = itens.map(x => ({
+        item:  String(x.item || '').trim(),
+        un:    String(x.un || 'vb').trim(),
+        qtd:   parseNum(x.qtd),
+        vunit: parseNum(x.vunit),
+        etapa: String(x.etapa || '').trim(),
+      })).filter(x => x.item && (x.qtd > 0 || x.vunit > 0));
+      renderPreview();
+      showToast(`✅ ${_importItens.length} itens extraídos! Revise antes de importar.`);
+    } catch (err) {
+      showToast('❌ Erro ao ler PDF: ' + err.message);
+    }
+  };
+  reader.readAsDataURL(file);
 }
 
 export function importManual() {
