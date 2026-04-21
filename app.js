@@ -104,6 +104,21 @@ export function renderAtiva() {
   }
 }
 
+function statusObra(o, etapas) {
+  const avg = etapas.length ? Math.round(etapas.reduce((a,x)=>a+x.conc,0)/etapas.length) : 0;
+  if (!o.inicio || !o.fim) return { avg, cor:'green', icon:'🟢', label:'Em dia' };
+  const ini = new Date(o.inicio).getTime();
+  const fim = new Date(o.fim).getTime();
+  const hoje = Date.now();
+  if (hoje < ini || fim <= ini) return { avg, cor:'green', icon:'🟢', label:'Em dia' };
+  const prazoPct = Math.min(100, Math.round((hoje - ini) / (fim - ini) * 100));
+  const delta = avg - prazoPct;
+  if (hoje > fim && avg < 100) return { avg, cor:'red', icon:'🔴', label:'Atrasada' };
+  if (delta < -15) return { avg, cor:'red', icon:'🔴', label:'Atrasada' };
+  if (delta < 0)   return { avg, cor:'yellow', icon:'🟡', label:'Atenção' };
+  return { avg, cor:'green', icon:'🟢', label:'Em dia' };
+}
+
 function renderDashboard() {
   const hoje = new Date();
   safeText('dash-date', hoje.toLocaleDateString('pt-BR',{weekday:'long',year:'numeric',month:'long',day:'numeric'}));
@@ -118,20 +133,52 @@ function renderDashboard() {
   safeText('kpi-saldo', fmt(rec-des));
   const sEl = document.getElementById('kpi-saldo');
   if (sEl) sEl.style.color = (rec-des) >= 0 ? 'var(--green)' : 'var(--red)';
-  // Cards ativos
+
+  // Empty state: zero obras cadastradas
+  if (state.obras.length === 0) {
+    safeInner('dash-obras', `
+      <div class="empty-hero">
+        <div class="empty-hero-icon">🚧</div>
+        <div class="empty-hero-title">Nenhuma obra cadastrada</div>
+        <div class="empty-hero-sub">Crie sua primeira obra e comece a controlar custos, prazo e execução.</div>
+        <button class="btn btn-primary" onclick="resetFormObra();openModal('modal-obra')">＋ Criar Primeira Obra</button>
+      </div>`);
+    safeInner('dash-fin', '<div style="color:var(--muted);padding:14px;text-align:center;font-size:13px">Sem movimentações ainda.</div>');
+    return;
+  }
+
+  // Cards ativos com semáforo de status
   const active = state.obras.filter(o => o.status === 'Em andamento');
   safeInner('dash-obras', active.map(o => {
     const etapas = state.cron.filter(c=>c.obraId===o.id);
-    const avg = etapas.length ? Math.round(etapas.reduce((a,x)=>a+x.conc,0)/etapas.length) : 0;
-    return `<div class="obra-card" onclick="window.nav('obras',null)" style="cursor:pointer">
-      <div class="obra-card-title">${o.nome}</div>
+    const st = statusObra(o, etapas);
+    return `<div class="obra-card status-${st.cor}" onclick="window.nav('obras',null)" style="cursor:pointer">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div class="obra-card-title">${o.nome}</div>
+        <span class="status-pill status-pill-${st.cor}" title="${st.label}">${st.icon} ${st.label}</span>
+      </div>
       <div class="obra-card-meta"><span>👤 ${o.cliente}</span><span>📐 ${o.area} m²</span></div>
       <div style="margin-top:10px">
-        <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px"><span style="color:var(--muted)">Avanço</span><strong>${avg}%</strong></div>
-        <div class="prog-obra"><div class="prog-obra-fill" style="width:${avg}%"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px"><span style="color:var(--muted)">Avanço</span><strong>${st.avg}%</strong></div>
+        <div class="prog-obra"><div class="prog-obra-fill" style="width:${st.avg}%"></div></div>
       </div>
     </div>`;
   }).join('') || '<div style="color:var(--muted);padding:20px;text-align:center">Nenhuma obra em andamento.</div>');
+
+  // Últimas 5 movimentações financeiras
+  const ultFin = [...state.fin].sort((a,b)=>(b.data||'').localeCompare(a.data||'')).slice(0,5);
+  safeInner('dash-fin', ultFin.length ? ultFin.map(f => {
+    const obra = state.obras.find(o=>o.id===f.obraId);
+    const cor = f.tipo === 'Receita' ? 'var(--green)' : 'var(--red)';
+    const sinal = f.tipo === 'Receita' ? '+' : '−';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.desc || '—'}</div>
+        <div style="font-size:11.5px;color:var(--muted)">${fmtD(f.data)} • ${obra ? obra.nome : '—'} • ${f.cat || ''}</div>
+      </div>
+      <div style="font-weight:700;color:${cor};margin-left:12px;white-space:nowrap">${sinal} ${fmt(f.valor)}</div>
+    </div>`;
+  }).join('') : '<div style="color:var(--muted);padding:14px;text-align:center;font-size:13px">Sem movimentações ainda.</div>');
 }
 
 function exportJSON() {
