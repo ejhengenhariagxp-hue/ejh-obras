@@ -217,7 +217,16 @@
 
   <div class="section"><div class="section-hdr"><div class="section-title">Projetos</div></div><div class="table-wrap"><table><thead><tr><th>Projeto</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="tbody-fin-r1"></tbody></table></div></div>
   <div class="section"><div class="section-hdr"><div class="section-title">Obras</div></div><div class="table-wrap"><table><thead><tr><th>Obra</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="tbody-fin-r2"></tbody></table></div></div>
-  <div class="section"><div class="section-hdr"><div class="section-title">Lançamentos</div></div><div class="table-wrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Obra</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th></th></tr></thead><tbody id="tbody-fin"></tbody></table></div></div>
+  <div class="section">
+    <div class="section-hdr" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div class="section-title">Lançamentos</div>
+      <label style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer">
+        <input type="checkbox" id="fin-hide-rt" onchange="toggleHideRT(this)" style="cursor:pointer">
+        Ocultar obras de Acompanhamento (RT)
+      </label>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Obra</th><th>Descrição</th><th>Categoria</th><th>Status</th><th>Valor</th><th></th></tr></thead><tbody id="tbody-fin"></tbody></table></div>
+  </div>
 </div>
 
 <!-- TABELAS -->
@@ -614,11 +623,17 @@
     <div class="form-group full"><label>Ocorrências</label><input id="f-dia-ocorr" placeholder="Sem ocorrências / descreva se houver"></div>
     <div class="form-group full">
       <label>📷 Fotos da Obra</label>
-      <div class="foto-upload-area" id="foto-drop-area">
-        <input type="file" id="f-dia-fotos" accept="image/*" multiple capture="environment" onchange="handleFotos(this)">
-        <div class="foto-upload-icon">📷</div>
-        <div class="foto-upload-text">Toque para <b>tirar foto ou escolher da galeria</b><br><span style="font-size:11px">JPG, PNG — múltiplas fotos permitidas</span></div>
+      <div class="foto-upload-buttons">
+        <label class="btn btn-outline foto-btn" for="f-dia-foto-cam">
+          📸 Tirar foto
+          <input type="file" id="f-dia-foto-cam" accept="image/*" capture="environment" onchange="handleFotos(this)" hidden>
+        </label>
+        <label class="btn btn-outline foto-btn" for="f-dia-foto-gal">
+          🖼 Galeria (várias)
+          <input type="file" id="f-dia-foto-gal" accept="image/*" multiple onchange="handleFotos(this)" hidden>
+        </label>
       </div>
+      <div class="foto-upload-hint">JPG/PNG — você pode adicionar várias (câmera uma por vez, galeria várias de uma só vez).</div>
       <div class="foto-preview-grid" id="foto-preview"></div>
     </div>
   </div>

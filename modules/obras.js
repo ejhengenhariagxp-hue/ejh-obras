@@ -137,8 +137,11 @@ export function renderObras(state) {
       ? `<span style="margin-left:6px;font-size:10px;padding:2px 6px;border-radius:8px;font-weight:700;background:${aviso.tipo==='vencida'?'#fee2e2':'#fef3c7'};color:${aviso.tipo==='vencida'?'#991b1b':'#92400e'}">
           ${aviso.tipo==='vencida'?'⚠️ Med. '+aviso.dias+'d atraso':'🔔 Med. em '+aviso.dias+'d'}
         </span>` : '';
+    const tipoBadgeClass = o.tipo==='acompanhamento' ? 'badge-teal'
+                         : (o.tipo==='projeto' || o.tipo==='R1' ? 'badge-purple' : 'badge-blue');
+    const tipoBadgeIcon  = o.tipo==='acompanhamento' ? '🔍 ' : '';
     return `<tr>
-      <td><span class="badge ${o.tipo==='projeto' || o.tipo==='R1'?'badge-purple':'badge-blue'}">${tipoLabel(o.tipo)}</span></td>
+      <td><span class="badge ${tipoBadgeClass}">${tipoBadgeIcon}${tipoLabel(o.tipo)}</span></td>
       <td class="td-id">${o.id}</td>
       <td style="font-weight:600">${escapeHtml(o.nome)}${avisoHtml}</td>
       <td>${escapeHtml(o.cliente||'—')}</td>
