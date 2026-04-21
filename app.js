@@ -12,7 +12,7 @@ import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, sa
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js';
 import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js';
-import { addFin, delFin, openModalFin, renderFinanceiro } from './modules/financeiro.js';
+import { addFin, delFin, openModalFin, renderFinanceiro, toggleHideRT } from './modules/financeiro.js';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes } from './modules/medicoes.js';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
@@ -273,9 +273,12 @@ function renderDashboard() {
   safeInner('dash-obras', active.map(o => {
     const etapas = state.cron.filter(c=>c.obraId===o.id);
     const st = statusObra(o, etapas);
+    const rtBadge = o.tipo === 'acompanhamento'
+      ? '<span class="badge badge-teal" style="margin-right:6px;font-size:10px">🔍 RT</span>'
+      : '';
     return `<div class="obra-card status-${st.cor}" onclick="window.nav('obras',null)" style="cursor:pointer">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-        <div class="obra-card-title">${o.nome}</div>
+        <div class="obra-card-title">${rtBadge}${o.nome}</div>
         <span class="status-pill status-pill-${st.cor}" title="${st.label}">${st.icon} ${st.label}</span>
       </div>
       <div class="obra-card-meta"><span>👤 ${o.cliente}</span><span>📐 ${o.area} m²</span></div>
@@ -457,6 +460,7 @@ G.gerarDiarioComFoto = () => gerarDiarioComFoto(state);
 G.openModalFin = tipo => openModalFin(state, tipo);
 G.addFin = () => { if(addFin(state)) renderAtiva(); };
 G.delFin = id => { if(delFin(state,id)) renderAtiva(); };
+G.toggleHideRT = cb => { toggleHideRT(state, cb); renderAtiva(); };
 G.addMedicao = () => { if(addMedicao(state)) renderAtiva(); };
 G.updateMedVal = (inp, orcId) => updateMedVal(state, inp, orcId);
 G.loadMedItems = () => loadMedItems(state);

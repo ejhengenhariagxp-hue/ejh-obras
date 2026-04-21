@@ -16,12 +16,20 @@ export function renderReport(state){
   const obras=obraId?state.obras.filter(o=>o.id===obraId):state.obras;
   const hoje=new Date().toLocaleDateString('pt-BR');
 
+  // Modo RT: quando todas as obras do escopo são de acompanhamento (RT)
+  const rtMode = obras.length > 0 && obras.every(o => o.tipo === 'acompanhamento');
+  const visitasEscopo = state.diario.filter(d => obras.some(o => o.id === d.obraId));
+  const ultimaVisita = visitasEscopo.length
+    ? visitasEscopo.map(v => v.data).sort().slice(-1)[0]
+    : '';
+
   const totalOrc=state.orc.filter(x=>!obraId||x.obraId===obraId).reduce((a,x)=>a+x.qtd*x.vunit,0);
   const totalReal=state.orc.filter(x=>!obraId||x.obraId===obraId).reduce((a,x)=>a+x.real,0);
   const rec=state.fin.filter(x=>(!obraId||x.obraId===obraId)&&x.tipo==='Receita').reduce((a,x)=>a+x.valor,0);
   const des=state.fin.filter(x=>(!obraId||x.obraId===obraId)&&x.tipo==='Despesa').reduce((a,x)=>a+x.valor,0);
 
   const tipoLabel={gerencial:'Relatório Gerencial',avanco:'Relatório de Avanço',financeiro:'Resumo Financeiro',medicao:'Relatório de Medição',diario:'Relatório do Diário de Obra'}[tipo]||'Relatório';
+  const tituloRel = rtMode && tipo !== 'diario' ? 'Relatório de Acompanhamento Técnico (RT)' : tipoLabel;
 
   document.getElementById('report-content').innerHTML=`
   <div style="font-family:'DM Sans',sans-serif;max-width:820px;margin:0 auto">
@@ -31,7 +39,7 @@ export function renderReport(state){
         ${state.empresaLogo?`<img src="${state.empresaLogo}" style="height:48px;max-width:180px;object-fit:contain;margin-bottom:8px">`:''}
         <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#0f2744">${state.empresaNome || 'EJH ENGENHARIA'}</div>
         <div style="font-size:12px;color:#64748b">Engenharia Civil • Projetos • Obras</div>
-        <div style="font-size:13px;font-weight:600;color:#2563eb;margin-top:4px">${tipoLabel}</div>
+        <div style="font-size:13px;font-weight:600;color:#2563eb;margin-top:4px">${tituloRel}</div>
       </div>
       <div style="text-align:right;font-size:12.5px;color:#64748b">
         <div><strong>Emissão:</strong> ${hoje}</div>
@@ -39,7 +47,26 @@ export function renderReport(state){
       </div>
     </div>
 
-    ${tipo !== 'diario' ? `
+    ${tipo !== 'diario' ? (rtMode ? `
+    <!-- KPIs (modo RT) -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
+      <div style="background:#f0f9ff;border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">Obras (RT)</div>
+        <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#0f2744">${obras.length}</div>
+      </div>
+      <div style="background:#ccfbf1;border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">Visitas</div>
+        <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#0f766e">${visitasEscopo.length}</div>
+      </div>
+      <div style="background:#eff6ff;border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">Última visita</div>
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:#1d4ed8">${ultimaVisita ? fmtD(ultimaVisita) : '—'}</div>
+      </div>
+      <div style="background:#fffbeb;border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">Etapas ativas</div>
+        <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#92400e">${state.cron.filter(c => obras.some(o => o.id === c.obraId) && c.conc > 0 && c.conc < 100).length}</div>
+      </div>
+    </div>` : `
     <!-- KPIs -->
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
       <div style="background:#f0f9ff;border-radius:10px;padding:14px;text-align:center">
@@ -58,7 +85,7 @@ export function renderReport(state){
         <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">Saldo</div>
         <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:${(rec-des)>=0?'#065f46':'#991b1b'}">${fmt(rec-des)}</div>
       </div>
-    </div>` : ''}
+    </div>`) : ''}
 
     <!-- Conteúdo do Relatório -->
     ${tipo === 'diario' 
@@ -88,6 +115,7 @@ export function renderReport(state){
           </div>`;
         }).join('')
       : obras.map(o=>{
+          const isRT = o.tipo === 'acompanhamento';
           const etapas=state.cron.filter(c=>c.obraId===o.id);
           const avg=etapas.length?Math.round(etapas.reduce((a,x)=>a+x.conc,0)/etapas.length):0;
           const orcObra=state.orc.filter(x=>x.obraId===o.id).reduce((a,x)=>a+x.qtd*x.vunit,0);
@@ -97,11 +125,14 @@ export function renderReport(state){
           const diasRestantes=o.fim?Math.ceil((new Date(o.fim)-new Date())/86400000):null;
           const cor=avg>=80?'#10b981':avg>=40?'#f59e0b':'#ef4444';
           const statusIcon=avg>=80?'✅':avg>=40?'⚠️':'🔴';
+          const rtTag = isRT ? '<span style="background:#ccfbf1;color:#0f766e;font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:6px;margin-left:6px">🔍 RT</span>' : '';
+          const visitasObra = state.diario.filter(d => d.obraId === o.id).sort((a,b)=>b.data.localeCompare(a.data));
+          const ultimas3 = visitasObra.slice(0,3);
           return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px;border-left:4px solid ${cor}">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
               <div>
-                <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#0f2744">${statusIcon} ${o.nome}</div>
-                <div style="font-size:12px;color:#64748b;margin-top:2px">👤 ${o.cliente} ${o.area?' • 📐 '+o.area+' m²':''} ${diasRestantes!==null?' • ⏱ '+(diasRestantes>0?diasRestantes+'d restantes':Math.abs(diasRestantes)+'d atrasada'):''}</div>
+                <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#0f2744">${statusIcon} ${o.nome}${rtTag}</div>
+                <div style="font-size:12px;color:#64748b;margin-top:2px">👤 ${o.cliente} ${o.area?' • 📐 '+o.area+' m²':''} ${diasRestantes!==null?' • ⏱ '+(diasRestantes>0?diasRestantes+'d restantes':Math.abs(diasRestantes)+'d atrasada'):''}${isRT?' • 🗓 '+visitasObra.length+' visita(s)':''}</div>
               </div>
               <div style="text-align:right">
                 <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:${cor}">${avg}%</div>
@@ -112,8 +143,8 @@ export function renderReport(state){
             <div style="height:8px;background:#e2e8f0;border-radius:4px;margin-bottom:14px">
               <div style="height:100%;width:${avg}%;background:${cor};border-radius:4px;transition:width .6s"></div>
             </div>
-            <!-- Financeiro da obra -->
-            ${orcObra>0?`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:12px">
+            ${!isRT && orcObra>0?`<!-- Financeiro da obra -->
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:12px">
               <div style="background:#f8faff;padding:8px;border-radius:7px;text-align:center">
                 <div style="color:#64748b">Orçado</div><div style="font-weight:700">${fmt(orcObra)}</div>
               </div>
@@ -124,9 +155,14 @@ export function renderReport(state){
                 <div style="color:#64748b">Saldo</div><div style="font-weight:700;color:${(recObra-desObra)>=0?'#065f46':'#991b1b'}">${fmt(recObra-desObra)}</div>
               </div>
             </div>`:''}
-            <!-- Etapas em execução -->
             ${etapas.filter(e=>e.conc>0&&e.conc<100).length?`<div style="margin-top:10px;font-size:12px;color:#64748b">
               🔨 Em execução: <strong>${etapas.filter(e=>e.conc>0&&e.conc<100).map(e=>e.etapa).join(' • ')}</strong>
+            </div>`:''}
+            ${isRT && ultimas3.length?`<div style="margin-top:12px;padding-top:10px;border-top:1px solid #f1f5f9">
+              <div style="font-size:11.5px;font-weight:700;color:#0f766e;text-transform:uppercase;margin-bottom:6px">Últimas visitas técnicas</div>
+              ${ultimas3.map(v => `<div style="font-size:12.5px;color:#334155;margin-bottom:4px">
+                <strong>${fmtD(v.data)}</strong> — ${(v.desc||'').substring(0,140)}${(v.desc||'').length>140?'…':''}
+              </div>`).join('')}
             </div>`:''}
           </div>`;
         }).join('')}
@@ -154,6 +190,7 @@ export function gerarTextoRelatorio(state, obraId){
 
 `;
   obras.forEach(o=>{
+    const isRT = o.tipo === 'acompanhamento';
     const etapas=state.cron.filter(c=>c.obraId===o.id);
     const avg=etapas.length?Math.round(etapas.reduce((a,x)=>a+x.conc,0)/etapas.length):0;
     const orc=state.orc.filter(x=>x.obraId===o.id).reduce((a,x)=>a+x.qtd*x.vunit,0);
@@ -161,21 +198,24 @@ export function gerarTextoRelatorio(state, obraId){
     const rec=state.fin.filter(x=>x.obraId===o.id&&x.tipo==='Receita').reduce((a,x)=>a+x.valor,0);
     const des=state.fin.filter(x=>x.obraId===o.id&&x.tipo==='Despesa').reduce((a,x)=>a+x.valor,0);
     const status=avg>=80?'✅ No prazo':avg>=40?'⚠️ Em andamento':'🔴 Atenção';
-    msg+=`*${o.nome}* ${status}
+    msg+=`*${o.nome}*${isRT?' 🔍 RT':''} ${status}
 `;
     msg+=`👤 Cliente: ${o.cliente}
 `;
     msg+=`📊 Avanço: *${avg}%*
 `;
-    if(orc>0) msg+=`💰 Orçado: ${fmt(orc)} | Realizado: ${fmt(real)}
+    if(!isRT && orc>0) msg+=`💰 Orçado: ${fmt(orc)} | Realizado: ${fmt(real)}
 `;
-    if(rec>0||des>0) msg+=`🏦 Saldo: ${fmt(rec-des)}
+    if(!isRT && (rec>0||des>0)) msg+=`🏦 Saldo: ${fmt(rec-des)}
 `;
     if(o.fim) msg+=`📅 Prazo: ${fmtD(o.fim)}
 `;
-    // Últimas etapas
     const emExec=etapas.filter(e=>e.conc>0&&e.conc<100);
     if(emExec.length) msg+='🔨 Em execução: '+emExec.map(e=>e.etapa).join(', ')+'\n';
+    if(isRT) {
+      const visitas = state.diario.filter(d => d.obraId === o.id).sort((a,b)=>b.data.localeCompare(a.data));
+      msg+=`🗓 Visitas técnicas: ${visitas.length}`+(visitas[0]?` (última: ${fmtD(visitas[0].data)})`:'')+'\n';
+    }
     msg+='\n';
   });
   msg+=`_Gerado por ${state.engNome || 'EJH Engenharia'} — Sistema de Gestão de Obras_`;

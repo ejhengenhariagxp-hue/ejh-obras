@@ -2,6 +2,12 @@
 import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName } from '../utils.js';
 
 let _finLimit = 20;
+let _hideRT = false;
+
+export function toggleHideRT(state, cb) {
+  _hideRT = !!(cb && cb.checked);
+  return true;
+}
 
 export function addFin(state){
   const desc=document.getElementById('f-fin-desc').value.trim();
@@ -110,7 +116,9 @@ export function renderFinanceiro(state){
     if(verMaisWrap) verMaisWrap.innerHTML = '';
     return;
   }
-  const sortedFin = [...state.fin].sort((a,b)=>b.data.localeCompare(a.data));
+  const rtIds = new Set(state.obras.filter(o => o.tipo === 'acompanhamento').map(o => o.id));
+  const baseFin = _hideRT ? state.fin.filter(f => !rtIds.has(f.obraId)) : state.fin;
+  const sortedFin = [...baseFin].sort((a,b)=>b.data.localeCompare(a.data));
   const totalFin = sortedFin.length;
   const visiveisFin = sortedFin.slice(0, _finLimit);
   const htmlFin = visiveisFin.map(f=>{
