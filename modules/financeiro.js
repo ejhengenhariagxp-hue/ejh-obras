@@ -96,6 +96,20 @@ export function renderFinanceiro(state){
   }
 
   // Lançamentos — com paginação
+  if(!state.fin.length){
+    safeInner('tbody-fin', `<tr><td colspan="8" style="padding:36px;text-align:center;color:var(--muted)">
+      <div style="font-size:32px;margin-bottom:8px">💰</div>
+      <div style="font-weight:600;color:var(--navy);font-size:14px;margin-bottom:4px">Nenhum lançamento financeiro</div>
+      <div style="font-size:12.5px;margin-bottom:14px">Registre receitas e despesas para acompanhar o saldo das suas obras</div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="openModalFin('Receita')" style="background:var(--green)">＋ Receita</button>
+        <button class="btn btn-primary btn-sm" onclick="openModalFin('Despesa')" style="background:var(--red)">＋ Despesa</button>
+      </div>
+    </td></tr>`);
+    const verMaisWrap = document.getElementById('fin-ver-mais-wrap');
+    if(verMaisWrap) verMaisWrap.innerHTML = '';
+    return;
+  }
   const sortedFin = [...state.fin].sort((a,b)=>b.data.localeCompare(a.data));
   const totalFin = sortedFin.length;
   const visiveisFin = sortedFin.slice(0, _finLimit);

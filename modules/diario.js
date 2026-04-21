@@ -119,7 +119,12 @@ export function renderDiario(state){
           <button class="btn btn-outline btn-xs" onclick="delDiario('${d.id}')" style="color:var(--red);border-color:var(--red);margin-left:12px;align-self:flex-start">✕</button>
         </div>
       </div>`;
-    }).join('')||'<div style="color:var(--muted);padding:20px">Nenhum registro ainda.</div>';
+    }).join('')||`<div style="background:var(--card);border-radius:var(--radius);padding:36px 20px;text-align:center;border:1.5px dashed var(--border)">
+      <div style="font-size:32px;margin-bottom:8px">📋</div>
+      <div style="font-weight:600;color:var(--navy);font-size:14px;margin-bottom:4px">Nenhum registro de diário</div>
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">Documente o que aconteceu na obra hoje — fotos, equipe, clima e ocorrências</div>
+      <button class="btn btn-primary btn-sm" onclick="openModalDiario()">＋ Primeiro Registro</button>
+    </div>`;
     
   safeInner('list-diario', html);
   

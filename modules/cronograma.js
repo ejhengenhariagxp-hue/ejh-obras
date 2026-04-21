@@ -66,6 +66,15 @@ export function setCronView(v){
 }
 
 export function renderCron(state){
+  if(!state.cron.length){
+    safeInner('tbody-cron', `<tr><td colspan="9" style="padding:36px;text-align:center;color:var(--muted)">
+      <div style="font-size:32px;margin-bottom:8px">📅</div>
+      <div style="font-weight:600;color:var(--navy);font-size:14px;margin-bottom:4px">Nenhuma etapa cadastrada</div>
+      <div style="font-size:12.5px;margin-bottom:14px">Adicione etapas para acompanhar prazo e avanço físico</div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-cron')">＋ Primeira Etapa</button>
+    </td></tr>`);
+    return;
+  }
   safeInner('tbody-cron', state.cron.map(x=>{
     const col=x.conc>=100?'var(--green)':x.conc===0?'#94a3b8':'var(--blue)';
     const sit=x.conc>=100?'<span class="badge badge-green">✅ Concluída</span>':

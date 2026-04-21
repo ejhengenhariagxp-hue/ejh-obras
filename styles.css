@@ -131,7 +131,10 @@ textarea{resize:vertical;min-height:70px}
 .lightbox-close{position:absolute;top:18px;right:22px;color:#fff;font-size:26px;cursor:pointer}
 /* FAB */
 .fab{position:fixed;bottom:22px;right:22px;width:54px;height:54px;border-radius:50%;background:var(--blue);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(37,99,235,.4);cursor:pointer;z-index:400;border:none;transition:transform .2s}
+.fab::before{content:'Ações rápidas';position:absolute;right:64px;top:50%;transform:translateY(-50%);background:var(--navy);color:#fff;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;box-shadow:0 4px 12px rgba(0,0,0,.18)}
+.fab:hover::before{opacity:1}
 .fab.open{transform:rotate(45deg)}
+.fab.open::before{display:none}
 .fab-menu{position:fixed;bottom:86px;right:18px;display:flex;flex-direction:column;gap:8px;z-index:399;opacity:0;pointer-events:none;transform:translateY(10px);transition:all .2s}
 .fab-menu.open{opacity:1;pointer-events:all;transform:translateY(0)}
 .fab-item{display:flex;align-items:center;gap:9px;padding:9px 14px;border-radius:11px;border:none;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;color:var(--navy);box-shadow:0 4px 14px rgba(15,39,68,.14);white-space:nowrap;transition:transform .15s}
