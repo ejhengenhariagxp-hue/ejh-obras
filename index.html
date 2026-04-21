@@ -1099,6 +1099,8 @@
 
 <button class="fab" id="fab-btn" onclick="toggleFab()">＋</button>
 <div class="fab-menu" id="fab-menu">
+  <button class="fab-item" onclick="resetFormObra();openModal('modal-obra');closeFab()">🚧 Nova obra</button>
+  <button class="fab-item" onclick="nav('captura',null);closeFab()">📡 Comunicação</button>
   <button class="fab-item" onclick="openModalDiario();closeFab()">📋 Diário rápido</button>
   <button class="fab-item" onclick="openModalFin('Despesa');closeFab()">💸 Nova despesa</button>
   <button class="fab-item" onclick="openModalFin('Receita');closeFab()">💰 Nova receita</button>
