@@ -553,6 +553,18 @@ G.addImportRow = () => addImportRow();
 G.cancelImport = () => cancelImport();
 G.confirmImport = () => { if (confirmImport(state)) renderAtiva(); };
 
+let _lastVisSync = 0;
+function syncFromCloud(silent) {
+  if (!window._fbUser) return;
+  fbLoadData(state).then(merged => {
+    const before = _lastHash;
+    Object.assign(state, merged); window._state = state;
+    _lastHash = calcHash(state);
+    renderAtiva();
+    if (!silent && _lastHash !== before) showToast('☁️ Atualizado do celular!', 2000);
+  });
+}
+
 window.addEventListener('load', () => {
   initFields();
   renderAtiva();
@@ -569,6 +581,7 @@ window.addEventListener('load', () => {
       safeText('user-name', nome.split(' ')[0]);
       fbLoadData(state).then(merged => {
         Object.assign(state, merged); window._state = state;
+        _lastHash = calcHash(state);
         renderAtiva(); showToast('☁️ Sincronizado!', 2000);
       });
     } else {
@@ -576,4 +589,13 @@ window.addEventListener('load', () => {
       if (lBar) lBar.style.display = 'flex';
     }
   });
+});
+
+// Re-sincronizar quando a aba volta pro foco (celular → PC)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  const now = Date.now();
+  if (now - _lastVisSync < 10000) return; // debounce 10s
+  _lastVisSync = now;
+  syncFromCloud(false);
 });
