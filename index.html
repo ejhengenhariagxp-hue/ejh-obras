@@ -939,93 +939,6 @@
 <div class="modal-bg" id="modal-login"><div class="modal" style="max-width:480px">
   <div class="modal-title">☁️ Backup na Nuvem</div>
 
-  <!-- PASSO 1: SEM CONFIG (oculto — credenciais já embutidas) -->
-  <div id="fb-step-config" style="display:none">
-    <div style="background:#fef3c7;border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:13px;color:#78350f">
-      <strong>⚙️ Configure em 3 passos para ativar o backup automático na nuvem</strong>
-    </div>
-
-    <!-- PASSO A -->
-    <div style="margin-bottom:16px">
-      <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--navy);font-size:13.5px;margin-bottom:6px">
-        1️⃣ Crie seu projeto Firebase (gratuito)
-      </div>
-      <a href="https://console.firebase.google.com" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;font-size:13px">
-        🔗 Abrir console.firebase.google.com
-      </a>
-      <div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5">
-        → Clique em <strong>Criar projeto</strong> → Dê um nome (ex: ejh-obras) → Confirme<br>
-        → No projeto: ative <strong>Authentication → Google → Salvar</strong><br>
-        → Ative <strong>Firestore Database → Criar banco → Modo produção</strong>
-      </div>
-    </div>
-
-    <!-- PASSO B -->
-    <div style="margin-bottom:16px">
-      <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--navy);font-size:13.5px;margin-bottom:6px">
-        2️⃣ Copie as credenciais do seu projeto
-      </div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.5">
-        No Firebase: <strong>Configurações ⚙️ → Seus aplicativos → &lt;/&gt; Web → Registrar app</strong><br>
-        Copie o objeto <code style="background:#f1f5f9;padding:1px 5px;border-radius:4px">firebaseConfig</code> que aparecer
-      </div>
-    </div>
-
-    <!-- PASSO C: COLE AQUI -->
-    <div style="margin-bottom:16px">
-      <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--navy);font-size:13.5px;margin-bottom:8px">
-        3️⃣ Cole as credenciais aqui
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
-        <div class="fg full" style="grid-column:1/-1">
-          <label>API Key</label>
-          <input id="cfg-apiKey" placeholder="AIzaSy..." style="font-family:monospace;font-size:12px">
-        </div>
-        <div class="fg">
-          <label>Auth Domain</label>
-          <input id="cfg-authDomain" placeholder="meu-projeto.firebaseapp.com" style="font-family:monospace;font-size:12px">
-        </div>
-        <div class="fg">
-          <label>Project ID</label>
-          <input id="cfg-projectId" placeholder="meu-projeto" style="font-family:monospace;font-size:12px">
-        </div>
-        <div class="fg">
-          <label>Storage Bucket</label>
-          <input id="cfg-storageBucket" placeholder="meu-projeto.appspot.com" style="font-family:monospace;font-size:12px">
-        </div>
-        <div class="fg">
-          <label>Messaging Sender ID</label>
-          <input id="cfg-messagingSenderId" placeholder="123456789012" style="font-family:monospace;font-size:12px">
-        </div>
-        <div class="fg full" style="grid-column:1/-1">
-          <label>App ID</label>
-          <input id="cfg-appId" placeholder="1:123456789012:web:abc..." style="font-family:monospace;font-size:12px">
-        </div>
-      </div>
-      <div style="margin-top:10px;font-size:12px;color:var(--muted)">
-        💡 Dica: se quiser colar o objeto JSON inteiro, use o botão abaixo
-      </div>
-      <button class="btn btn-outline btn-sm" onclick="showJsonPaste()" style="margin-top:6px">📋 Colar JSON completo</button>
-      <div id="json-paste-wrap" style="display:none;margin-top:8px">
-        <textarea id="cfg-json" style="font-family:monospace;font-size:11px;min-height:100px" placeholder='Cole aqui o firebaseConfig completo:
-{
-  apiKey: "AIzaSy...",
-  authDomain: "...",
-  ...
-}'></textarea>
-        <button class="btn btn-outline btn-sm" onclick="parseJsonConfig()" style="margin-top:6px">↓ Extrair campos</button>
-      </div>
-    </div>
-
-    <div id="cfg-status" style="font-size:12.5px;min-height:20px;margin-bottom:10px"></div>
-
-    <div class="modal-actions">
-      <button class="btn btn-outline" onclick="closeModal('modal-login')">Fechar</button>
-      <button class="btn btn-primary" onclick="salvarConfigurarFb()">💾 Salvar e Conectar</button>
-    </div>
-  </div>
-
-  <!-- PASSO 2: CONFIGURADO, FAZER LOGIN -->
   <div id="fb-step-login" style="display:block;text-align:center">
     <div style="font-size:40px;margin-bottom:12px">✅</div>
     <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:6px">Firebase configurado!</div>
@@ -1035,7 +948,6 @@
       Entrar com Google
     </button>
     <div id="login-status" style="margin-top:12px;font-size:12.5px;color:var(--muted)"></div><div style="margin-top:10px;font-size:12px;color:var(--muted);background:#f8faff;padding:10px;border-radius:8px">ℹ️ Você será redirecionado para o login Google e voltará automaticamente ao app.</div>
-    <button class="btn btn-outline btn-sm" onclick="document.getElementById('fb-step-config').style.display='block';document.getElementById('fb-step-login').style.display='none'" style="margin-top:14px">⚙️ Alterar credenciais</button>
     <div class="modal-actions" style="justify-content:center"><button class="btn btn-outline" onclick="closeModal('modal-login')">Fechar</button></div>
   </div>
 </div></div>
