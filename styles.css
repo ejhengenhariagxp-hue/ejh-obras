@@ -76,6 +76,15 @@ tfoot td{background:#f8faff;font-weight:700;font-size:13px;padding:10px 13px;bor
 .empty-hero-icon{font-size:44px;margin-bottom:8px}
 .empty-hero-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--navy);margin-bottom:6px}
 .empty-hero-sub{font-size:13px;color:var(--muted);margin-bottom:16px;max-width:420px;margin-left:auto;margin-right:auto;line-height:1.5}
+.portfolio-banner{display:flex;align-items:center;gap:16px;padding:16px 22px;border-radius:var(--radius);margin-bottom:18px;box-shadow:var(--shadow);border-left:5px solid}
+.portfolio-icon{font-size:32px;line-height:1;flex-shrink:0}
+.portfolio-body{flex:1;min-width:0}
+.portfolio-titulo{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--navy);margin-bottom:2px}
+.portfolio-sub{font-size:12.5px;color:var(--muted)}
+.portfolio-green{background:linear-gradient(90deg,#dcfce7 0%,#fff 60%);border-left-color:#16a34a}
+.portfolio-yellow{background:linear-gradient(90deg,#fef3c7 0%,#fff 60%);border-left-color:#d97706}
+.portfolio-red{background:linear-gradient(90deg,#fee2e2 0%,#fff 60%);border-left-color:#dc2626}
+.portfolio-gray{background:var(--card);border-left-color:var(--border)}
 .dash-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
 .dash-col{margin-bottom:0;background:var(--card);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
 @media(max-width:780px){.dash-row{grid-template-columns:1fr}}

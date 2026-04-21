@@ -165,6 +165,28 @@ function calcAcoes() {
   return acoes.slice(0, 6);
 }
 
+function statusPortfolio() {
+  const ativas = state.obras.filter(o => o.status === 'Em andamento');
+  if (!ativas.length) {
+    return { cor:'gray', icon:'⚪', titulo:'Nenhuma obra ativa', sub:'Marque uma obra como "Em andamento" para acompanhar a saúde do portfolio' };
+  }
+  let verdes=0, amarelas=0, vermelhas=0;
+  ativas.forEach(o => {
+    const etapas = state.cron.filter(c => c.obraId === o.id);
+    const st = statusObra(o, etapas);
+    if (st.cor === 'red') vermelhas++;
+    else if (st.cor === 'yellow') amarelas++;
+    else verdes++;
+  });
+  if (vermelhas > 0) {
+    return { cor:'red', icon:'🔴', titulo:`${vermelhas} obra${vermelhas>1?'s':''} crítica${vermelhas>1?'s':''}`, sub:`${verdes} em dia · ${amarelas} em atenção · ${vermelhas} atrasada${vermelhas>1?'s':''}` };
+  }
+  if (amarelas > 0) {
+    return { cor:'yellow', icon:'🟡', titulo:`${amarelas} obra${amarelas>1?'s':''} em atenção`, sub:`${verdes} em dia · ${amarelas} em atenção` };
+  }
+  return { cor:'green', icon:'🟢', titulo:'Portfolio em dia', sub:`Todas as ${verdes} obra${verdes>1?'s':''} ativa${verdes>1?'s':''} dentro do prazo` };
+}
+
 function statusObra(o, etapas) {
   const avg = etapas.length ? Math.round(etapas.reduce((a,x)=>a+x.conc,0)/etapas.length) : 0;
   if (!o.inicio || !o.fim) return { avg, cor:'green', icon:'🟢', label:'Em dia' };
@@ -183,6 +205,15 @@ function statusObra(o, etapas) {
 function renderDashboard() {
   const hoje = new Date();
   safeText('dash-date', hoje.toLocaleDateString('pt-BR',{weekday:'long',year:'numeric',month:'long',day:'numeric'}));
+  // Status geral do portfolio
+  const sp = statusPortfolio();
+  safeInner('dash-portfolio', `<div class="portfolio-banner portfolio-${sp.cor}">
+    <div class="portfolio-icon">${sp.icon}</div>
+    <div class="portfolio-body">
+      <div class="portfolio-titulo">${sp.titulo}</div>
+      <div class="portfolio-sub">${sp.sub}</div>
+    </div>
+  </div>`);
   const totOrc  = state.orc.reduce((a,x)=>a+x.qtd*x.vunit, 0);
   const totReal = state.orc.reduce((a,x)=>a+x.real, 0);
   const rec = state.fin.filter(x=>x.tipo==='Receita').reduce((a,x)=>a+x.valor, 0);
