@@ -104,6 +104,67 @@ export function renderAtiva() {
   }
 }
 
+function calcAcoes() {
+  const acoes = [];
+  const hoje = new Date();
+  const hojeStr = hoje.toISOString().split('T')[0];
+  const semanaAtras = new Date(hoje.getTime() - 7*86400000).toISOString().split('T')[0];
+  const ativas = state.obras.filter(o => o.status === 'Em andamento');
+
+  // 1. Etapas atrasadas (fim < hoje e conc < 100)
+  state.cron.forEach(c => {
+    if (c.fim && c.fim < hojeStr && (c.conc || 0) < 100) {
+      const obra = state.obras.find(o => o.id === c.obraId);
+      acoes.push({
+        cor: 'red', icon: '⏰',
+        title: `Etapa atrasada: ${c.etapa}`,
+        sub: `${obra ? obra.nome : c.obraId} • ${c.conc || 0}% concluído • venceu ${fmtD(c.fim)}`,
+        onclick: `nav('cronograma',null)`
+      });
+    }
+  });
+
+  // 2. Diário sem registro hoje (por obra ativa)
+  ativas.forEach(o => {
+    const tem = state.diario.some(d => d.obraId === o.id && d.data === hojeStr);
+    if (!tem) {
+      acoes.push({
+        cor: 'yellow', icon: '📋',
+        title: `Atualizar diário de hoje`,
+        sub: `${o.nome}`,
+        onclick: `openModalDiario()`
+      });
+    }
+  });
+
+  // 3. Despesas pendentes (status === 'Pendente')
+  const pendentes = state.fin.filter(f => f.status === 'Pendente');
+  if (pendentes.length) {
+    const tot = pendentes.reduce((a,x) => a + (x.valor || 0), 0);
+    acoes.push({
+      cor: 'red', icon: '💰',
+      title: `${pendentes.length} lançamento(s) pendente(s)`,
+      sub: `Total ${fmt(tot)} aguardando pagamento`,
+      onclick: `nav('financeiro',null)`
+    });
+  }
+
+  // 4. Sem lançamento financeiro na última semana (por obra ativa)
+  ativas.forEach(o => {
+    const recente = state.fin.some(f => f.obraId === o.id && f.data >= semanaAtras);
+    if (!recente) {
+      acoes.push({
+        cor: 'blue', icon: '💸',
+        title: `Sem lançamentos esta semana`,
+        sub: `${o.nome} — registre despesas/receitas`,
+        onclick: `openModalFin('Despesa')`
+      });
+    }
+  });
+
+  return acoes.slice(0, 6);
+}
+
 function statusObra(o, etapas) {
   const avg = etapas.length ? Math.round(etapas.reduce((a,x)=>a+x.conc,0)/etapas.length) : 0;
   if (!o.inicio || !o.fim) return { avg, cor:'green', icon:'🟢', label:'Em dia' };
@@ -144,8 +205,37 @@ function renderDashboard() {
         <button class="btn btn-primary" onclick="resetFormObra();openModal('modal-obra')">＋ Criar Primeira Obra</button>
       </div>`);
     safeInner('dash-fin', '<div style="color:var(--muted);padding:14px;text-align:center;font-size:13px">Sem movimentações ainda.</div>');
+    safeInner('dash-acoes', '<div style="color:var(--muted);padding:14px;text-align:center;font-size:13px">Cadastre uma obra para ver suas pendências aqui.</div>');
+    safeInner('dash-coms', '<div style="color:var(--muted);padding:14px;text-align:center;font-size:13px">Sem comunicações ainda.</div>');
     return;
   }
+
+  // Próximas Ações
+  const acoes = calcAcoes();
+  safeInner('dash-acoes', acoes.length ? acoes.map(a => `
+    <div class="acao-item acao-${a.cor}" onclick="${a.onclick}">
+      <span class="acao-icon">${a.icon}</span>
+      <div class="acao-body">
+        <div class="acao-title">${a.title}</div>
+        <div class="acao-sub">${a.sub}</div>
+      </div>
+    </div>`).join('') : '<div style="color:var(--green);padding:14px;text-align:center;font-size:13px">✅ Tudo em dia! Sem pendências.</div>');
+
+  // Últimas Comunicações (de capturas)
+  const coms = [...(state.capturas || [])].sort((a,b) => b.ts - a.ts).slice(0, 4);
+  safeInner('dash-coms', coms.length ? coms.map(c => {
+    const obra = state.obras.find(o => o.id === c.obraId);
+    const dt = new Date(c.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+    const hora = new Date(c.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    return `<div class="com-item" onclick="nav('captura',null)">
+      <div class="com-title">${(c.resumo || 'Comunicação').substring(0,80)}</div>
+      <div class="com-meta">
+        <span>🏗 ${obra ? obra.nome : c.obraId || '—'}</span>
+        <span>📅 ${dt} ${hora}</span>
+        <span style="color:var(--green)">✅ ${c.salvos || 0} registro(s)</span>
+      </div>
+    </div>`;
+  }).join('') : '<div style="color:var(--muted);padding:14px;text-align:center;font-size:13px">Sem comunicações registradas. <br><a href="#" onclick="event.preventDefault();nav(\'captura\',null)" style="color:var(--blue);font-weight:600">Registrar a primeira →</a></div>');
 
   // Cards ativos com semáforo de status
   const active = state.obras.filter(o => o.status === 'Em andamento');
