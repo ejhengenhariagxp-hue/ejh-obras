@@ -1,5 +1,5 @@
 // modules/cronograma.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName, escapeHtml } from '../utils.js';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName, escapeHtml, markDeleted } from '../utils.js';
 
 export function addCron(state){
   const etapa=document.getElementById('f-cron-etapa').value.trim();
@@ -26,6 +26,7 @@ export function addCron(state){
 export function delCron(state, id){
   if(confirm('Excluir este estágio?')){
     state.cron=state.cron.filter(x=>x.id!==id);
+    markDeleted(state, 'cron', id);
     return true;
   }
   return false;

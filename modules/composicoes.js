@@ -1,6 +1,6 @@
 // modules/composicoes.js — Composições próprias de serviço
 // ══════════════════════════════════════════════════════════════════════
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, escapeHtml } from '../utils.js';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, escapeHtml, markDeleted } from '../utils.js';
 import { SINAPI, SICOR } from './sinapi.js';
 
 // ── INSUMOS temporários durante edição ────────────────────────────────
@@ -205,6 +205,7 @@ export function salvarComposicao(state) {
 export function delComposicao(state, id) {
   if (!confirm('Excluir esta composição?')) return false;
   state.composicoes = state.composicoes.filter(c => c.id !== id);
+  markDeleted(state, 'composicoes', id);
   return true;
 }
 

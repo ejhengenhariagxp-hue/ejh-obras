@@ -2,7 +2,7 @@
 // modules/obras.js — CRUD de obras, validação e renderização
 // ══════════════════════════════════════════════════════════════════════
 
-import { fmt, fmtD, pad, safeInner, showToast, statusBadge, tipoLabel, openModal, closeModal, modalidadeIcon, verificarAvisosObra, escapeHtml } from '../utils.js';
+import { fmt, fmtD, pad, safeInner, showToast, statusBadge, tipoLabel, openModal, closeModal, modalidadeIcon, verificarAvisosObra, escapeHtml, markDeleted } from '../utils.js';
 
 const val = id => document.getElementById(id)?.value?.trim() || '';
 const num = id => +document.getElementById(id)?.value || 0;
@@ -103,12 +103,24 @@ export function resetFormObra() {
 // Excluir obra
 export function delObra(state, id) {
   if (!confirm('Excluir esta obra e todos os dados associados?')) return false;
+  // Captura ids relacionados ANTES de filtrar, para gerar tombstones
+  const orcIds  = state.orc.filter(x=>x.obraId===id).map(x=>x.id);
+  const cronIds = state.cron.filter(x=>x.obraId===id).map(x=>x.id);
+  const diaIds  = state.diario.filter(x=>x.obraId===id).map(x=>x.id);
+  const finIds  = state.fin.filter(x=>x.obraId===id).map(x=>x.id);
+  const medIds  = state.medicoes.filter(x=>x.obraId===id).map(x=>x.id);
   state.obras    = state.obras.filter(x=>x.id!==id);
   state.orc      = state.orc.filter(x=>x.obraId!==id);
   state.cron     = state.cron.filter(x=>x.obraId!==id);
   state.diario   = state.diario.filter(x=>x.obraId!==id);
   state.fin      = state.fin.filter(x=>x.obraId!==id);
   state.medicoes = state.medicoes.filter(x=>x.obraId!==id);
+  markDeleted(state, 'obras', id);
+  orcIds.forEach(i => markDeleted(state, 'orc', i));
+  cronIds.forEach(i => markDeleted(state, 'cron', i));
+  diaIds.forEach(i => markDeleted(state, 'diario', i));
+  finIds.forEach(i => markDeleted(state, 'fin', i));
+  medIds.forEach(i => markDeleted(state, 'medicoes', i));
   return true;
 }
 

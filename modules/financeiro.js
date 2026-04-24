@@ -1,5 +1,5 @@
 // modules/financeiro.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName } from '../utils.js';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js';
 
 let _finLimit = 20;
 let _hideRT = false;
@@ -45,6 +45,7 @@ export function addFin(state){
 export function delFin(state, id){
   if(confirm('Excluir este lançamento?')){
     state.fin=state.fin.filter(x=>x.id!==id);
+    markDeleted(state, 'fin', id);
     _finLimit=20;
     return true;
   }

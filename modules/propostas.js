@@ -1,5 +1,5 @@
 // modules/propostas.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge } from '../utils.js';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, markDeleted } from '../utils.js';
 
 window.projServicos = window.projServicos || [];
 window.projExtras = window.projExtras || [];
@@ -336,6 +336,7 @@ export function saveProposta(state, tipo){
 export function delProposta(state, id){
   if(confirm('Excluir proposta?')){
     state.propostas=state.propostas.filter(x=>x.id!==id);
+    markDeleted(state, 'propostas', id);
     return true;
   }
   return false;

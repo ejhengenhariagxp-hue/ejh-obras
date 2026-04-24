@@ -1,5 +1,5 @@
 // modules/orcamento.js — Orçamento por obra
-import { fmt, fmtD, pad, safeInner, showToast, openModal, closeModal } from '../utils.js';
+import { fmt, fmtD, pad, safeInner, showToast, openModal, closeModal, markDeleted } from '../utils.js';
 import { iaCall } from '../services.js';
 
 export function addOrc(state) {
@@ -38,6 +38,8 @@ export function addOrc(state) {
 
 export function delOrc(state, id) {
   if (!confirm('Excluir este item do orçamento?')) return false;
+  state.orc = state.orc.filter(x => x.id !== id);
+  markDeleted(state, 'orc', id);
   return true;
 }
 

@@ -1,5 +1,5 @@
 // modules/diario.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName, escapeHtml } from '../utils.js';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName, escapeHtml, markDeleted } from '../utils.js';
 import { iaCall } from '../services.js';
 
 let _diarioLimit = 20;
@@ -32,6 +32,7 @@ export function addDiario(state){
 export function delDiario(state, id){
   if(confirm('Excluir este registro?')){
     state.diario=state.diario.filter(x=>x.id!==id);
+    markDeleted(state, 'diario', id);
     _diarioLimit=20;
     return true;
   }
