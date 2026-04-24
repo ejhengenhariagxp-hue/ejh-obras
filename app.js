@@ -11,7 +11,7 @@ import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
 import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js';
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js';
-import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js';
+import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js';
 import { addFin, delFin, openModalFin, renderFinanceiro, toggleHideRT } from './modules/financeiro.js';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes } from './modules/medicoes.js';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js';
@@ -95,7 +95,7 @@ export function renderAtiva() {
   const hash = calcHash(state);
   if (hash !== _lastHash) {
     _lastHash = hash;
-    saveState(state);
+    saveStateLocal();
     showSaveIndicator();
     if (window._fbUser) {
       clearTimeout(_fbSaveTimer);
@@ -454,6 +454,7 @@ G.openModalDiario = () => openModalDiario(state);
 G.cancelarDiario = () => cancelarDiario();
 G.addDiario = () => { if(addDiario(state)) renderAtiva(); };
 G.delDiario = id => { if(delDiario(state,id)) renderAtiva(); };
+G.openEditDiario = id => openEditDiario(state, id);
 G.handleFotos = inp => handleFotos(state, inp);
 G.removePendingFoto = i => removePendingFoto(state, i);
 G.gerarDiarioComFoto = () => gerarDiarioComFoto(state);
@@ -604,6 +605,21 @@ function syncFromCloud(silent) {
     console.error('syncFromCloud falhou:', e);
     setSyncStatus('❌', 'Erro no sync: ' + (e.message || ''));
   });
+}
+
+// Save local PRESERVANDO fotos do diário (saveState do services.js zera fotos)
+function saveStateLocal() {
+  try {
+    localStorage.setItem('ejh_obras_v4', JSON.stringify(state));
+    if (Array.isArray(state.propostas)) {
+      localStorage.setItem('ejh_propostas_bak', JSON.stringify(state.propostas));
+    }
+  } catch (e) {
+    console.warn('saveStateLocal:', e?.message || e);
+    if (e?.name === 'QuotaExceededError' || /quota/i.test(e?.message || '')) {
+      showToast('⚠️ Armazenamento do navegador cheio. Apague registros antigos com fotos.', 8000);
+    }
+  }
 }
 
 // Save ao cloud com captura explícita de erro — fbSaveData do services.js engole exceções

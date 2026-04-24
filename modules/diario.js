@@ -16,8 +16,8 @@ export function addDiario(state){
     state.counters.dia = state.counters.dia || 1;
     state.diario = state.diario || [];
 
-    state.diario.push({
-      id:     'DIA-'+pad(state.counters.dia),
+    const editId = document.getElementById('f-dia-id')?.value;
+    const dadosForm = {
       obraId: obraId,
       data:   data,
       desc:   document.getElementById('f-dia-desc')?.value || '',
@@ -25,18 +25,45 @@ export function addDiario(state){
       clima:  document.getElementById('f-dia-clima')?.value || '',
       ocorr:  document.getElementById('f-dia-ocorr')?.value || '',
       fotos:  [..._pendingFotos],
-    });
+    };
+
+    if (editId) {
+      const idx = state.diario.findIndex(d => d.id === editId);
+      if (idx < 0) { showToast('⚠️ Registro não encontrado'); return false; }
+      state.diario[idx] = { ...state.diario[idx], ...dadosForm };
+    } else {
+      state.diario.push({ id: 'DIA-'+pad(state.counters.dia), ...dadosForm });
+      state.counters.dia++;
+    }
     _pendingFotos = [];
     renderFotoPreview();
-    state.counters.dia++;
     closeModal('modal-diario');
-    showToast('✅ Registro salvo!');
+    showToast(editId ? '✅ Registro atualizado!' : '✅ Registro salvo!');
     return true;
   } catch (e) {
     console.error('addDiario falhou:', e);
     showToast('❌ Erro ao salvar: ' + (e.message || 'desconhecido'), 5000);
     return false;
   }
+}
+
+export function openEditDiario(state, id) {
+  const d = state.diario.find(x => x.id === id);
+  if (!d) { showToast('⚠️ Registro não encontrado'); return; }
+  popularSelectsObras(state);
+  _pendingFotos = [...(d.fotos || [])];
+  renderFotoPreview();
+  const set = (k, v) => { const el = document.getElementById(k); if (el) el.value = v ?? ''; };
+  set('f-dia-id', d.id);
+  set('f-dia-obra', d.obraId);
+  set('f-dia-data', d.data);
+  set('f-dia-desc', d.desc);
+  set('f-dia-equipe', d.equipe);
+  set('f-dia-clima', d.clima);
+  set('f-dia-ocorr', d.ocorr);
+  const t = document.querySelector('#modal-diario .modal-title');
+  if (t) t.textContent = '✏️ Editar registro do diário';
+  openModal('modal-diario');
 }
 
 export function delDiario(state, id){
@@ -92,7 +119,11 @@ export function openModalDiario(state){
   _pendingFotos=[];
   renderFotoPreview();
   popularSelectsObras(state);
+  // limpa modo edição e campos
+  ['f-dia-id','f-dia-desc','f-dia-equipe','f-dia-ocorr'].forEach(k => { const el = document.getElementById(k); if (el) el.value = ''; });
   if(document.getElementById('f-dia-data')) document.getElementById('f-dia-data').value = new Date().toISOString().split('T')[0];
+  const t = document.querySelector('#modal-diario .modal-title');
+  if (t) t.textContent = '📋 Novo registro do diário';
   openModal('modal-diario');
 }
 
@@ -127,7 +158,10 @@ export function renderDiario(state){
             </div>
             ${galeriaHtml}
           </div>
-          <button class="btn btn-outline btn-xs" onclick="delDiario('${d.id}')" style="color:var(--red);border-color:var(--red);margin-left:12px;align-self:flex-start">✕</button>
+          <div style="display:flex;gap:6px;margin-left:12px;align-self:flex-start">
+            <button class="btn btn-outline btn-xs" onclick="openEditDiario('${d.id}')" style="color:var(--amber);border-color:var(--amber)" title="Editar registro">✏️</button>
+            <button class="btn btn-outline btn-xs" onclick="delDiario('${d.id}')" style="color:var(--red);border-color:var(--red)" title="Excluir">✕</button>
+          </div>
         </div>
       </div>`;
     }).join('')||`<div style="background:var(--card);border-radius:var(--radius);padding:36px 20px;text-align:center;border:1.5px dashed var(--border)">
