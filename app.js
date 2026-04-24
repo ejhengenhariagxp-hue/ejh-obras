@@ -99,7 +99,7 @@ export function renderAtiva() {
     showSaveIndicator();
     if (window._fbUser) {
       clearTimeout(_fbSaveTimer);
-      _fbSaveTimer = setTimeout(() => fbSaveData(state), 800);
+      _fbSaveTimer = setTimeout(() => saveToCloud(), 800);
     }
   }
 }
@@ -597,7 +597,7 @@ function syncFromCloud(silent) {
     Object.assign(state, merged); window._state = state;
     _lastHash = calcHash(state);
     renderAtiva();
-    if (window._fbUser) { clearTimeout(_fbSaveTimer); fbSaveData(state); }
+    if (window._fbUser) { clearTimeout(_fbSaveTimer); saveToCloud(); }
     setSyncStatus('☁✓', 'Sincronizado ' + new Date().toLocaleTimeString('pt-BR'));
     if (!silent && _lastHash !== before) showToast('☁️ Atualizado!', 2000);
   }).catch(e => {
@@ -606,13 +606,33 @@ function syncFromCloud(silent) {
   });
 }
 
+// Save ao cloud com captura explícita de erro — fbSaveData do services.js engole exceções
+async function saveToCloud() {
+  if (!window._fbUser) return;
+  if (!navigator.onLine) { setSyncStatus('⚠️', 'Offline — save adiado'); return; }
+  setSyncStatus('🔄', 'Salvando…');
+  try {
+    if (typeof firebase === 'undefined') throw new Error('Firebase não carregado');
+    const db = firebase.firestore();
+    const s = { ...state, diario: (state.diario||[]).map(d=>({...d, fotos:[]})),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+    await db.collection('usuarios').doc(window._fbUser.uid).set(s);
+    setSyncStatus('☁✓', 'Salvo ' + new Date().toLocaleTimeString('pt-BR'));
+  } catch (e) {
+    console.error('saveToCloud falhou:', e);
+    const msg = e?.message || e?.code || 'erro desconhecido';
+    setSyncStatus('❌', 'Erro ao salvar: ' + msg);
+    showToast('❌ Salvar na nuvem falhou: ' + msg, 8000);
+  }
+}
+
 // Flush imediato do save pendente (chamado ao sair/minimizar)
 function flushSave() {
   if (!window._fbUser) return;
   if (_fbSaveTimer) {
     clearTimeout(_fbSaveTimer);
     _fbSaveTimer = null;
-    fbSaveData(state);
+    saveToCloud();
   }
 }
 
@@ -666,7 +686,7 @@ window.addEventListener('load', () => {
         Object.assign(state, merged); window._state = state;
         _lastHash = calcHash(state);
         renderAtiva();
-        if (window._fbUser) fbSaveData(state);
+        if (window._fbUser) saveToCloud();
         showToast('☁️ Sincronizado!', 2000);
       });
     } else {
