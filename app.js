@@ -581,18 +581,28 @@ function applyTombstones(merged, localTombs) {
   return merged;
 }
 
+function setSyncStatus(emoji, title) {
+  const el = document.getElementById('sync-status');
+  if (el) { el.textContent = emoji; el.title = title || ''; }
+}
+
 function syncFromCloud(silent) {
-  if (!window._fbUser) return;
+  if (!window._fbUser) return Promise.resolve();
+  if (!navigator.onLine) { setSyncStatus('⚠️', 'Offline — clique quando voltar à internet'); return Promise.resolve(); }
+  setSyncStatus('🔄', 'Sincronizando…');
   const localTombs = JSON.parse(JSON.stringify(state.deletedIds || {}));
-  fbLoadData(state).then(merged => {
+  return fbLoadData(state).then(merged => {
     applyTombstones(merged, localTombs);
     const before = _lastHash;
     Object.assign(state, merged); window._state = state;
     _lastHash = calcHash(state);
     renderAtiva();
-    // Re-salva para propagar tombstones do local ao cloud
     if (window._fbUser) { clearTimeout(_fbSaveTimer); fbSaveData(state); }
+    setSyncStatus('☁✓', 'Sincronizado ' + new Date().toLocaleTimeString('pt-BR'));
     if (!silent && _lastHash !== before) showToast('☁️ Atualizado!', 2000);
+  }).catch(e => {
+    console.error('syncFromCloud falhou:', e);
+    setSyncStatus('❌', 'Erro no sync: ' + (e.message || ''));
   });
 }
 
@@ -605,6 +615,24 @@ function flushSave() {
     fbSaveData(state);
   }
 }
+
+// Sync manual ao clicar no ícone do header
+window.syncNow = () => {
+  if (!window._fbUser) { showToast('⚠️ Faça login primeiro', 3000); return; }
+  showToast('🔄 Sincronizando…', 1500);
+  syncFromCloud(false);
+};
+
+// Monitorar conexão
+window.addEventListener('online',  () => { setSyncStatus('☁✓', 'Voltou online'); syncFromCloud(true); });
+window.addEventListener('offline', () => setSyncStatus('⚠️', 'Offline — sem internet'));
+
+// Polling leve a cada 60s quando a aba está visível (redundância caso visibilitychange não dispare)
+setInterval(() => {
+  if (document.visibilityState === 'visible' && window._fbUser && navigator.onLine) {
+    syncFromCloud(true);
+  }
+}, 60000);
 
 window.addEventListener('load', () => {
   initFields();

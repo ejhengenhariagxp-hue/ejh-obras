@@ -6,27 +6,37 @@ let _diarioLimit = 20;
 let _pendingFotos = [];
 
 export function addDiario(state){
-  const obraId = document.getElementById('f-dia-obra')?.value;
-  const data = document.getElementById('f-dia-data')?.value;
-  if (!obraId) { showToast('⚠️ Selecione uma obra'); return false; }
-  if (!data) { showToast('⚠️ Selecione uma data'); return false; }
+  try {
+    const obraId = document.getElementById('f-dia-obra')?.value;
+    const data = document.getElementById('f-dia-data')?.value;
+    if (!obraId) { showToast('⚠️ Selecione uma obra'); return false; }
+    if (!data) { showToast('⚠️ Selecione uma data'); return false; }
 
-  state.diario.push({
-    id:     'DIA-'+pad(state.counters.dia),
-    obraId: obraId,
-    data:   document.getElementById('f-dia-data').value,
-    desc:   document.getElementById('f-dia-desc').value,
-    equipe: document.getElementById('f-dia-equipe').value,
-    clima:  document.getElementById('f-dia-clima').value,
-    ocorr:  document.getElementById('f-dia-ocorr').value,
-    fotos:  [..._pendingFotos],
-  });
-  _pendingFotos = [];
-  renderFotoPreview();
-  state.counters.dia++;
-  closeModal('modal-diario');
-  showToast('✅ Registro salvo!');
-  return true;
+    state.counters = state.counters || {};
+    state.counters.dia = state.counters.dia || 1;
+    state.diario = state.diario || [];
+
+    state.diario.push({
+      id:     'DIA-'+pad(state.counters.dia),
+      obraId: obraId,
+      data:   data,
+      desc:   document.getElementById('f-dia-desc')?.value || '',
+      equipe: document.getElementById('f-dia-equipe')?.value || '',
+      clima:  document.getElementById('f-dia-clima')?.value || '',
+      ocorr:  document.getElementById('f-dia-ocorr')?.value || '',
+      fotos:  [..._pendingFotos],
+    });
+    _pendingFotos = [];
+    renderFotoPreview();
+    state.counters.dia++;
+    closeModal('modal-diario');
+    showToast('✅ Registro salvo!');
+    return true;
+  } catch (e) {
+    console.error('addDiario falhou:', e);
+    showToast('❌ Erro ao salvar: ' + (e.message || 'desconhecido'), 5000);
+    return false;
+  }
 }
 
 export function delDiario(state, id){
