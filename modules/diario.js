@@ -17,6 +17,10 @@ export function addDiario(state){
     state.diario = state.diario || [];
 
     const editId = document.getElementById('f-dia-id')?.value;
+    // Se a foto tem URL no Storage, descarta dataUrl pesado pra economizar localStorage
+    const fotosFinais = _pendingFotos.map(f => f.url
+      ? { url: f.url, storagePath: f.storagePath, name: f.name }
+      : { dataUrl: f.dataUrl, name: f.name });
     const dadosForm = {
       obraId: obraId,
       data:   data,
@@ -24,7 +28,7 @@ export function addDiario(state){
       equipe: document.getElementById('f-dia-equipe')?.value || '',
       clima:  document.getElementById('f-dia-clima')?.value || '',
       ocorr:  document.getElementById('f-dia-ocorr')?.value || '',
-      fotos:  [..._pendingFotos],
+      fotos:  fotosFinais,
     };
 
     if (editId) {
@@ -68,6 +72,15 @@ export function openEditDiario(state, id) {
 
 export function delDiario(state, id){
   if(confirm('Excluir este registro?')){
+    const reg = state.diario.find(x=>x.id===id);
+    // Apaga fotos do Firebase Storage (best-effort, não bloqueia)
+    if (reg && typeof firebase !== 'undefined' && firebase.storage) {
+      (reg.fotos||[]).forEach(f => {
+        if (f.storagePath) {
+          firebase.storage().ref(f.storagePath).delete().catch(e => console.warn('del storage:', e?.message));
+        }
+      });
+    }
     state.diario=state.diario.filter(x=>x.id!==id);
     markDeleted(state, 'diario', id);
     _diarioLimit=20;
@@ -90,22 +103,63 @@ function compressImage(dataUrl, maxWidth = 1280, quality = 0.75) {
       canvas.height = h;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL('image/jpeg', quality));
+      canvas.toBlob(blob => resolve({ dataUrl: canvas.toDataURL('image/jpeg', quality), blob }), 'image/jpeg', quality);
     };
     img.src = dataUrl;
   });
 }
 
+// Upload de uma foto para Firebase Storage. Retorna URL pública ou null se falhar/sem login.
+async function uploadFotoToStorage(blob, fileName) {
+  if (typeof firebase === 'undefined' || !firebase.storage || !window._fbUser) return null;
+  try {
+    const safeName = (fileName || 'foto.jpg').replace(/[^a-zA-Z0-9._-]/g, '_');
+    const path = `usuarios/${window._fbUser.uid}/diario/${Date.now()}_${safeName}`;
+    const ref = firebase.storage().ref(path);
+    const snap = await ref.put(blob, { contentType: 'image/jpeg' });
+    const url = await snap.ref.getDownloadURL();
+    return { url, storagePath: path };
+  } catch (e) {
+    console.warn('uploadFotoToStorage falhou:', e?.message || e);
+    return null;
+  }
+}
+
 export async function handleFotos(state, input){
   const files = Array.from(input.files);
+  const placeholders = [];
   for (const file of files) {
-    const reader = new FileReader();
-    reader.onload = async e => {
-      const compressed = await compressImage(e.target.result);
-      _pendingFotos.push({dataUrl:compressed, name:file.name});
+    const ph = { dataUrl: '', name: file.name, uploading: true };
+    _pendingFotos.push(ph);
+    placeholders.push(ph);
+  }
+  renderFotoPreview();
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const ph = placeholders[i];
+    try {
+      const dataUrl = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = e => res(e.target.result);
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+      const { dataUrl: compressed, blob } = await compressImage(dataUrl);
+      ph.dataUrl = compressed;
+      ph.uploading = false;
+      // Upload em background — mantém dataUrl em memória para IA/preview, mas marca url para save
+      const uploaded = await uploadFotoToStorage(blob, file.name);
+      if (uploaded) {
+        ph.url = uploaded.url;
+        ph.storagePath = uploaded.storagePath;
+      }
       renderFotoPreview();
-    };
-    reader.readAsDataURL(file);
+    } catch (e) {
+      console.error('handleFotos:', e);
+      ph.uploading = false;
+      ph.error = (e?.message || 'erro');
+      renderFotoPreview();
+    }
   }
   input.value=''; // permite reusar
 }
@@ -141,9 +195,9 @@ export function renderDiario(state){
       const fotos=d.fotos||[];
       const galeriaHtml=fotos.length?`
         <div class="foto-galeria">
-          ${fotos.map((f,i)=>`<img src="${f.dataUrl}" alt="${f.name||'foto'}"
-            onclick="openLightbox('${f.dataUrl}','${obraName(state, d.obraId)} — ${fmtD(d.data)} — Foto ${i+1}')"
-            title="${f.name||'foto'}">`).join('')}
+          ${fotos.map((f,i)=>{const src=f.url||f.dataUrl||'';return `<img src="${src}" alt="${f.name||'foto'}"
+            onclick="openLightbox('${src}','${obraName(state, d.obraId)} — ${fmtD(d.data)} — Foto ${i+1}')"
+            title="${f.name||'foto'}">`}).join('')}
         </div>`:'';
       return `<div class="diario-item">
         <div style="display:flex;justify-content:space-between">
@@ -184,11 +238,16 @@ export function renderDiario(state){
 export function renderFotoPreview(){
   const el = document.getElementById('foto-preview');
   if(!el) return;
-  el.innerHTML = _pendingFotos.map((f,i)=>`
-    <div class="foto-preview-item">
-      <img src="${f.dataUrl}" alt="${f.name}">
+  el.innerHTML = _pendingFotos.map((f,i)=>{
+    const src = f.url || f.dataUrl || '';
+    const overlay = f.uploading ? '<div style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;border-radius:7px">⏳</div>' :
+                    f.error ? '<div style="position:absolute;inset:0;background:rgba(220,38,38,.55);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;border-radius:7px" title="'+(f.error||'')+'">❌</div>' : '';
+    return `<div class="foto-preview-item" style="position:relative">
+      <img src="${src}" alt="${f.name||''}">
+      ${overlay}
       <button class="foto-preview-del" onclick="removePendingFoto(${i})">✕</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 export async function gerarDiarioComFoto(state) {
