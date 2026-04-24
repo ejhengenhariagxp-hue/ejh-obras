@@ -497,6 +497,32 @@ G.renderTabelas = () => renderTabelas(state);
 G.gerarRelatorioWpp = () => gerarRelatorioWpp(state);
 G.gerarRelatorioEmail = () => gerarRelatorioEmail(state);
 G.renderReport = () => renderReport(state);
+
+// Atalho: gera PDF do diário direto da aba Diário (e Medição)
+G.gerarDiarioPDF = () => {
+  const obraId = document.getElementById('dia-pdf-obra')?.value || '';
+  window.nav('relatorio', null);
+  setTimeout(() => {
+    const sel = document.getElementById('rel-obra-sel');
+    const tipo = document.getElementById('rel-tipo-sel');
+    if (sel) sel.value = obraId;
+    if (tipo) tipo.value = 'diario';
+    renderReport(state);
+    setTimeout(() => window.print(), 400);
+  }, 200);
+};
+G.gerarMedicaoPDF = () => {
+  const obraId = document.getElementById('med-pdf-obra')?.value || '';
+  window.nav('relatorio', null);
+  setTimeout(() => {
+    const sel = document.getElementById('rel-obra-sel');
+    const tipo = document.getElementById('rel-tipo-sel');
+    if (sel) sel.value = obraId;
+    if (tipo) tipo.value = 'medicao';
+    renderReport(state);
+    setTimeout(() => window.print(), 400);
+  }, 200);
+};
 G.addChecklist = () => { if(addChecklist(state)) renderAtiva(); };
 G.renderTemplatesNBR = () => renderTemplatesNBR();
 G.novoChecklist = () => novoChecklist(state);
@@ -630,7 +656,12 @@ async function saveToCloud() {
   try {
     if (typeof firebase === 'undefined') throw new Error('Firebase não carregado');
     const db = firebase.firestore();
-    const s = { ...state, diario: (state.diario||[]).map(d=>({...d, fotos:[]})),
+    // Sobe fotos só se forem URLs do Storage; descarta dataUrl pesado (limite 1MB do Firestore)
+    const diarioCloud = (state.diario||[]).map(d => ({
+      ...d,
+      fotos: (d.fotos||[]).filter(f => f.url).map(f => ({ url: f.url, storagePath: f.storagePath, name: f.name }))
+    }));
+    const s = { ...state, diario: diarioCloud,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
     await db.collection('usuarios').doc(window._fbUser.uid).set(s);
     setSyncStatus('☁✓', 'Salvo ' + new Date().toLocaleTimeString('pt-BR'));

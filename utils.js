@@ -109,7 +109,8 @@ export function popularSelectsObras(state, ids) {
     'f-orc-obra','f-cron-obra','f-dia-obra','f-fin-obra',
     'f-med-obra','f-emp-obra','f-imp-obra','f-ck-obra',
     'f-simp-obra','rel-obra-sel','ia-orc-obra',
-    'ck-filtro-obra','gantt-obra-sel','cap-obra-sel','cap-hist-filtro'
+    'ck-filtro-obra','gantt-obra-sel','cap-obra-sel','cap-hist-filtro',
+    'dia-pdf-obra','med-pdf-obra'
   ];
   (ids || defaults).forEach(id => {
     const el = document.getElementById(id);

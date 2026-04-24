@@ -107,7 +107,7 @@ export function renderReport(state){
                   </div>` : ''}
                 ${e.fotos && e.fotos.length ? `
                   <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));gap:10px;margin-top:14px">
-                    ${e.fotos.map(f => `<img src="${f.dataUrl}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0">`).join('')}
+                    ${e.fotos.map(f => `<img src="${f.url||f.dataUrl||''}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0">`).join('')}
                   </div>
                 ` : ''}
               </div>
