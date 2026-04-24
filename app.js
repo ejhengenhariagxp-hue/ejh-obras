@@ -99,7 +99,7 @@ export function renderAtiva() {
     showSaveIndicator();
     if (window._fbUser) {
       clearTimeout(_fbSaveTimer);
-      _fbSaveTimer = setTimeout(() => fbSaveData(state), 3000);
+      _fbSaveTimer = setTimeout(() => fbSaveData(state), 800);
     }
   }
 }
@@ -558,15 +558,52 @@ G.cancelImport = () => cancelImport();
 G.confirmImport = () => { if (confirmImport(state)) renderAtiva(); };
 
 let _lastVisSync = 0;
+
+// Aplica tombstones (itens apagados em qualquer dispositivo) no objeto merged
+function applyTombstones(merged, localTombs) {
+  const remoteTombs = merged.deletedIds || {};
+  const tombs = {};
+  new Set([...Object.keys(localTombs), ...Object.keys(remoteTombs)]).forEach(k => {
+    tombs[k] = [...new Set([...(localTombs[k]||[]), ...(remoteTombs[k]||[])])];
+  });
+  merged.deletedIds = tombs;
+  const arrayMap = {
+    obras:'obras', orc:'orc', cron:'cron', diario:'diario', fin:'fin',
+    medicoes:'medicoes', empreita:'empreitas', propostas:'propostas',
+    checklists:'checklists', capturas:'capturas', composicoes:'composicoes'
+  };
+  Object.entries(arrayMap).forEach(([tombKey, stateKey]) => {
+    const dels = new Set(tombs[tombKey] || []);
+    if (dels.size && Array.isArray(merged[stateKey])) {
+      merged[stateKey] = merged[stateKey].filter(x => !dels.has(x.id));
+    }
+  });
+  return merged;
+}
+
 function syncFromCloud(silent) {
   if (!window._fbUser) return;
+  const localTombs = JSON.parse(JSON.stringify(state.deletedIds || {}));
   fbLoadData(state).then(merged => {
+    applyTombstones(merged, localTombs);
     const before = _lastHash;
     Object.assign(state, merged); window._state = state;
     _lastHash = calcHash(state);
     renderAtiva();
-    if (!silent && _lastHash !== before) showToast('☁️ Atualizado do celular!', 2000);
+    // Re-salva para propagar tombstones do local ao cloud
+    if (window._fbUser) { clearTimeout(_fbSaveTimer); fbSaveData(state); }
+    if (!silent && _lastHash !== before) showToast('☁️ Atualizado!', 2000);
   });
+}
+
+// Flush imediato do save pendente (chamado ao sair/minimizar)
+function flushSave() {
+  if (!window._fbUser) return;
+  if (_fbSaveTimer) {
+    clearTimeout(_fbSaveTimer);
+    _fbSaveTimer = null;
+    fbSaveData(state);
+  }
 }
 
 window.addEventListener('load', () => {
@@ -583,10 +620,14 @@ window.addEventListener('load', () => {
       const ini  = nome.split(' ').filter(Boolean).slice(0,2).map(n=>n[0].toUpperCase()).join('');
       safeText('user-initials', ini);
       safeText('user-name', nome.split(' ')[0]);
+      const localTombs = JSON.parse(JSON.stringify(state.deletedIds || {}));
       fbLoadData(state).then(merged => {
+        applyTombstones(merged, localTombs);
         Object.assign(state, merged); window._state = state;
         _lastHash = calcHash(state);
-        renderAtiva(); showToast('☁️ Sincronizado!', 2000);
+        renderAtiva();
+        if (window._fbUser) fbSaveData(state);
+        showToast('☁️ Sincronizado!', 2000);
       });
     } else {
       if (uBar) uBar.style.display = 'none';
@@ -595,11 +636,13 @@ window.addEventListener('load', () => {
   });
 });
 
-// Re-sincronizar quando a aba volta pro foco (celular → PC)
+// Sync ao voltar o foco; flush ao sair (celular ↔ PC ↔ tablet)
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState !== 'visible') return;
+  if (document.visibilityState === 'hidden') { flushSave(); return; }
   const now = Date.now();
-  if (now - _lastVisSync < 10000) return; // debounce 10s
+  if (now - _lastVisSync < 5000) return; // debounce 5s
   _lastVisSync = now;
   syncFromCloud(false);
 });
+window.addEventListener('pagehide', flushSave);
+window.addEventListener('beforeunload', flushSave);

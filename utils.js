@@ -42,6 +42,14 @@ export function tipoLabel(tipo) {
   return {'projeto':'Projeto','obra':'Obra','acompanhamento':'Acompanhamento (RT)','consultoria':'Consultoria','R1':'Projeto','R2':'Obra'}[tipo] || tipo || 'Obra';
 }
 
+// Tombstones: registra id apagado para propagar deleção entre dispositivos via cloud merge
+export function markDeleted(state, tipo, id) {
+  if (!id) return;
+  state.deletedIds ||= {};
+  state.deletedIds[tipo] ||= [];
+  if (!state.deletedIds[tipo].includes(id)) state.deletedIds[tipo].push(id);
+}
+
 export function openModal(id) {
   const m = document.getElementById(id);
   if (m) { m.style.display = 'flex'; m.classList.add('open'); }

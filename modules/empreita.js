@@ -1,5 +1,5 @@
 ﻿// modules/empreita.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName, escapeHtml } from '../utils.js';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName, escapeHtml, markDeleted } from '../utils.js';
 
 let _empSigCanvas = { cliente: null, empreiteiro: null };
 let _empSigDrawing = { cliente: false, empreiteiro: false };
@@ -77,7 +77,7 @@ export function addEmpreita(state){
   closeModal('modal-empreita'); return true; showToast('✅ Contrato de empreita cadastrado!');
 }
 
-export function delEmpreita(state, id){if(confirm('Remover contrato?')){state.empreitas=state.empreitas.filter(x=>x.id!==id);return true;}}
+export function delEmpreita(state, id){if(confirm('Remover contrato?')){state.empreitas=state.empreitas.filter(x=>x.id!==id);markDeleted(state, 'empreita', id);return true;}}
 
 export function openEmpPag(state, id){
   document.getElementById('f-epag-id').value=id;
