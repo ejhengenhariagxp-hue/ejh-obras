@@ -36,7 +36,7 @@
   <div class="user-bar" id="user-bar" style="display:none;background:rgba(16,185,129,.2)">
     <div id="user-initials" style="width:28px;height:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0"></div>
     <div class="user-name" id="user-name"></div>
-    <span style="font-size:14px" title="Sincronizado na nuvem">☁✓</span>
+    <span id="sync-status" style="font-size:13px;cursor:pointer" title="Clique para sincronizar agora" onclick="syncNow()">☁✓</span>
     <button class="user-btn" onclick="iaTrocarChave()" title="Configurar chave Anthropic">🤖</button>
     <button class="user-btn" onclick="fbLogout()" title="Sair">↩</button>
   </div>
