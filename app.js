@@ -627,6 +627,18 @@ window.syncNow = () => {
 window.addEventListener('online',  () => { setSyncStatus('☁✓', 'Voltou online'); syncFromCloud(true); });
 window.addEventListener('offline', () => setSyncStatus('⚠️', 'Offline — sem internet'));
 
+// Captura erros globais — fundamental para diagnosticar falhas silenciosas no celular
+window.addEventListener('error', (ev) => {
+  const msg = (ev.error?.message || ev.message || 'Erro desconhecido').substring(0, 160);
+  try { showToast('❌ ' + msg, 8000); } catch {}
+  console.error('GLOBAL error:', ev.error || ev);
+});
+window.addEventListener('unhandledrejection', (ev) => {
+  const msg = (ev.reason?.message || String(ev.reason) || 'Promise rejeitada').substring(0, 160);
+  try { showToast('❌ ' + msg, 8000); } catch {}
+  console.error('Unhandled rejection:', ev.reason);
+});
+
 // Polling leve a cada 60s quando a aba está visível (redundância caso visibilitychange não dispare)
 setInterval(() => {
   if (document.visibilityState === 'visible' && window._fbUser && navigator.onLine) {
