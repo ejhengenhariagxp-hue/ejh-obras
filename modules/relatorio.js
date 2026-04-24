@@ -182,9 +182,33 @@ export function renderReport(state){
   </div>`;
 }
 
-export function gerarTextoRelatorio(state, obraId){
+export function gerarTextoRelatorio(state, obraId, tipo){
   const obras=obraId?state.obras.filter(o=>o.id===obraId):state.obras;
   const hoje=new Date().toLocaleDateString('pt-BR');
+
+  // Modo "Diário": texto focado no diário de obra (atividades por dia)
+  if (tipo === 'diario') {
+    let msg = `*EJH ENGENHARIA — Relatório do Diário de Obra*\n*Data:* ${hoje}\n\n`;
+    obras.forEach(o => {
+      const entries = state.diario.filter(d => d.obraId === o.id).sort((a,b) => b.data.localeCompare(a.data));
+      msg += `*${o.nome}*\n`;
+      msg += `👤 Cliente: ${o.cliente}\n\n`;
+      if (!entries.length) {
+        msg += `_Sem registros._\n\n`;
+      } else {
+        entries.forEach(e => {
+          msg += `📅 *${fmtD(e.data)}*  ${e.clima || ''}  👷 ${e.equipe || '—'}\n`;
+          if (e.desc)  msg += `${e.desc}\n`;
+          if (e.ocorr && e.ocorr !== 'Sem ocorrências' && e.ocorr !== 'Nenhuma') msg += `⚠️ ${e.ocorr}\n`;
+          if (e.fotos?.length) msg += `📷 ${e.fotos.length} foto(s) anexa(s)\n`;
+          msg += '\n';
+        });
+      }
+    });
+    msg += `_Gerado por ${state.engNome || 'EJH Engenharia'} — Sistema de Gestão de Obras_`;
+    return msg;
+  }
+
   let msg=`*EJH ENGENHARIA — Relatório de Obras*
 *Data:* ${hoje}
 
@@ -224,13 +248,15 @@ export function gerarTextoRelatorio(state, obraId){
 
 export function gerarRelatorioWpp(state){
   const obraId=document.getElementById('rel-obra-sel')?.value||'';
-  const msg=gerarTextoRelatorio(state, obraId);
+  const tipo=document.getElementById('rel-tipo-sel')?.value||'gerencial';
+  const msg=gerarTextoRelatorio(state, obraId, tipo);
   window.open('https://api.whatsapp.com/send?text='+encodeURIComponent(msg),'_blank');
 }
 
 export function gerarRelatorioEmail(state){
   const obraId=document.getElementById('rel-obra-sel')?.value||'';
-  const msg=gerarTextoRelatorio(state, obraId);
+  const tipo=document.getElementById('rel-tipo-sel')?.value||'gerencial';
+  const msg=gerarTextoRelatorio(state, obraId, tipo);
   const subject='Relatório de Obras — EJH Engenharia — '+new Date().toLocaleDateString('pt-BR');
   // Convert markdown-like to plain text
   const body=msg.replace(/\*/g,'').replace(/_/g,'');
