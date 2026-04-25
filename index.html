@@ -19,14 +19,14 @@
 
 
 <!-- build:20260424_1930 -->
-<link rel="stylesheet" href="./styles.css?v=20260425e">
+<link rel="stylesheet" href="./styles.css?v=20260425f">
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260425e"></script>
+<script type="module" src="./app.js?v=20260425f"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -202,6 +202,7 @@
     <div><div class="page-title">Diário de Obra</div><div class="page-sub">Registro diário com fotos</div></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <select id="dia-pdf-obra" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px"><option value="">Todas as obras</option></select>
+      <button class="btn btn-outline" onclick="gerarDiarioWpp()" title="Compartilhar Diário no WhatsApp" style="color:#25d366;border-color:#25d366">📱 WhatsApp</button>
       <button class="btn btn-outline" onclick="gerarDiarioPDF()" title="Gerar PDF do Diário">🖨 PDF do Diário</button>
       <button class="btn btn-primary" onclick="openModalDiario()">＋ Registro</button>
     </div>

@@ -1,6 +1,6 @@
 // modules/composicoes.js — Composições próprias de serviço
 // ══════════════════════════════════════════════════════════════════════
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, escapeHtml, markDeleted } from '../utils.js?v=20260425e';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, escapeHtml, markDeleted } from '../utils.js?v=20260425f';
 import { SINAPI, SICOR } from './sinapi.js';
 
 // ── INSUMOS temporários durante edição ────────────────────────────────
@@ -10,8 +10,12 @@ let _compSinapiOrigem = null;
 export function novaComposicao() {
   _insumosAtual = [];
   _compSinapiOrigem = null;
+  window._editandoCompId = null;
+  ['f-comp-nome','f-comp-cod','f-comp-desc'].forEach(k => { const el=document.getElementById(k); if(el) el.value=''; });
   const org = document.getElementById('comp-sinapi-origem');
   if (org) { org.style.display = 'none'; org.innerHTML = ''; }
+  const t = document.querySelector('#modal-composicao .modal-title');
+  if (t) t.textContent = '🧱 Nova Composição';
   renderInsumosComp();
   openModal('modal-composicao');
 }
@@ -183,8 +187,7 @@ export function salvarComposicao(state) {
   if (!state.counters.comp) state.counters.comp = 1;
 
   const vunit = calcTotalComp();
-  const comp = {
-    id: 'COMP-' + pad(state.counters.comp),
+  const dadosForm = {
     nome,
     cat:   document.getElementById('f-comp-cat')?.value  || 'Outros',
     un:    document.getElementById('f-comp-un')?.value   || 'vb',
@@ -192,13 +195,24 @@ export function salvarComposicao(state) {
     desc:  document.getElementById('f-comp-desc')?.value || '',
     insumos: _insumosAtual.map(x => ({ ...x })),
     vunit,
-    criadoEm: new Date().toISOString(),
   };
-  state.composicoes.push(comp);
-  state.counters.comp++;
+
+  const editId = window._editandoCompId;
+  let comp;
+  if (editId) {
+    const idx = state.composicoes.findIndex(c => c.id === editId);
+    if (idx < 0) { showToast('⚠️ Composição não encontrada'); return false; }
+    comp = { ...state.composicoes[idx], ...dadosForm, atualizadoEm: new Date().toISOString() };
+    state.composicoes[idx] = comp;
+  } else {
+    comp = { id: 'COMP-' + pad(state.counters.comp), ...dadosForm, criadoEm: new Date().toISOString() };
+    state.composicoes.push(comp);
+    state.counters.comp++;
+  }
+  window._editandoCompId = null;
   _insumosAtual = [];
   closeModal('modal-composicao');
-  showToast('✅ Composição salva: ' + comp.id);
+  showToast(editId ? '✅ Composição atualizada: ' + comp.id : '✅ Composição salva: ' + comp.id);
   return true;
 }
 
@@ -353,15 +367,16 @@ export function inserirComposicaoNoOrcamento(state, obraId) {
 
 export function editarComposicao(state, id) {
   const comp = state.composicoes?.find(c => c.id === id);
-  if (!comp) return;
+  if (!comp) { showToast('⚠️ Composição não encontrada'); return; }
   document.getElementById('f-comp-nome').value = comp.nome;
   document.getElementById('f-comp-cat').value  = comp.cat;
   document.getElementById('f-comp-un').value   = comp.un;
   document.getElementById('f-comp-cod').value  = comp.cod || '';
   document.getElementById('f-comp-desc').value = comp.desc || '';
-  _insumosAtual = comp.insumos.map(x => ({ ...x }));
+  _insumosAtual = (comp.insumos || []).map(x => ({ ...x }));
   renderInsumosComp();
-  // Override save to update instead of create
   window._editandoCompId = id;
+  const t = document.querySelector('#modal-composicao .modal-title');
+  if (t) t.textContent = '✏️ Editar Composição — ' + comp.id;
   openModal('modal-composicao');
 }

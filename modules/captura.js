@@ -1,6 +1,6 @@
 // modules/captura.js — Central de Comunicação da Obra
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, escapeHtml } from '../utils.js?v=20260425e';
-import { iaCall } from '../services.js?v=20260425e';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, escapeHtml } from '../utils.js?v=20260425f';
+import { iaCall } from '../services.js?v=20260425f';
 
 var capResultadoAtual = null;
 var capArquivos = [];
