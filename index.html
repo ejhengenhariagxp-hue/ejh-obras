@@ -19,14 +19,14 @@
 
 
 <!-- build:20260424_1930 -->
-<link rel="stylesheet" href="./styles.css?v=20260425g">
+<link rel="stylesheet" href="./styles.css?v=20260425h">
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260425g"></script>
+<script type="module" src="./app.js?v=20260425h"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -1114,6 +1114,28 @@
 <!-- FAB flutuante -->
 
 
+<div class="modal-bg" id="modal-info-rapida"><div class="modal">
+  <div class="modal-title">📊 Resumo Rápido</div>
+  <div id="info-rapida-conteudo" style="font-size:13px;line-height:1.6">
+    <div style="background:var(--card);padding:12px;border-radius:8px;margin-bottom:10px">
+      <div style="color:var(--muted);font-size:11px">Obras em andamento</div>
+      <div style="font-size:18px;font-weight:700;color:var(--navy)" id="info-obras-ativas">—</div>
+    </div>
+    <div style="background:var(--card);padding:12px;border-radius:8px;margin-bottom:10px">
+      <div style="color:var(--muted);font-size:11px">Etapas atrasadas</div>
+      <div style="font-size:18px;font-weight:700;color:#dc2626" id="info-etapas-atrasadas">—</div>
+    </div>
+    <div style="background:var(--card);padding:12px;border-radius:8px;margin-bottom:10px">
+      <div style="color:var(--muted);font-size:11px">Saldo financeiro</div>
+      <div style="font-size:18px;font-weight:700;color:var(--navy)" id="info-saldo">—</div>
+    </div>
+    <div id="info-detalhes" style="font-size:12px;color:var(--muted);margin-top:14px"></div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-outline" onclick="closeModal('modal-info-rapida')">Fechar</button>
+  </div>
+</div></div>
+
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
   <span class="lightbox-close">✕</span>
   <img id="lightbox-img" src="" alt="">
@@ -1140,6 +1162,7 @@
 </nav>
 
 <button class="fab" id="fab-btn" onclick="toggleFab()" title="Ações rápidas — Nova obra, despesa, diário, comunicação..." aria-label="Ações rápidas">＋</button>
+<button class="fab" id="info-btn" style="bottom:88px;background:linear-gradient(135deg,#3b82f6,#2563eb);cursor:help" onclick="abrirInfoRapida()" title="Resumo rápido da situação das obras">📊</button>
 <div class="fab-menu" id="fab-menu">
   <button class="fab-item" onclick="resetFormObra();openModal('modal-obra');closeFab()">🚧 Nova obra</button>
   <button class="fab-item" onclick="nav('captura',null);closeFab()">📡 Comunicação</button>
