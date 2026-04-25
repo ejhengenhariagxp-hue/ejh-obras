@@ -1,33 +1,102 @@
 // modules/medicoes.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName } from '../utils.js';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName, popularSelectsObras, markDeleted } from '../utils.js';
 
 export function addMedicao(state){
   const obraId=document.getElementById('f-med-obra')?.value;
   if(!obraId) { showToast('⚠️ Selecione uma obra'); return false; }
-  
+
+  const editId = document.getElementById('f-med-id')?.value;
+
   const itens=[];
   document.querySelectorAll('.med-item-row').forEach(row=>{
     const qtdMed=+row.querySelector('.med-qtd').value||0;
     if(qtdMed>0){
       const orcId=row.dataset.orcid;
       const orc=state.orc.find(x=>x.id===orcId);
-      if(orc) itens.push({item:orc.item,un:orc.un,qtd:orc.qtd,vunit:orc.vunit,qtdMed,valorMed:qtdMed*orc.vunit});
+      if(orc) itens.push({orcId,item:orc.item,un:orc.un,qtd:orc.qtd,vunit:orc.vunit,qtdMed,valorMed:qtdMed*orc.vunit});
     }
   });
-  
-  state.medicoes.push({
-    id:'MED-'+pad(state.counters.med),
+
+  state.medicoes = state.medicoes || [];
+  state.counters = state.counters || {};
+  state.counters.med = state.counters.med || 1;
+
+  const dadosForm = {
     obraId,
-    num:+document.getElementById('f-med-num').value||state.medicoes.filter(m=>m.obraId===obraId).length+1,
+    num:+document.getElementById('f-med-num').value
+        || state.medicoes.filter(m=>m.obraId===obraId && m.id!==editId).length+1,
     periodo:document.getElementById('f-med-periodo').value,
     data:document.getElementById('f-med-data').value,
     resp:document.getElementById('f-med-resp').value,
     itens,
-  });
-  
-  state.counters.med++;
+  };
+
+  if (editId) {
+    const idx = state.medicoes.findIndex(m => m.id === editId);
+    if (idx < 0) { showToast('⚠️ Medição não encontrada'); return false; }
+    state.medicoes[idx] = { ...state.medicoes[idx], ...dadosForm };
+  } else {
+    state.medicoes.push({ id:'MED-'+pad(state.counters.med), ...dadosForm });
+    state.counters.med++;
+  }
+
   closeModal('modal-medicao');
-  showToast('✅ Medição gerada!');
+  showToast(editId ? '✅ Medição atualizada!' : '✅ Medição gerada!');
+  return true;
+}
+
+export function openModalMedicao(state){
+  popularSelectsObras(state);
+  ['f-med-id','f-med-num','f-med-periodo','f-med-resp'].forEach(k => {
+    const el = document.getElementById(k); if (el) el.value = '';
+  });
+  const obraSel = document.getElementById('f-med-obra'); if (obraSel) obraSel.value = '';
+  const dataEl = document.getElementById('f-med-data');
+  if (dataEl) dataEl.value = new Date().toISOString().split('T')[0];
+  safeInner('med-items-list', '<div style="color:var(--muted);padding:16px">Selecione uma obra para listar os itens.</div>');
+  const t = document.querySelector('#modal-medicao .modal-title');
+  if (t) t.textContent = '📏 Nova Medição';
+  openModal('modal-medicao');
+}
+
+export function openEditMedicao(state, id){
+  const m = state.medicoes?.find(x => x.id === id);
+  if (!m) { showToast('⚠️ Medição não encontrada'); return; }
+  popularSelectsObras(state);
+  const set = (k, v) => { const el = document.getElementById(k); if (el) el.value = v ?? ''; };
+  set('f-med-id', id);
+  set('f-med-obra', m.obraId);
+  set('f-med-num', m.num);
+  set('f-med-periodo', m.periodo);
+  set('f-med-data', m.data);
+  set('f-med-resp', m.resp);
+  loadMedItems(state);
+  // Prefill após renderização das linhas
+  setTimeout(() => {
+    document.querySelectorAll('.med-item-row').forEach(row => {
+      const orcId = row.dataset.orcid;
+      const orc = state.orc.find(x => x.id === orcId);
+      if (!orc) return;
+      const it = m.itens.find(x => x.orcId === orcId)
+              || m.itens.find(x => x.item === orc.item && x.un === orc.un);
+      if (it && it.qtdMed) {
+        const inp = row.querySelector('.med-qtd');
+        if (inp) {
+          inp.value = it.qtdMed;
+          updateMedVal(state, inp, orcId);
+        }
+      }
+    });
+  }, 50);
+  const t = document.querySelector('#modal-medicao .modal-title');
+  if (t) t.textContent = '✏️ Editar Medição';
+  openModal('modal-medicao');
+}
+
+export function delMedicao(state, id){
+  if (!confirm('Excluir esta medição?')) return false;
+  state.medicoes = (state.medicoes || []).filter(x => x.id !== id);
+  markDeleted(state, 'medicoes', id);
   return true;
 }
 
@@ -164,10 +233,12 @@ export function renderMedicoes(state){
           <div class="medicao-title">Medição nº ${m.num} — ${obraName(state, m.obraId)}</div>
           <div style="font-size:12px;opacity:.7;margin-top:2px">Período: ${m.periodo} • Emissão: ${fmtD(m.data)}</div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800">${fmt(totalMed)}</div>
+          <button class="btn btn-outline btn-sm" onclick="openEditMedicao('${m.id}')" style="color:var(--amber);border-color:var(--amber)" title="Editar medição">✏️ Editar</button>
           <button class="btn btn-outline btn-sm" onclick="printMedicao('${m.id}')">🖨 Imprimir</button>
           <button class="btn btn-outline btn-sm" onclick="colherAssinatura('${m.id}')" style="color:var(--purple);border-color:var(--purple)">✍️ Assinar</button>
+          <button class="btn btn-outline btn-sm" onclick="delMedicao('${m.id}')" style="color:var(--red);border-color:var(--red)" title="Excluir medição">✕</button>
         </div>
       </div>
       <div class="medicao-body">

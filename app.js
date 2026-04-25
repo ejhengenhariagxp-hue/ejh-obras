@@ -13,7 +13,7 @@ import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOr
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js';
 import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js';
 import { addFin, delFin, openModalFin, renderFinanceiro, toggleHideRT } from './modules/financeiro.js';
-import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes } from './modules/medicoes.js';
+import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
          saveProposta, delProposta, editProposta, printProposta, compartilharWhatsApp,
@@ -462,6 +462,9 @@ G.openModalFin = tipo => openModalFin(state, tipo);
 G.addFin = () => { if(addFin(state)) renderAtiva(); };
 G.delFin = id => { if(delFin(state,id)) renderAtiva(); };
 G.toggleHideRT = cb => { toggleHideRT(state, cb); renderAtiva(); };
+G.openModalMedicao = () => openModalMedicao(state);
+G.openEditMedicao = id => openEditMedicao(state, id);
+G.delMedicao = id => { if(delMedicao(state,id)) renderAtiva(); };
 G.addMedicao = () => { if(addMedicao(state)) renderAtiva(); };
 G.updateMedVal = (inp, orcId) => updateMedVal(state, inp, orcId);
 G.loadMedItems = () => loadMedItems(state);
@@ -586,6 +589,35 @@ G.confirmImport = () => { if (confirmImport(state)) renderAtiva(); };
 
 let _lastVisSync = 0;
 
+// Snapshot das fotos locais por id de diário — usado para restaurar após sync
+// (saveToCloud descarta dataUrl para não estourar 1MB do Firestore;
+//  ao recarregar do cloud, fotos locais sem URL voltariam vazias sem isso)
+function snapshotLocalFotos() {
+  const m = {};
+  (state.diario || []).forEach(d => {
+    if (Array.isArray(d.fotos) && d.fotos.length) m[d.id] = d.fotos;
+  });
+  return m;
+}
+
+function restoreLocalFotos(merged, snap) {
+  if (!merged || !Array.isArray(merged.diario)) return;
+  merged.diario.forEach(d => {
+    const local = snap[d.id];
+    if (!local || !local.length) return;
+    const cloudFotos = Array.isArray(d.fotos) ? d.fotos : [];
+    // Mescla: mantém todas as URLs do cloud + dataUrls locais que ainda não viraram URL
+    const cloudUrls = new Set(cloudFotos.filter(f => f.url).map(f => f.url));
+    const cloudPaths = new Set(cloudFotos.filter(f => f.storagePath).map(f => f.storagePath));
+    const extras = local.filter(f => {
+      if (f.url) return !cloudUrls.has(f.url);
+      if (f.storagePath) return !cloudPaths.has(f.storagePath);
+      return !!f.dataUrl; // dataUrl local nunca está no cloud
+    });
+    d.fotos = [...cloudFotos, ...extras];
+  });
+}
+
 // Aplica tombstones (itens apagados em qualquer dispositivo) no objeto merged
 function applyTombstones(merged, localTombs) {
   const remoteTombs = merged.deletedIds || {};
@@ -618,8 +650,10 @@ function syncFromCloud(silent) {
   if (!navigator.onLine) { setSyncStatus('⚠️', 'Offline — clique quando voltar à internet'); return Promise.resolve(); }
   setSyncStatus('🔄', 'Sincronizando…');
   const localTombs = JSON.parse(JSON.stringify(state.deletedIds || {}));
+  const fotosSnap = snapshotLocalFotos();
   return fbLoadData(state).then(merged => {
     applyTombstones(merged, localTombs);
+    restoreLocalFotos(merged, fotosSnap);
     const before = _lastHash;
     Object.assign(state, merged); window._state = state;
     _lastHash = calcHash(state);
@@ -728,8 +762,10 @@ window.addEventListener('load', () => {
       safeText('user-initials', ini);
       safeText('user-name', nome.split(' ')[0]);
       const localTombs = JSON.parse(JSON.stringify(state.deletedIds || {}));
+      const fotosSnap = snapshotLocalFotos();
       fbLoadData(state).then(merged => {
         applyTombstones(merged, localTombs);
+        restoreLocalFotos(merged, fotosSnap);
         Object.assign(state, merged); window._state = state;
         _lastHash = calcHash(state);
         renderAtiva();

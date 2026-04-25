@@ -19,14 +19,14 @@
 
 
 <!-- build:20260424_1930 -->
-<link rel="stylesheet" href="./styles.css?v=20260424d">
+<link rel="stylesheet" href="./styles.css?v=20260425a">
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260424d"></script>
+<script type="module" src="./app.js?v=20260425a"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -256,7 +256,7 @@
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <select id="med-pdf-obra" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px"><option value="">Todas as obras</option></select>
       <button class="btn btn-outline" onclick="gerarMedicaoPDF()" title="Gerar PDF da Medição">🖨 PDF da Medição</button>
-      <button class="btn btn-primary" onclick="openModal('modal-medicao')">＋ Nova Medição</button>
+      <button class="btn btn-primary" onclick="openModalMedicao()">＋ Nova Medição</button>
     </div>
   </div>
   <div id="list-medicoes"></div>
@@ -735,6 +735,7 @@
 <!-- Medição -->
 <div class="modal-bg" id="modal-medicao"><div class="modal modal-wide">
   <div class="modal-title">📏 Nova Medição</div>
+  <input type="hidden" id="f-med-id">
   <div class="form-grid">
     <div class="form-group full"><label>Obra</label><select id="f-med-obra" onchange="loadMedItems()"></select></div>
     <div class="form-group"><label>Nº da Medição</label><input id="f-med-num" type="number" min="1" placeholder="1"></div>
