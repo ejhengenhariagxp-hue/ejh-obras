@@ -19,14 +19,14 @@
 
 
 <!-- build:20260424_1930 -->
-<link rel="stylesheet" href="./styles.css?v=20260425f">
+<link rel="stylesheet" href="./styles.css?v=20260425g">
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260425f"></script>
+<script type="module" src="./app.js?v=20260425g"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -66,7 +66,7 @@
     <div class="nav-group">Propostas & Relatório</div>
     <div class="nav-item" onclick="nav('propostas',this)"><span class="nav-icon">📝</span><span>Propostas</span></div>
     <div class="nav-item" onclick="nav('relatorio',this)"><span class="nav-icon">📄</span><span>Relatório</span></div>
-    <div class="nav-item" onclick="openModal('modal-ia-config')"><span class="nav-icon">🤖</span><span>IA Inteligente (BETA)</span></div>
+    <div class="nav-item" onclick="openIaConfig()"><span class="nav-icon">🤖</span><span>IA Inteligente (BETA)</span></div>
     <div class="nav-group">Preferências</div>
     <div class="nav-item" onclick="openModal('modal-settings')"><span class="nav-icon">⚙️</span><span>Configurações</span></div>
   </div>
@@ -1079,11 +1079,15 @@
 <!-- Modal Configurar IA (Anthropic) -->
 <div class="modal-bg" id="modal-ia-config"><div class="modal" style="max-width:480px">
   <div class="modal-title">🤖 Configurar IA (Anthropic)</div>
+  <div id="ia-status" style="background:#f0fdf4;border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:13px;color:#166534;display:none">
+    <strong>✅ Chave configurada</strong><br>
+    <span id="ia-key-preview" style="font-family:monospace;font-size:11px;margin-top:6px;display:block">sk-ant-...xxxx</span>
+  </div>
   <div style="background:#fef3c7;border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:13px;color:#78350f">
     <strong>⚡ IA Nativa no Browser</strong><br>
     Sua chave será salva apenas neste dispositivo para garantir sua privacidade.
   </div>
-  
+
   <div style="margin-bottom:16px">
     <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--navy);font-size:13.5px;margin-bottom:6px">
       1️⃣ Obtenha sua chave
@@ -1094,7 +1098,7 @@
   </div>
 
   <div class="form-group full">
-    <label>2️⃣ Cole sua API Key aqui</label>
+    <label>2️⃣ Cole sua API Key aqui (ou deixe vazia para manter a atual)</label>
     <input type="password" id="set-ia-key" placeholder="sk-ant-api03-..." style="font-family:monospace;font-size:12px">
     <div style="font-size:11px;color:var(--muted);margin-top:6px">
       A chave começa com <code>sk-ant-</code>. Nunca compartilhe sua chave.
@@ -1102,7 +1106,7 @@
   </div>
 
   <div class="modal-actions">
-    <button class="btn btn-outline" onclick="closeModal('modal-ia-config')">Cancelar</button>
+    <button class="btn btn-outline" onclick="closeModal('modal-ia-config')">Fechar</button>
     <button class="btn btn-primary" onclick="saveIaConfig()">💾 Salvar Chave</button>
   </div>
 </div></div>
