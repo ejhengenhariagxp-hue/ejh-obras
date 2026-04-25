@@ -1,6 +1,6 @@
 // modules/composicoes.js — Composições próprias de serviço
 // ══════════════════════════════════════════════════════════════════════
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, escapeHtml, markDeleted } from '../utils.js?v=20260425d';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, escapeHtml, markDeleted } from '../utils.js?v=20260425e';
 import { SINAPI, SICOR } from './sinapi.js';
 
 // ── INSUMOS temporários durante edição ────────────────────────────────

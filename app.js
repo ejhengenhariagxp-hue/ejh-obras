@@ -4,35 +4,35 @@
 import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
          openModal, closeModal, statusBadge, tipoLabel,
          popularSelectsObras, modalidadeIcon, verificarAvisosObra,
-         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260425d';
+         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260425e';
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
          fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA,
-         getIaKey, setIaKey, hasIaKey } from './services.js?v=20260425d';
-import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260425d';
-import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260425d';
-import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260425d';
-import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js?v=20260425d';
-import { addFin, delFin, openModalFin, renderFinanceiro, toggleHideRT } from './modules/financeiro.js?v=20260425d';
-import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260425d';
-import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260425d';
+         getIaKey, setIaKey, hasIaKey } from './services.js?v=20260425e';
+import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260425e';
+import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260425e';
+import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260425e';
+import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js?v=20260425e';
+import { addFin, delFin, openModalFin, renderFinanceiro, toggleHideRT } from './modules/financeiro.js?v=20260425e';
+import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260425e';
+import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260425e';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
          saveProposta, delProposta, editProposta, printProposta, compartilharWhatsApp,
          colherAssinaturaProposta, importFromOrcamento, addObraItem,
-         addProjServico, addProjExtra, toggleModoGlobal, renderPropostas } from './modules/propostas.js?v=20260425d';
-import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260425d';
-import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260425d';
-import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260425d';
-import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js?v=20260425d';
+         addProjServico, addProjExtra, toggleModoGlobal, renderPropostas } from './modules/propostas.js?v=20260425e';
+import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260425e';
+import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260425e';
+import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260425e';
+import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js?v=20260425e';
 import { novaComposicao, addInsumoComp, renderInsumosComp, calcTotalComp,
          salvarComposicao, delComposicao, renderComposicoes, filtrarComposicoes,
          popularSelectComposicoes, preencherDadosComposicao, calcTotalComposicaoSel,
          inserirComposicaoNoOrcamento, editarComposicao,
          abrirCopiaSinapi, _setCopiaSrc, _filtrarCopiaSinapi, _copiarDeSinapi,
-         setInsumoField, removeInsumoAt } from './modules/composicoes.js?v=20260425d';
-import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js?v=20260425d';
+         setInsumoField, removeInsumoAt } from './modules/composicoes.js?v=20260425e';
+import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js?v=20260425e';
 import { importExcel, importCSV, importPDF, importManual, applyMapping,
          _selectSheet, _updateImportItem, _removeImportItem, addImportRow,
-         cancelImport, confirmImport } from './modules/importar.js?v=20260425d';
+         cancelImport, confirmImport } from './modules/importar.js?v=20260425e';
 
 // ── Estado global ────────────────────────────────────────────────────
 const DEFAULT_STATE = {
@@ -749,15 +749,13 @@ function restoreLocalFotos(merged, snap) {
     const local = snap[d.id];
     if (!local || !local.length) return;
     const cloudFotos = Array.isArray(d.fotos) ? d.fotos : [];
-    // Mescla: mantém todas as URLs do cloud + dataUrls locais que ainda não viraram URL
-    const cloudUrls = new Set(cloudFotos.filter(f => f.url).map(f => f.url));
-    const cloudPaths = new Set(cloudFotos.filter(f => f.storagePath).map(f => f.storagePath));
-    const extras = local.filter(f => {
-      if (f.url) return !cloudUrls.has(f.url);
-      if (f.storagePath) return !cloudPaths.has(f.storagePath);
-      return !!f.dataUrl; // dataUrl local nunca está no cloud
-    });
-    d.fotos = [...cloudFotos, ...extras];
+    // Caminho B: cloud (sub-coleção) é a fonte da verdade quando tem fotos.
+    // Só restauramos do snapshot local quando o cloud trouxe MENOS fotos —
+    // típico durante migração caminho A→B (cloud zerado, local cheio) ou
+    // quando o save ainda não rodou.
+    if (local.length > cloudFotos.length) {
+      d.fotos = local;
+    }
   });
 }
 
@@ -929,7 +927,11 @@ async function loadFromCloudV2() {
   const m = { ...state, ...main };
   ['obras','orc','cron','fin','medicoes','empreita','propostas','checklists','capturas','composicoes']
     .forEach(k => { m[k] = mergeArr(state[k], main[k]); });
-  m.diario = mergeArr(state.diario, remoteDiarios);
+  // Sub-coleção é fonte da verdade do diário; mas se ainda estiver vazia,
+  // cai pro main.diario (legado caminho A) pra dispositivo fresh recuperar
+  // os registros antigos sem fotos.
+  const cloudDiarios = remoteDiarios.length ? remoteDiarios : (main.diario || []);
+  m.diario = mergeArr(state.diario, cloudDiarios);
 
   if (main.counters && state.counters) {
     m.counters = {};
