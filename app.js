@@ -4,35 +4,35 @@
 import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
          openModal, closeModal, statusBadge, tipoLabel,
          popularSelectsObras, modalidadeIcon, verificarAvisosObra,
-         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js';
+         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260425b';
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
          fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA,
-         getIaKey, setIaKey, hasIaKey } from './services.js';
-import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js';
-import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js';
-import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js';
-import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js';
-import { addFin, delFin, openModalFin, renderFinanceiro, toggleHideRT } from './modules/financeiro.js';
-import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js';
-import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js';
+         getIaKey, setIaKey, hasIaKey } from './services.js?v=20260425b';
+import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260425b';
+import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260425b';
+import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260425b';
+import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js?v=20260425b';
+import { addFin, delFin, openModalFin, renderFinanceiro, toggleHideRT } from './modules/financeiro.js?v=20260425b';
+import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260425b';
+import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260425b';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
          saveProposta, delProposta, editProposta, printProposta, compartilharWhatsApp,
          colherAssinaturaProposta, importFromOrcamento, addObraItem,
-         addProjServico, addProjExtra, toggleModoGlobal, renderPropostas } from './modules/propostas.js';
-import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js';
-import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js';
-import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js';
-import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js';
+         addProjServico, addProjExtra, toggleModoGlobal, renderPropostas } from './modules/propostas.js?v=20260425b';
+import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260425b';
+import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260425b';
+import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260425b';
+import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js?v=20260425b';
 import { novaComposicao, addInsumoComp, renderInsumosComp, calcTotalComp,
          salvarComposicao, delComposicao, renderComposicoes, filtrarComposicoes,
          popularSelectComposicoes, preencherDadosComposicao, calcTotalComposicaoSel,
          inserirComposicaoNoOrcamento, editarComposicao,
          abrirCopiaSinapi, _setCopiaSrc, _filtrarCopiaSinapi, _copiarDeSinapi,
-         setInsumoField, removeInsumoAt } from './modules/composicoes.js';
-import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js';
+         setInsumoField, removeInsumoAt } from './modules/composicoes.js?v=20260425b';
+import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js?v=20260425b';
 import { importExcel, importCSV, importPDF, importManual, applyMapping,
          _selectSheet, _updateImportItem, _removeImportItem, addImportRow,
-         cancelImport, confirmImport } from './modules/importar.js';
+         cancelImport, confirmImport } from './modules/importar.js?v=20260425b';
 
 // ── Estado global ────────────────────────────────────────────────────
 const DEFAULT_STATE = {
@@ -682,6 +682,25 @@ function saveStateLocal() {
   }
 }
 
+// Remove dataUrls grandes de qualquer item (recursivo, raso) para caber no
+// limite de 1MB do Firestore. Mantém URLs externas/Storage e metadados.
+function stripDataUrls(obj) {
+  if (Array.isArray(obj)) return obj.map(stripDataUrls);
+  if (obj && typeof obj === 'object') {
+    const out = {};
+    for (const k of Object.keys(obj)) {
+      const v = obj[k];
+      if (typeof v === 'string' && v.startsWith('data:') && v.length > 8000) {
+        // dataUrl pesado: descarta; lightbox/local cuidam
+        continue;
+      }
+      out[k] = stripDataUrls(v);
+    }
+    return out;
+  }
+  return obj;
+}
+
 // Save ao cloud com captura explícita de erro — fbSaveData do services.js engole exceções
 async function saveToCloud() {
   if (!window._fbUser) return;
@@ -690,20 +709,26 @@ async function saveToCloud() {
   try {
     if (typeof firebase === 'undefined') throw new Error('Firebase não carregado');
     const db = firebase.firestore();
-    // Sobe fotos só se forem URLs do Storage; descarta dataUrl pesado (limite 1MB do Firestore)
+    // Diário: só URLs do Storage (dataUrl pesa demais para Firestore)
     const diarioCloud = (state.diario||[]).map(d => ({
       ...d,
       fotos: (d.fotos||[]).filter(f => f.url).map(f => ({ url: f.url, storagePath: f.storagePath, name: f.name }))
     }));
-    const s = { ...state, diario: diarioCloud,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+    // Demais campos: tira qualquer dataUrl pesado escondido (logo, assinaturas grandes, capturas)
+    const cleaned = stripDataUrls({ ...state, diario: diarioCloud });
+    const s = { ...cleaned, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+    const sizeKB = Math.round(JSON.stringify(s).length / 1024);
+    if (sizeKB > 950) {
+      throw new Error(`Documento ${sizeKB}KB > 1MB do Firestore. Apague registros antigos.`);
+    }
     await db.collection('usuarios').doc(window._fbUser.uid).set(s);
-    setSyncStatus('☁✓', 'Salvo ' + new Date().toLocaleTimeString('pt-BR'));
+    setSyncStatus('☁✓', `Salvo ${new Date().toLocaleTimeString('pt-BR')} (${sizeKB}KB)`);
   } catch (e) {
     console.error('saveToCloud falhou:', e);
-    const msg = e?.message || e?.code || 'erro desconhecido';
-    setSyncStatus('❌', 'Erro ao salvar: ' + msg);
-    showToast('❌ Salvar na nuvem falhou: ' + msg, 8000);
+    const code = e?.code ? ` [${e.code}]` : '';
+    const msg = (e?.message || 'erro desconhecido') + code;
+    setSyncStatus('❌', 'Erro: ' + msg);
+    showToast('❌ Salvar falhou: ' + msg, 10000);
   }
 }
 

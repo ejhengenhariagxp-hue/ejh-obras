@@ -1,6 +1,6 @@
 // modules/importar.js — Importar orçamento (Excel/CSV/JSON/Manual/PDF)
-import { fmt, pad, showToast } from '../utils.js';
-import { iaCall } from '../services.js';
+import { fmt, pad, showToast } from '../utils.js?v=20260425b';
+import { iaCall } from '../services.js?v=20260425b';
 
 let _importItens = [];
 let _rawData = [];

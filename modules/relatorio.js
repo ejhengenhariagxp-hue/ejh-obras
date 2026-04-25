@@ -1,5 +1,5 @@
 ﻿// modules/relatorio.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge } from '../utils.js';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge } from '../utils.js?v=20260425b';
 
 
 export function renderReport(state){
@@ -246,10 +246,60 @@ export function gerarTextoRelatorio(state, obraId, tipo){
   return msg;
 }
 
-export function gerarRelatorioWpp(state){
+// Coleta fotos do diário (filtradas por obra/tipo) como objetos File para
+// compartilhamento via Web Share API. URL → fetch; dataUrl → blob direto.
+async function _coletarFotosDiario(state, obraId) {
+  const entries = (state.diario || [])
+    .filter(d => !obraId || d.obraId === obraId)
+    .sort((a, b) => b.data.localeCompare(a.data));
+  const files = [];
+  let count = 0;
+  for (const e of entries) {
+    if (!Array.isArray(e.fotos)) continue;
+    for (const f of e.fotos) {
+      if (count >= 10) return files; // WhatsApp suporta até ~10 anexos
+      try {
+        let blob;
+        if (f.dataUrl) {
+          const r = await fetch(f.dataUrl);
+          blob = await r.blob();
+        } else if (f.url) {
+          const r = await fetch(f.url);
+          blob = await r.blob();
+        }
+        if (!blob) continue;
+        const safe = (f.name || `foto_${e.data}_${count+1}.jpg`).replace(/[^a-zA-Z0-9._-]/g, '_');
+        files.push(new File([blob], safe, { type: blob.type || 'image/jpeg' }));
+        count++;
+      } catch (err) {
+        console.warn('coletarFotos:', err?.message);
+      }
+    }
+  }
+  return files;
+}
+
+export async function gerarRelatorioWpp(state){
   const obraId=document.getElementById('rel-obra-sel')?.value||'';
   const tipo=document.getElementById('rel-tipo-sel')?.value||'gerencial';
   const msg=gerarTextoRelatorio(state, obraId, tipo);
+
+  // Modo Diário em dispositivo com Web Share API: tenta compartilhar com fotos
+  if (tipo === 'diario' && navigator.canShare && navigator.share) {
+    try {
+      const files = await _coletarFotosDiario(state, obraId);
+      const payload = { title: 'Diário de Obra — EJH', text: msg };
+      if (files.length && navigator.canShare({ files })) {
+        payload.files = files;
+      }
+      await navigator.share(payload);
+      return;
+    } catch (e) {
+      if (e?.name === 'AbortError') return; // usuário cancelou
+      console.warn('navigator.share falhou:', e?.message);
+      // fallback abaixo
+    }
+  }
   window.open('https://api.whatsapp.com/send?text='+encodeURIComponent(msg),'_blank');
 }
 
