@@ -106,14 +106,30 @@ export async function fbLoadData(cur) {
 }
 
 // ── Anthropic IA ─────────────────────────────────────────────────────
+// Sanitiza chave: remove qualquer caractere fora do ASCII imprimível
+// (corrige problema "non ISO-8859-1 code point" causado por copy/paste
+// que traz espaços Unicode, zero-width chars, etc).
+function sanitizeKey(k) {
+  return (k || '').replace(/[^\x20-\x7E]/g, '').trim();
+}
+
 export function saveIaKey(key) {
   if (!key) return;
-  localStorage.setItem('anthropic_api_key', key.trim());
+  const clean = sanitizeKey(key);
+  if (!clean) return;
+  localStorage.setItem('anthropic_api_key', clean);
 }
 
 export async function iaCall(system, userContent, maxTokens=1500) {
-  const key = localStorage.getItem('anthropic_api_key');
+  let key = localStorage.getItem('anthropic_api_key');
   if (!key) throw new Error('Chave da Anthropic não configurada. Vá em IA Inteligente (BETA) na barra lateral.');
+  // Re-sanitiza ao ler — chaves antigas podem ter sido salvas antes do fix
+  const clean = sanitizeKey(key);
+  if (clean !== key) {
+    localStorage.setItem('anthropic_api_key', clean);
+    key = clean;
+  }
+  if (!key.startsWith('sk-ant-')) throw new Error('Chave inválida no localStorage. Reconfigure em IA Inteligente.');
 
   const messages = [{
     role: 'user',
@@ -170,7 +186,7 @@ export function getIaKey() {
   return localStorage.getItem(IA_KEY_STORAGE) || '';
 }
 export function setIaKey(k) {
-  if (k) localStorage.setItem(IA_KEY_STORAGE, k.trim());
+  if (k) localStorage.setItem(IA_KEY_STORAGE, sanitizeKey(k));
   else   localStorage.removeItem(IA_KEY_STORAGE);
 }
 export function hasIaKey() { return !!getIaKey(); }
