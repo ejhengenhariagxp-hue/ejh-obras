@@ -1,6 +1,6 @@
 // modules/excel_export.js — Exportação profissional para Excel (SheetJS)
 // ══════════════════════════════════════════════════════════════════════
-import { fmt, fmtD } from '../utils.js?v=20260425f';
+import { fmt, fmtD } from '../utils.js?v=20260425g';
 
 // Cores EJH
 const COR_HEADER  = { fgColor: { rgb: '1A3A8C' } }; // azul EJH
