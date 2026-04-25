@@ -1,5 +1,5 @@
 // modules/financeiro.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260425b';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260425c';
 
 let _finLimit = 20;
 let _hideRT = false;

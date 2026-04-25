@@ -1,6 +1,6 @@
 // modules/diario.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName, escapeHtml, markDeleted } from '../utils.js?v=20260425b';
-import { iaCall } from '../services.js?v=20260425b';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName, escapeHtml, markDeleted } from '../utils.js?v=20260425c';
+import { iaCall } from '../services.js?v=20260425c';
 
 let _diarioLimit = 20;
 let _pendingFotos = [];
@@ -17,10 +17,11 @@ export function addDiario(state){
     state.diario = state.diario || [];
 
     const editId = document.getElementById('f-dia-id')?.value;
-    // Se a foto tem URL no Storage, descarta dataUrl pesado pra economizar localStorage
-    const fotosFinais = _pendingFotos.map(f => f.url
-      ? { url: f.url, storagePath: f.storagePath, name: f.name }
-      : { dataUrl: f.dataUrl, name: f.name });
+    // Caminho B (Firestore puro): foto fica como dataUrl no sub-doc do registro
+    const fotosFinais = _pendingFotos.map(f => ({
+      dataUrl: f.dataUrl,
+      name: f.name
+    })).filter(f => f.dataUrl);
     const dadosForm = {
       obraId: obraId,
       data:   data,
@@ -72,15 +73,6 @@ export function openEditDiario(state, id) {
 
 export function delDiario(state, id){
   if(confirm('Excluir este registro?')){
-    const reg = state.diario.find(x=>x.id===id);
-    // Apaga fotos do Firebase Storage (best-effort, não bloqueia)
-    if (reg && typeof firebase !== 'undefined' && firebase.storage) {
-      (reg.fotos||[]).forEach(f => {
-        if (f.storagePath) {
-          firebase.storage().ref(f.storagePath).delete().catch(e => console.warn('del storage:', e?.message));
-        }
-      });
-    }
     state.diario=state.diario.filter(x=>x.id!==id);
     markDeleted(state, 'diario', id);
     _diarioLimit=20;
@@ -89,7 +81,9 @@ export function delDiario(state, id){
   return false;
 }
 
-function compressImage(dataUrl, maxWidth = 1280, quality = 0.75) {
+// Compressão alvo: ~80–120KB por foto, pra caber 6+ fotos por diário no
+// limite de 1MB do sub-doc Firestore.
+function compressImage(dataUrl, maxWidth = 1024, quality = 0.65) {
   return new Promise(resolve => {
     const img = new Image();
     img.onload = () => {
@@ -107,22 +101,6 @@ function compressImage(dataUrl, maxWidth = 1280, quality = 0.75) {
     };
     img.src = dataUrl;
   });
-}
-
-// Upload de uma foto para Firebase Storage. Retorna URL pública ou null se falhar/sem login.
-async function uploadFotoToStorage(blob, fileName) {
-  if (typeof firebase === 'undefined' || !firebase.storage || !window._fbUser) return null;
-  try {
-    const safeName = (fileName || 'foto.jpg').replace(/[^a-zA-Z0-9._-]/g, '_');
-    const path = `usuarios/${window._fbUser.uid}/diario/${Date.now()}_${safeName}`;
-    const ref = firebase.storage().ref(path);
-    const snap = await ref.put(blob, { contentType: 'image/jpeg' });
-    const url = await snap.ref.getDownloadURL();
-    return { url, storagePath: path };
-  } catch (e) {
-    console.warn('uploadFotoToStorage falhou:', e?.message || e);
-    return null;
-  }
 }
 
 export async function handleFotos(state, input){
@@ -144,15 +122,9 @@ export async function handleFotos(state, input){
         r.onerror = rej;
         r.readAsDataURL(file);
       });
-      const { dataUrl: compressed, blob } = await compressImage(dataUrl);
+      const { dataUrl: compressed } = await compressImage(dataUrl);
       ph.dataUrl = compressed;
       ph.uploading = false;
-      // Upload em background — mantém dataUrl em memória para IA/preview, mas marca url para save
-      const uploaded = await uploadFotoToStorage(blob, file.name);
-      if (uploaded) {
-        ph.url = uploaded.url;
-        ph.storagePath = uploaded.storagePath;
-      }
       renderFotoPreview();
     } catch (e) {
       console.error('handleFotos:', e);
