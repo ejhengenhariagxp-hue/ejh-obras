@@ -19,14 +19,14 @@
 
 
 <!-- build:20260424_1930 -->
-<link rel="stylesheet" href="./styles.css?v=20260425i">
+<link rel="stylesheet" href="./styles.css?v=20260425j">
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260425i"></script>
+<script type="module" src="./app.js?v=20260425j"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -1162,10 +1162,10 @@
 </nav>
 
 <button class="fab" id="fab-btn" onclick="toggleFab()" title="Ações rápidas — Nova obra, despesa, diário, comunicação..." aria-label="Ações rápidas">＋</button>
-<button class="fab" id="info-btn" style="bottom:88px;background:linear-gradient(135deg,#3b82f6,#2563eb);cursor:help" onclick="abrirInfoRapida()" title="Resumo rápido da situação das obras">📊</button>
+<button class="fab" id="ia-btn" style="bottom:88px;background:linear-gradient(135deg,#7c3aed,#5b21b6);font-size:22px" onclick="nav('captura',null)" title="🤖 IA — Captura inteligente de WhatsApp/email" aria-label="IA Captura">🤖</button>
 <div class="fab-menu" id="fab-menu">
+  <button class="fab-item" onclick="nav('captura',null);closeFab()" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;font-weight:700">🤖 IA — Captura inteligente</button>
   <button class="fab-item" onclick="resetFormObra();openModal('modal-obra');closeFab()">🚧 Nova obra</button>
-  <button class="fab-item" onclick="nav('captura',null);closeFab()">📡 Comunicação</button>
   <button class="fab-item" onclick="openModalDiario();closeFab()">📋 Diário rápido</button>
   <button class="fab-item" onclick="openModalFin('Despesa');closeFab()">💸 Nova despesa</button>
   <button class="fab-item" onclick="openModalFin('Receita');closeFab()">💰 Nova receita</button>
