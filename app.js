@@ -4,35 +4,35 @@
 import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
          openModal, closeModal, statusBadge, tipoLabel,
          popularSelectsObras, modalidadeIcon, verificarAvisosObra,
-         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260425c';
+         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260425d';
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
          fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA,
-         getIaKey, setIaKey, hasIaKey } from './services.js?v=20260425c';
-import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260425c';
-import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260425c';
-import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260425c';
-import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js?v=20260425c';
-import { addFin, delFin, openModalFin, renderFinanceiro, toggleHideRT } from './modules/financeiro.js?v=20260425c';
-import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260425c';
-import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260425c';
+         getIaKey, setIaKey, hasIaKey } from './services.js?v=20260425d';
+import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260425d';
+import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260425d';
+import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260425d';
+import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js?v=20260425d';
+import { addFin, delFin, openModalFin, renderFinanceiro, toggleHideRT } from './modules/financeiro.js?v=20260425d';
+import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260425d';
+import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260425d';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
          saveProposta, delProposta, editProposta, printProposta, compartilharWhatsApp,
          colherAssinaturaProposta, importFromOrcamento, addObraItem,
-         addProjServico, addProjExtra, toggleModoGlobal, renderPropostas } from './modules/propostas.js?v=20260425c';
-import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260425c';
-import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260425c';
-import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260425c';
-import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js?v=20260425c';
+         addProjServico, addProjExtra, toggleModoGlobal, renderPropostas } from './modules/propostas.js?v=20260425d';
+import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260425d';
+import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260425d';
+import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260425d';
+import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js?v=20260425d';
 import { novaComposicao, addInsumoComp, renderInsumosComp, calcTotalComp,
          salvarComposicao, delComposicao, renderComposicoes, filtrarComposicoes,
          popularSelectComposicoes, preencherDadosComposicao, calcTotalComposicaoSel,
          inserirComposicaoNoOrcamento, editarComposicao,
          abrirCopiaSinapi, _setCopiaSrc, _filtrarCopiaSinapi, _copiarDeSinapi,
-         setInsumoField, removeInsumoAt } from './modules/composicoes.js?v=20260425c';
-import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js?v=20260425c';
+         setInsumoField, removeInsumoAt } from './modules/composicoes.js?v=20260425d';
+import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js?v=20260425d';
 import { importExcel, importCSV, importPDF, importManual, applyMapping,
          _selectSheet, _updateImportItem, _removeImportItem, addImportRow,
-         cancelImport, confirmImport } from './modules/importar.js?v=20260425c';
+         cancelImport, confirmImport } from './modules/importar.js?v=20260425d';
 
 // ── Estado global ────────────────────────────────────────────────────
 const DEFAULT_STATE = {
@@ -78,7 +78,17 @@ const PAGE_RENDER_MAP = {
 let _fbSaveTimer = null;
 let _lastHash = '';
 function calcHash(s) {
+  // diario inclui hash leve (id, data, desc, ocorr, qtd de fotos) — sem dataUrl
+  // pra não pesar megabytes na string. Mas DEVE estar no hash, senão alterações
+  // no diário não disparam save.
+  const diaLite = (s.diario || []).map(d => ({
+    id: d.id, obraId: d.obraId, data: d.data,
+    desc: d.desc, equipe: d.equipe, clima: d.clima, ocorr: d.ocorr,
+    nFotos: (d.fotos || []).length,
+    fotosHash: (d.fotos || []).map(f => (f.name || '') + '|' + ((f.dataUrl || f.url || '').length)).join(',')
+  }));
   const str = JSON.stringify({obras:s.obras,orc:s.orc,cron:s.cron,fin:s.fin,
+    diario: diaLite,
     medicoes:s.medicoes,empreita:s.empreita,propostas:s.propostas,
     checklists:s.checklists,capturas:s.capturas,composicoes:s.composicoes});
   let h = 0;
@@ -501,30 +511,163 @@ G.gerarRelatorioWpp = () => gerarRelatorioWpp(state);
 G.gerarRelatorioEmail = () => gerarRelatorioEmail(state);
 G.renderReport = () => renderReport(state);
 
-// Atalho: gera PDF do diário direto da aba Diário (e Medição)
+// PDF do Diário: abre janela nova só com os registros do diário da obra selecionada
+// (sem barra lateral/menu); imprime direto. "Todas as obras" inclui todas.
 G.gerarDiarioPDF = () => {
   const obraId = document.getElementById('dia-pdf-obra')?.value || '';
-  window.nav('relatorio', null);
-  setTimeout(() => {
-    const sel = document.getElementById('rel-obra-sel');
-    const tipo = document.getElementById('rel-tipo-sel');
-    if (sel) sel.value = obraId;
-    if (tipo) tipo.value = 'diario';
-    renderReport(state);
-    setTimeout(() => window.print(), 400);
-  }, 200);
+  const obras = obraId ? state.obras.filter(o => o.id === obraId) : state.obras;
+  if (!obras.length) { showToast('⚠️ Nenhuma obra selecionada'); return; }
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const w = window.open('', '_blank');
+  if (!w) { showToast('⚠️ Permita pop-ups para gerar o PDF'); return; }
+  const corpo = obras.map(o => {
+    const ents = state.diario.filter(d => d.obraId === o.id).sort((a,b) => b.data.localeCompare(a.data));
+    return `
+      <h2>${o.nome}</h2>
+      <div class="meta">👤 ${o.cliente || '—'}${o.area ? ' • 📐 '+o.area+' m²' : ''}</div>
+      ${ents.length ? ents.map(e => `
+        <div class="entry">
+          <div class="entry-h"><strong>${fmtD(e.data)}</strong> <span class="muted">${e.clima || ''} • Equipe: ${e.equipe || '—'}</span></div>
+          <div class="entry-b">${(e.desc || '').replace(/</g,'&lt;')}</div>
+          ${e.ocorr && e.ocorr !== 'Sem ocorrências' && e.ocorr !== 'Nenhuma'
+            ? `<div class="ocorr">⚠️ ${(e.ocorr || '').replace(/</g,'&lt;')}</div>` : ''}
+          ${e.fotos && e.fotos.length ? `
+            <div class="fotos">
+              ${e.fotos.map(f => `<img src="${f.url || f.dataUrl || ''}">`).join('')}
+            </div>` : ''}
+        </div>
+      `).join('') : '<div class="vazio">Sem registros de diário.</div>'}
+    `;
+  }).join('');
+  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+    <title>Diário de Obra — ${obraId ? obras[0].nome : 'Todas'} — ${hoje}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+      *{box-sizing:border-box}
+      body{font-family:'DM Sans',sans-serif;padding:32px;max-width:820px;margin:0 auto;color:#1e293b;line-height:1.5}
+      .hdr{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #0f2744;padding-bottom:14px;margin-bottom:22px}
+      .logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#0f2744}
+      .sub{font-size:12px;color:#64748b}
+      .titulo{font-size:14px;font-weight:600;color:#2563eb;margin-top:4px}
+      .meta-doc{text-align:right;font-size:12px;color:#64748b}
+      h2{font-family:'Syne',sans-serif;font-size:18px;color:#0f2744;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin:24px 0 12px}
+      .meta{font-size:12px;color:#64748b;margin-bottom:12px}
+      .entry{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:10px;page-break-inside:avoid}
+      .entry-h{display:flex;justify-content:space-between;border-bottom:1px solid #f1f5f9;padding-bottom:6px;margin-bottom:8px}
+      .entry-b{font-size:13px;white-space:pre-wrap}
+      .muted{font-size:11.5px;color:#64748b}
+      .ocorr{margin-top:8px;font-size:12px;color:#b91c1c;background:#fef2f2;padding:8px;border-radius:6px}
+      .fotos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+      .fotos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0}
+      .vazio{color:#64748b;font-size:13px;padding:20px;text-align:center;border:1px dashed #e2e8f0;border-radius:8px}
+      .footer{margin-top:24px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;display:flex;justify-content:space-between}
+      @media print{body{padding:18px}}
+    </style></head><body>
+    <div class="hdr">
+      <div>
+        ${state.logoData ? `<img src="${state.logoData}" style="height:42px;max-width:160px;object-fit:contain;margin-bottom:6px">` : ''}
+        <div class="logo">${state.empNome || state.empresaNome || 'EJH ENGENHARIA'}</div>
+        <div class="sub">Engenharia Civil • Projetos • Obras</div>
+        <div class="titulo">Relatório do Diário de Obra</div>
+      </div>
+      <div class="meta-doc">
+        <div><strong>Emissão:</strong> ${hoje}</div>
+        <div><strong>Escopo:</strong> ${obraId ? obras[0].nome : 'Todas as obras'}</div>
+      </div>
+    </div>
+    ${corpo}
+    <div class="footer">
+      <span>${state.relatorioRodape || 'EJH Engenharia — Sistema de Gestão de Obras'}</span>
+      <span>Emitido em ${hoje}</span>
+    </div>
+    <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script>
+  </body></html>`);
+  w.document.close();
 };
+
+// PDF da Medição: abre janela nova só com as medições da obra selecionada
 G.gerarMedicaoPDF = () => {
   const obraId = document.getElementById('med-pdf-obra')?.value || '';
-  window.nav('relatorio', null);
-  setTimeout(() => {
-    const sel = document.getElementById('rel-obra-sel');
-    const tipo = document.getElementById('rel-tipo-sel');
-    if (sel) sel.value = obraId;
-    if (tipo) tipo.value = 'medicao';
-    renderReport(state);
-    setTimeout(() => window.print(), 400);
-  }, 200);
+  const obras = obraId ? state.obras.filter(o => o.id === obraId) : state.obras;
+  if (!obras.length) { showToast('⚠️ Nenhuma obra selecionada'); return; }
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const w = window.open('', '_blank');
+  if (!w) { showToast('⚠️ Permita pop-ups para gerar o PDF'); return; }
+  const corpo = obras.map(o => {
+    const meds = state.medicoes.filter(m => m.obraId === o.id).sort((a,b) => (a.num||0)-(b.num||0));
+    if (!meds.length) return `<h2>${o.nome}</h2><div class="vazio">Sem medições registradas.</div>`;
+    return `<h2>${o.nome}</h2>
+      <div class="meta">👤 ${o.cliente || '—'}${o.area ? ' • 📐 '+o.area+' m²' : ''}</div>
+      ${meds.map(m => {
+        const total = (m.itens||[]).reduce((a,x)=>a+(x.valorMed||0),0);
+        return `
+          <div class="entry">
+            <div class="entry-h">
+              <strong>Medição nº ${m.num}</strong>
+              <span class="muted">Período: ${m.periodo || '—'} • Emissão: ${fmtD(m.data)}</span>
+            </div>
+            <table>
+              <thead><tr><th>Item</th><th>Un.</th><th>Qtd</th><th>V.Unit</th><th>Qtd Med.</th><th>Valor</th></tr></thead>
+              <tbody>${(m.itens||[]).map(it => `<tr>
+                <td>${it.item || ''}</td>
+                <td class="c">${it.un || ''}</td>
+                <td class="c">${it.qtd || 0}</td>
+                <td class="r">${fmt(it.vunit || 0)}</td>
+                <td class="c"><strong>${it.qtdMed || 0}</strong></td>
+                <td class="r"><strong>${fmt(it.valorMed || 0)}</strong></td>
+              </tr>`).join('')}</tbody>
+              <tfoot><tr><td colspan="5" class="r"><strong>TOTAL</strong></td><td class="r"><strong>${fmt(total)}</strong></td></tr></tfoot>
+            </table>
+            <div class="muted" style="margin-top:6px">Responsável Técnico: <strong>${m.resp || '—'}</strong> • ID: ${m.id}</div>
+          </div>`;
+      }).join('')}`;
+  }).join('');
+  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+    <title>Medições — ${obraId ? obras[0].nome : 'Todas'} — ${hoje}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+      *{box-sizing:border-box}
+      body{font-family:'DM Sans',sans-serif;padding:32px;max-width:820px;margin:0 auto;color:#1e293b;line-height:1.5}
+      .hdr{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #0f2744;padding-bottom:14px;margin-bottom:22px}
+      .logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#0f2744}
+      .sub{font-size:12px;color:#64748b}
+      .titulo{font-size:14px;font-weight:600;color:#2563eb;margin-top:4px}
+      .meta-doc{text-align:right;font-size:12px;color:#64748b}
+      h2{font-family:'Syne',sans-serif;font-size:18px;color:#0f2744;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin:24px 0 12px}
+      .meta{font-size:12px;color:#64748b;margin-bottom:12px}
+      .entry{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:14px;page-break-inside:avoid}
+      .entry-h{display:flex;justify-content:space-between;border-bottom:1px solid #f1f5f9;padding-bottom:6px;margin-bottom:8px}
+      .muted{font-size:11.5px;color:#64748b}
+      table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+      th{background:#0f2744;color:#fff;padding:6px 8px;text-align:left;font-size:10.5px;text-transform:uppercase}
+      td{padding:6px 8px;border-bottom:1px solid #e2e8f0}
+      tr:nth-child(even) td{background:#f8faff}
+      .c{text-align:center}.r{text-align:right}
+      tfoot td{font-weight:700;background:#f0f4fa;border-top:2px solid #0f2744}
+      .vazio{color:#64748b;font-size:13px;padding:20px;text-align:center;border:1px dashed #e2e8f0;border-radius:8px}
+      .footer{margin-top:24px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;display:flex;justify-content:space-between}
+      @media print{body{padding:18px}}
+    </style></head><body>
+    <div class="hdr">
+      <div>
+        ${state.logoData ? `<img src="${state.logoData}" style="height:42px;max-width:160px;object-fit:contain;margin-bottom:6px">` : ''}
+        <div class="logo">${state.empNome || state.empresaNome || 'EJH ENGENHARIA'}</div>
+        <div class="sub">Engenharia Civil • Projetos • Obras</div>
+        <div class="titulo">Relatório de Medições</div>
+      </div>
+      <div class="meta-doc">
+        <div><strong>Emissão:</strong> ${hoje}</div>
+        <div><strong>Escopo:</strong> ${obraId ? obras[0].nome : 'Todas as obras'}</div>
+      </div>
+    </div>
+    ${corpo}
+    <div class="footer">
+      <span>${state.relatorioRodape || 'EJH Engenharia — Sistema de Gestão de Obras'}</span>
+      <span>Emitido em ${hoje}</span>
+    </div>
+    <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script>
+  </body></html>`);
+  w.document.close();
 };
 G.addChecklist = () => { if(addChecklist(state)) renderAtiva(); };
 G.renderTemplatesNBR = () => renderTemplatesNBR();

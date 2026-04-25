@@ -1,5 +1,5 @@
 ﻿// modules/empreita.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName, escapeHtml, markDeleted } from '../utils.js?v=20260425c';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName, escapeHtml, markDeleted } from '../utils.js?v=20260425d';
 
 let _empSigCanvas = { cliente: null, empreiteiro: null };
 let _empSigDrawing = { cliente: false, empreiteiro: false };
