@@ -4,35 +4,35 @@
 import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
          openModal, closeModal, statusBadge, tipoLabel,
          popularSelectsObras, modalidadeIcon, verificarAvisosObra,
-         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260425e';
+         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260425f';
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
          fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA,
-         getIaKey, setIaKey, hasIaKey } from './services.js?v=20260425e';
-import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260425e';
-import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260425e';
-import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260425e';
-import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js?v=20260425e';
-import { addFin, delFin, openModalFin, renderFinanceiro, toggleHideRT } from './modules/financeiro.js?v=20260425e';
-import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260425e';
-import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260425e';
+         getIaKey, setIaKey, hasIaKey } from './services.js?v=20260425f';
+import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260425f';
+import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260425f';
+import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260425f';
+import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js?v=20260425f';
+import { addFin, delFin, openModalFin, renderFinanceiro, toggleHideRT } from './modules/financeiro.js?v=20260425f';
+import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260425f';
+import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260425f';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
          saveProposta, delProposta, editProposta, printProposta, compartilharWhatsApp,
          colherAssinaturaProposta, importFromOrcamento, addObraItem,
-         addProjServico, addProjExtra, toggleModoGlobal, renderPropostas } from './modules/propostas.js?v=20260425e';
-import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260425e';
-import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260425e';
-import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260425e';
-import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js?v=20260425e';
+         addProjServico, addProjExtra, toggleModoGlobal, renderPropostas } from './modules/propostas.js?v=20260425f';
+import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260425f';
+import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260425f';
+import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260425f';
+import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js?v=20260425f';
 import { novaComposicao, addInsumoComp, renderInsumosComp, calcTotalComp,
          salvarComposicao, delComposicao, renderComposicoes, filtrarComposicoes,
          popularSelectComposicoes, preencherDadosComposicao, calcTotalComposicaoSel,
          inserirComposicaoNoOrcamento, editarComposicao,
          abrirCopiaSinapi, _setCopiaSrc, _filtrarCopiaSinapi, _copiarDeSinapi,
-         setInsumoField, removeInsumoAt } from './modules/composicoes.js?v=20260425e';
-import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js?v=20260425e';
+         setInsumoField, removeInsumoAt } from './modules/composicoes.js?v=20260425f';
+import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js?v=20260425f';
 import { importExcel, importCSV, importPDF, importManual, applyMapping,
          _selectSheet, _updateImportItem, _removeImportItem, addImportRow,
-         cancelImport, confirmImport } from './modules/importar.js?v=20260425e';
+         cancelImport, confirmImport } from './modules/importar.js?v=20260425f';
 
 // ── Estado global ────────────────────────────────────────────────────
 const DEFAULT_STATE = {
@@ -90,7 +90,9 @@ function calcHash(s) {
   const str = JSON.stringify({obras:s.obras,orc:s.orc,cron:s.cron,fin:s.fin,
     diario: diaLite,
     medicoes:s.medicoes,empreita:s.empreita,propostas:s.propostas,
-    checklists:s.checklists,capturas:s.capturas,composicoes:s.composicoes});
+    checklists:s.checklists,capturas:s.capturas,composicoes:s.composicoes,
+    engNome:s.engNome, engRegistro:s.engRegistro, empNome:s.empNome,
+    relatorioRodape:s.relatorioRodape, logoLen:(s.logoData||'').length});
   let h = 0;
   for (let i = 0; i < str.length; i++) { h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
   return h.toString(36);
@@ -336,6 +338,8 @@ function saveSettings() {
   state.empNome        = document.getElementById('set-emp-nome')?.value || '';
   state.relatorioRodape = document.getElementById('set-rel-rodape')?.value || '';
   closeModal('modal-settings');
+  saveStateLocal();
+  if (window._fbUser) { clearTimeout(_fbSaveTimer); _fbSaveTimer = setTimeout(()=>saveToCloud(),400); }
   renderAtiva();
   showToast('✅ Configurações salvas!');
 }
@@ -343,7 +347,12 @@ function handleLogoUpload(input) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = e => { state.logoData = e.target.result; showToast('✅ Logo carregada!'); };
+  reader.onload = e => {
+    state.logoData = e.target.result;
+    saveStateLocal();
+    if (window._fbUser) { clearTimeout(_fbSaveTimer); _fbSaveTimer = setTimeout(()=>saveToCloud(),400); }
+    showToast('✅ Logo carregada e salva!');
+  };
   reader.readAsDataURL(file);
 }
 
@@ -583,6 +592,69 @@ G.gerarDiarioPDF = () => {
     <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script>
   </body></html>`);
   w.document.close();
+};
+
+// WhatsApp do Diário: monta texto + anexa fotos via Web Share (mobile);
+// fallback wa.me em desktop.
+G.gerarDiarioWpp = async () => {
+  const obraId = document.getElementById('dia-pdf-obra')?.value || '';
+  const obras = obraId ? state.obras.filter(o => o.id === obraId) : state.obras;
+  if (!obras.length) { showToast('⚠️ Nenhuma obra selecionada'); return; }
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const empresa = state.empNome || state.empresaNome || 'EJH Engenharia';
+
+  let msg = `*${empresa}*\n📋 *Diário de Obra* — ${hoje}\n\n`;
+  for (const o of obras) {
+    const ents = state.diario.filter(d => d.obraId === o.id).sort((a,b)=>b.data.localeCompare(a.data)).slice(0,5);
+    msg += `*🏗 ${o.nome}*\n`;
+    if (o.cliente) msg += `Cliente: ${o.cliente}\n`;
+    if (!ents.length) { msg += `_Sem registros._\n\n`; continue; }
+    for (const e of ents) {
+      msg += `\n📅 *${fmtD(e.data)}*`;
+      if (e.clima) msg += ` • ${e.clima}`;
+      if (e.equipe) msg += ` • 👷 ${e.equipe}`;
+      msg += `\n${e.desc || ''}`;
+      if (e.ocorr && e.ocorr !== 'Sem ocorrências' && e.ocorr !== 'Nenhuma') msg += `\n⚠️ ${e.ocorr}`;
+      if (e.fotos?.length) msg += `\n📷 ${e.fotos.length} foto(s)`;
+      msg += `\n`;
+    }
+    msg += `\n`;
+  }
+  if (state.engNome) msg += `_${state.engNome}${state.engRegistro?` — ${state.engRegistro}`:''}_\n`;
+  if (state.relatorioRodape) msg += `\n${state.relatorioRodape}`;
+
+  // Coleta fotos (até 10) das obras selecionadas
+  const files = [];
+  if (navigator.canShare && navigator.share) {
+    let count = 0;
+    outer: for (const o of obras) {
+      const ents = state.diario.filter(d => d.obraId === o.id).sort((a,b)=>b.data.localeCompare(a.data));
+      for (const e of ents) {
+        for (const f of (e.fotos || [])) {
+          if (count >= 10) break outer;
+          try {
+            const src = f.dataUrl || f.url;
+            if (!src) continue;
+            const r = await fetch(src);
+            const blob = await r.blob();
+            const safe = (f.name || `diario_${e.data}_${count+1}.jpg`).replace(/[^a-zA-Z0-9._-]/g,'_');
+            files.push(new File([blob], safe, { type: blob.type || 'image/jpeg' }));
+            count++;
+          } catch (err) { console.warn('foto skip:', err?.message); }
+        }
+      }
+    }
+    try {
+      const payload = { title: 'Diário de Obra', text: msg };
+      if (files.length && navigator.canShare({ files })) payload.files = files;
+      await navigator.share(payload);
+      return;
+    } catch (e) {
+      if (e?.name === 'AbortError') return;
+      console.warn('share falhou:', e?.message);
+    }
+  }
+  window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(msg), '_blank');
 };
 
 // PDF da Medição: abre janela nova só com as medições da obra selecionada
