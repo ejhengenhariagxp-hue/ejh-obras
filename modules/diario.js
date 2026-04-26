@@ -1,6 +1,6 @@
 // modules/diario.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName, escapeHtml, markDeleted } from '../utils.js?v=20260425k';
-import { iaCall } from '../services.js?v=20260425k';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName, escapeHtml, markDeleted } from '../utils.js?v=20260425l';
+import { iaCall } from '../services.js?v=20260425l';
 
 let _diarioLimit = 20;
 let _pendingFotos = [];
@@ -245,7 +245,7 @@ export async function gerarDiarioComFoto(state) {
     if (data.desc) document.getElementById('f-dia-desc').value = data.desc;
     if (data.clima) document.getElementById('f-dia-clima').value = data.clima;
     if (data.equipe) document.getElementById('f-dia-equipe').value = data.equipe;
-    showToast('✅ Preenchido pela IA!');
+    showToast('✅ IAsô preencheu pra você, sô!');
   } catch (e) {
     showToast('❌ Erro: ' + e.message);
   } finally {

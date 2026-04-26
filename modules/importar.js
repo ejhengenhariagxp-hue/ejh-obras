@@ -1,6 +1,6 @@
 // modules/importar.js — Importar orçamento (Excel/CSV/JSON/Manual/PDF)
-import { fmt, pad, showToast } from '../utils.js?v=20260425k';
-import { iaCall } from '../services.js?v=20260425k';
+import { fmt, pad, showToast } from '../utils.js?v=20260425l';
+import { iaCall } from '../services.js?v=20260425l';
 
 let _importItens = [];
 let _rawData = [];
@@ -180,7 +180,7 @@ export function importPDF(input) {
     showToast('⚠️ PDF maior que 10MB. Tente um arquivo menor ou use Excel/CSV');
     return;
   }
-  showToast('🤖 Analisando PDF com IA...', 8000);
+  showToast('👷 IAsô tá analisando o PDF, ô sô...', 8000);
   const reader = new FileReader();
   reader.onload = async e => {
     try {

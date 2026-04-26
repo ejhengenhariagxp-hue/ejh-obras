@@ -1,6 +1,6 @@
 // modules/orcamento.js — Orçamento por obra
-import { fmt, fmtD, pad, safeInner, showToast, openModal, closeModal, markDeleted } from '../utils.js?v=20260425k';
-import { iaCall } from '../services.js?v=20260425k';
+import { fmt, fmtD, pad, safeInner, showToast, openModal, closeModal, markDeleted } from '../utils.js?v=20260425l';
+import { iaCall } from '../services.js?v=20260425l';
 
 export function addOrc(state) {
   const obraId = document.getElementById('f-orc-obra')?.value;
@@ -176,7 +176,7 @@ export async function gerarOrcamentoComIA(state) {
     if (data.un) document.getElementById('f-orc-un').value = data.un;
     if (data.qtd) document.getElementById('f-orc-qtd').value = data.qtd;
     if (data.vunit) document.getElementById('f-orc-vunit').value = data.vunit;
-    showToast('✅ Preenchido pela IA!');
+    showToast('✅ IAsô orçou pra você, sô!');
   } catch (e) {
     showToast('❌ Erro: ' + e.message);
   } finally {
