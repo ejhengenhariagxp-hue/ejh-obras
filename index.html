@@ -19,61 +19,75 @@
 
 
 <!-- build:20260424_1930 -->
-<link rel="stylesheet" href="./styles.css?v=20260425l">
+<link rel="stylesheet" href="./styles.css?v=20260425m">
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260425l"></script>
+<script type="module" src="./app.js?v=20260425m"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Lucide icons (modern SVG icon library) -->
+<script src="https://unpkg.com/lucide@0.323.0/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 
 <nav class="sidebar">
-  <div class="logo"><div class="logo-title">EJH</div><div class="logo-sub">Gestão de Obras</div></div>
-  <div class="user-bar" id="user-bar" style="display:none;background:rgba(16,185,129,.2)">
-    <div id="user-initials" style="width:28px;height:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0"></div>
+  <div class="logo">
+    <div class="logo-title">EJH</div>
+    <div class="logo-sub">Gestão de Obras</div>
+  </div>
+
+  <!-- IAsô Promo (botão primário no topo) -->
+  <button class="iaso-promo" onclick="nav('captura',null)" title="Ô sô! Sou a IAsô. Manda os dados que eu organizo.">
+    <span class="iaso-promo-icon">👷</span>
+    <div class="iaso-promo-body">
+      <div class="iaso-promo-title">Chamar IAsô</div>
+      <div class="iaso-promo-sub">WhatsApp · email · foto</div>
+    </div>
+  </button>
+
+  <div class="user-bar" id="user-bar" style="display:none">
+    <div id="user-initials" class="user-avatar"></div>
     <div class="user-name" id="user-name"></div>
-    <span id="sync-status" style="font-size:13px;cursor:pointer" title="Clique para sincronizar agora" onclick="syncNow()">☁✓</span>
-    <button class="user-btn" onclick="iaTrocarChave()" title="Configurar IAsô (Anthropic)">👷</button>
-    <button class="user-btn" onclick="fbLogout()" title="Sair">↩</button>
+    <span id="sync-status" class="sync-pill" title="Clique para sincronizar agora" onclick="syncNow()">☁✓</span>
+    <button class="user-btn" onclick="fbLogout()" title="Sair"><i data-lucide="log-out"></i></button>
   </div>
   <div class="user-bar" id="login-bar">
     <span class="sync-dot" id="sync-dot"></span>
-    <span style="font-size:11px;color:rgba(255,255,255,.45);flex:1">Dados locais</span>
-    <button class="user-btn" onclick="iaTrocarChave()" title="Configurar IAsô (Anthropic)" style="background:rgba(168,85,247,.35);color:#fff">👷</button>
-    <button class="user-btn" onclick="abrirLogin()" style="background:rgba(37,99,235,.35);color:#fff">☁ Login</button>
+    <span class="user-status">Dados locais</span>
+    <button class="user-btn user-btn-primary" onclick="abrirLogin()" title="Login Google"><i data-lucide="cloud"></i> Login</button>
   </div>
+
   <div class="nav">
-    <div class="nav-group">Principal</div>
-    <div class="nav-item active" onclick="nav('dashboard',this)"><span class="nav-icon">📊</span><span>Dashboard</span></div>
-    <div class="nav-item" onclick="nav('obras',this)"><span class="nav-icon">🏗</span><span>Projetos & Obras</span></div>
+    <div class="nav-group">Visão</div>
+    <div class="nav-item active" onclick="nav('dashboard',this)"><i class="nav-icon" data-lucide="layout-dashboard"></i><span>Dashboard</span></div>
+    <div class="nav-item" onclick="nav('obras',this)"><i class="nav-icon" data-lucide="building-2"></i><span>Projetos & Obras</span></div>
+    <div class="nav-item" onclick="nav('relatorio',this)"><i class="nav-icon" data-lucide="file-text"></i><span>Relatório</span></div>
+
     <div class="nav-group">Execução</div>
-    <div class="nav-item" onclick="nav('orcamento',this)"><span class="nav-icon">💰</span><span>Orçamento</span></div>
-    <div class="nav-item" onclick="nav('empreita',this)"><span class="nav-icon">🤝</span><span>Empreita M.O.</span></div>
-    <div class="nav-item" onclick="nav('cronograma',this)"><span class="nav-icon">📅</span><span>Cronograma</span></div>
-    <div class="nav-item" onclick="nav('diario',this)"><span class="nav-icon">📋</span><span>Diário de Obra</span></div>
-    <div class="nav-item" onclick="nav('captura',this)"><span class="nav-icon">📡</span><span>Comunicação da Obra</span></div>
-    <div class="nav-group">Financeiro & Técnico</div>
-    <div class="nav-item" onclick="nav('financeiro',this)"><span class="nav-icon">🏦</span><span>Financeiro</span></div>
-    <div class="nav-item" onclick="nav('tabelas',this)"><span class="nav-icon">📐</span><span>SINAPI / SICOR-MG</span></div>
-    <div class="nav-item" onclick="nav('composicoes',this)"><span class="nav-icon">🧱</span><span>Composições</span></div>
-    <div class="nav-item" onclick="nav('medicao',this)"><span class="nav-icon">📏</span><span>Medição</span></div>
-    <div class="nav-item" onclick="nav('importar',this)"><span class="nav-icon">📥</span><span>Importar Orçamento</span></div>
-    <div class="nav-group">Propostas & Relatório</div>
-    <div class="nav-item" onclick="nav('propostas',this)"><span class="nav-icon">📝</span><span>Propostas</span></div>
-    <div class="nav-item" onclick="nav('relatorio',this)"><span class="nav-icon">📄</span><span>Relatório</span></div>
-    <div class="nav-item" onclick="openIaConfig()"><span class="nav-icon">👷</span><span>IAsô (BETA)</span></div>
-    <div class="nav-group">Preferências</div>
-    <div class="nav-item" onclick="openModal('modal-settings')"><span class="nav-icon">⚙️</span><span>Configurações</span></div>
-    <div class="nav-item" onclick="abrirOnboarding()"><span class="nav-icon">👋</span><span>Tutorial / Boas-vindas</span></div>
+    <div class="nav-item" onclick="nav('diario',this)"><i class="nav-icon" data-lucide="clipboard-list"></i><span>Diário de Obra</span></div>
+    <div class="nav-item" onclick="nav('cronograma',this)"><i class="nav-icon" data-lucide="calendar-days"></i><span>Cronograma</span></div>
+    <div class="nav-item" onclick="nav('orcamento',this)"><i class="nav-icon" data-lucide="calculator"></i><span>Orçamento</span></div>
+    <div class="nav-item" onclick="nav('medicao',this)"><i class="nav-icon" data-lucide="ruler"></i><span>Medição</span></div>
+    <div class="nav-item" onclick="nav('empreita',this)"><i class="nav-icon" data-lucide="handshake"></i><span>Empreita M.O.</span></div>
+    <div class="nav-item" onclick="nav('financeiro',this)"><i class="nav-icon" data-lucide="wallet"></i><span>Financeiro</span></div>
+    <div class="nav-item" onclick="nav('propostas',this)"><i class="nav-icon" data-lucide="file-signature"></i><span>Propostas</span></div>
+    <div class="nav-item" onclick="nav('captura',this)"><span class="nav-icon nav-emoji">👷</span><span>IAsô (Captura)</span></div>
+
+    <div class="nav-group">Cadastros & Config</div>
+    <div class="nav-item" onclick="nav('tabelas',this)"><i class="nav-icon" data-lucide="book-open"></i><span>SINAPI / SICOR-MG</span></div>
+    <div class="nav-item" onclick="nav('composicoes',this)"><i class="nav-icon" data-lucide="layers"></i><span>Composições</span></div>
+    <div class="nav-item" onclick="nav('importar',this)"><i class="nav-icon" data-lucide="file-input"></i><span>Importar Orçamento</span></div>
+    <div class="nav-item" onclick="openIaConfig()"><i class="nav-icon" data-lucide="key-round"></i><span>Configurar IAsô</span></div>
+    <div class="nav-item" onclick="openModal('modal-settings')"><i class="nav-icon" data-lucide="settings"></i><span>Configurações</span></div>
+    <div class="nav-item" onclick="abrirOnboarding()"><i class="nav-icon" data-lucide="life-buoy"></i><span>Tutorial</span></div>
   </div>
+
   <div class="sidebar-footer">
-    v4.2 • EJH Engenharia<br>
-    <button onclick="openSettings()" style="margin-top:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;width:100%">⚙️ Configurar Meu Perfil</button>
+    <div class="footer-version">v4.2 • EJH Engenharia</div>
   </div>
 </nav>
 

@@ -1,5 +1,5 @@
 // modules/propostas.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, markDeleted } from '../utils.js?v=20260425l';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, markDeleted } from '../utils.js?v=20260425m';
 
 window.projServicos = window.projServicos || [];
 window.projExtras = window.projExtras || [];
