@@ -4,35 +4,35 @@
 import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
          openModal, closeModal, statusBadge, tipoLabel,
          popularSelectsObras, modalidadeIcon, verificarAvisosObra,
-         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260425j';
+         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260425k';
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
          fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA,
-         getIaKey, setIaKey, hasIaKey } from './services.js?v=20260425j';
-import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260425j';
-import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260425j';
-import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260425j';
-import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js?v=20260425j';
-import { addFin, delFin, openModalFin, renderFinanceiro, toggleHideRT } from './modules/financeiro.js?v=20260425j';
-import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260425j';
-import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260425j';
+         getIaKey, setIaKey, hasIaKey } from './services.js?v=20260425k';
+import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260425k';
+import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260425k';
+import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260425k';
+import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js?v=20260425k';
+import { addFin, delFin, openModalFin, renderFinanceiro, toggleHideRT } from './modules/financeiro.js?v=20260425k';
+import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260425k';
+import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260425k';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
          saveProposta, delProposta, editProposta, printProposta, compartilharWhatsApp,
          colherAssinaturaProposta, importFromOrcamento, addObraItem,
-         addProjServico, addProjExtra, toggleModoGlobal, renderPropostas } from './modules/propostas.js?v=20260425j';
-import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260425j';
-import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260425j';
-import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260425j';
-import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js?v=20260425j';
+         addProjServico, addProjExtra, toggleModoGlobal, renderPropostas } from './modules/propostas.js?v=20260425k';
+import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260425k';
+import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260425k';
+import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260425k';
+import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js?v=20260425k';
 import { novaComposicao, addInsumoComp, renderInsumosComp, calcTotalComp,
          salvarComposicao, delComposicao, renderComposicoes, filtrarComposicoes,
          popularSelectComposicoes, preencherDadosComposicao, calcTotalComposicaoSel,
          inserirComposicaoNoOrcamento, editarComposicao,
          abrirCopiaSinapi, _setCopiaSrc, _filtrarCopiaSinapi, _copiarDeSinapi,
-         setInsumoField, removeInsumoAt } from './modules/composicoes.js?v=20260425j';
-import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js?v=20260425j';
+         setInsumoField, removeInsumoAt } from './modules/composicoes.js?v=20260425k';
+import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js?v=20260425k';
 import { importExcel, importCSV, importPDF, importManual, applyMapping,
          _selectSheet, _updateImportItem, _removeImportItem, addImportRow,
-         cancelImport, confirmImport } from './modules/importar.js?v=20260425j';
+         cancelImport, confirmImport } from './modules/importar.js?v=20260425k';
 
 // ── Estado global ────────────────────────────────────────────────────
 const DEFAULT_STATE = {
@@ -214,9 +214,65 @@ function statusObra(o, etapas) {
   return { avg, cor:'green', icon:'🟢', label:'Em dia' };
 }
 
+function renderAlertaUrgente() {
+  const el = document.getElementById('dash-alertas-urgentes');
+  if (!el) return;
+  const hojeStr = new Date().toISOString().split('T')[0];
+  const seteDiasAtras = new Date(Date.now() - 7*86400000).toISOString().split('T')[0];
+
+  // Conta problemas
+  const etapasAtrasadas = state.cron.filter(c => c.fim && c.fim < hojeStr && (c.conc || 0) < 100).length;
+  const ativas = state.obras.filter(o => o.status === 'Em andamento');
+  const obrasSemDiario = ativas.filter(o => {
+    const ult = state.diario.filter(d => d.obraId === o.id).sort((a,b)=>b.data.localeCompare(a.data))[0];
+    return !ult || ult.data < seteDiasAtras;
+  }).length;
+  const saldo = state.fin.filter(f => f.tipo === 'Receita').reduce((a,x)=>a+(+x.valor||0),0)
+              - state.fin.filter(f => f.tipo === 'Despesa').reduce((a,x)=>a+(+x.valor||0),0);
+
+  let alerta = null;
+
+  if (etapasAtrasadas > 0) {
+    alerta = {
+      cor: 'red', icon: '⏰',
+      title: `${etapasAtrasadas} etapa${etapasAtrasadas>1?'s':''} atrasada${etapasAtrasadas>1?'s':''}`,
+      sub: `Verifique o cronograma e atualize o avanço físico.`,
+      onclick: `nav('cronograma',null)`
+    };
+  } else if (saldo < 0) {
+    alerta = {
+      cor: 'red', icon: '💸',
+      title: `Saldo negativo: ${fmt(saldo)}`,
+      sub: `Despesas superando receitas. Revise o financeiro.`,
+      onclick: `nav('financeiro',null)`
+    };
+  } else if (obrasSemDiario > 0 && ativas.length > 0) {
+    alerta = {
+      cor: 'yellow', icon: '📋',
+      title: `${obrasSemDiario} obra${obrasSemDiario>1?'s':''} sem diário há 7+ dias`,
+      sub: `Use 🤖 IA Captura para registrar rapidamente por foto ou WhatsApp.`,
+      onclick: `nav('captura',null)`
+    };
+  }
+
+  if (!alerta) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="alert-urgente alert-${alerta.cor}" onclick="${alerta.onclick}">
+    <div class="alert-urgente-icon">${alerta.icon}</div>
+    <div class="alert-urgente-body">
+      <div class="alert-urgente-title">${alerta.title}</div>
+      <div class="alert-urgente-sub">${alerta.sub}</div>
+    </div>
+    <div class="alert-urgente-arrow">→</div>
+  </div>`;
+}
+
 function renderDashboard() {
   const hoje = new Date();
   safeText('dash-date', hoje.toLocaleDateString('pt-BR',{weekday:'long',year:'numeric',month:'long',day:'numeric'}));
+
+  // Card de alertas urgentes — só aparece se houver problema crítico
+  renderAlertaUrgente();
+
   // Status geral do portfolio
   const sp = statusPortfolio();
   safeInner('dash-portfolio', `<div class="portfolio-banner portfolio-${sp.cor}">
@@ -406,9 +462,55 @@ function saveCliSig(state) {
   }
 }
 
+// ── ONBOARDING ────────────────────────────────────────────────────────
+const ONB_KEY = 'ejh_onboarding_done';
+
+function deveExibirOnboarding() {
+  if (localStorage.getItem(ONB_KEY) === 'true') return false;
+  // Só mostra se for usuário realmente novo (sem nada cadastrado)
+  return !state.engNome && !state.empNome
+    && (!state.obras || state.obras.length === 0)
+    && (!state.diario || state.diario.length === 0);
+}
+
+function atualizarStatusOnboarding() {
+  const s1 = document.getElementById('onb-step-1');
+  const s2 = document.getElementById('onb-step-2');
+  const s3 = document.getElementById('onb-step-3');
+  const s4 = document.getElementById('onb-step-4');
+  if (s1) s1.classList.toggle('onb-done', !!(state.engNome || state.empNome));
+  if (s2) s2.classList.toggle('onb-done', state.obras.length > 0);
+  if (s3) s3.classList.toggle('onb-done', !!window._fbUser);
+  if (s4) s4.classList.toggle('onb-done', !!localStorage.getItem('anthropic_api_key'));
+}
+
+function abrirOnboarding() {
+  atualizarStatusOnboarding();
+  openModal('modal-onboarding');
+}
+
+function onbAcao(passo) {
+  closeModal('modal-onboarding');
+  setTimeout(() => {
+    if (passo === 1) openSettings();
+    else if (passo === 2) { resetFormObra(); openModal('modal-obra'); }
+    else if (passo === 3) abrirLogin();
+    else if (passo === 4) window.openIaConfig?.();
+  }, 250);
+}
+
+function onbFechar(marcarConcluido) {
+  const noShow = document.getElementById('onb-no-show')?.checked;
+  if (marcarConcluido || noShow) localStorage.setItem(ONB_KEY, 'true');
+  closeModal('modal-onboarding');
+}
+
 // ── EXPOSIÇÃO GLOBAL ──────────────────────────────────────────────────
 const G = window;
 G.nav = (id,el) => { nav(id,el); renderAtiva(); };
+G.abrirOnboarding = abrirOnboarding;
+G.onbAcao = onbAcao;
+G.onbFechar = onbFechar;
 G.openModal = openModal;
 G.closeModal = closeModal;
 G.renderAtiva = renderAtiva;
@@ -1107,6 +1209,8 @@ setInterval(() => {
 window.addEventListener('load', () => {
   initFields();
   renderAtiva();
+  // Onboarding no primeiro acesso (após pequeno delay para UI montar)
+  setTimeout(() => { if (deveExibirOnboarding()) abrirOnboarding(); }, 600);
   fbInit(user => {
     window._fbUser = user;
     const uBar = document.getElementById('user-bar');

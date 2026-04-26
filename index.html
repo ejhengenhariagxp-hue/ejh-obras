@@ -19,14 +19,14 @@
 
 
 <!-- build:20260424_1930 -->
-<link rel="stylesheet" href="./styles.css?v=20260425j">
+<link rel="stylesheet" href="./styles.css?v=20260425k">
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260425j"></script>
+<script type="module" src="./app.js?v=20260425k"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -69,6 +69,7 @@
     <div class="nav-item" onclick="openIaConfig()"><span class="nav-icon">🤖</span><span>IA Inteligente (BETA)</span></div>
     <div class="nav-group">Preferências</div>
     <div class="nav-item" onclick="openModal('modal-settings')"><span class="nav-icon">⚙️</span><span>Configurações</span></div>
+    <div class="nav-item" onclick="abrirOnboarding()"><span class="nav-icon">👋</span><span>Tutorial / Boas-vindas</span></div>
   </div>
   <div class="sidebar-footer">
     v4.2 • EJH Engenharia<br>
@@ -82,20 +83,60 @@
 <div id="page-dashboard" class="page active">
   <div class="page-hdr">
     <div><div class="page-title">Dashboard</div><div class="page-sub" id="dash-date"></div></div>
-    <button class="btn btn-primary" onclick="resetFormObra();openModal('modal-obra')">＋ Novo Projeto / Obra</button>
+    <div class="hdr-actions">
+      <button class="btn btn-outline" onclick="nav('captura',null)" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;border:none">🤖 IA Captura</button>
+      <button class="btn btn-primary" onclick="resetFormObra();openModal('modal-obra')">＋ Novo Projeto / Obra</button>
+    </div>
   </div>
+
+  <!-- 1. Alertas urgentes (vermelho/laranja) - sempre no topo -->
+  <div id="dash-alertas-urgentes"></div>
+
+  <!-- 2. Banner de status do portfolio -->
   <div id="dash-portfolio"></div>
+
+  <!-- 3. KPIs principais -->
   <div class="kpi-grid">
     <div class="kpi blue"><div class="kpi-label">Projetos e Obras Ativos</div><div class="kpi-value" id="kpi-total">0</div><div class="kpi-sub">cadastrados</div></div>
     <div class="kpi green"><div class="kpi-label">Orçamento Total</div><div class="kpi-value" id="kpi-orc">R$0</div><div class="kpi-sub">soma dos itens</div></div>
     <div class="kpi amber"><div class="kpi-label">Realizado</div><div class="kpi-value" id="kpi-real">R$0</div><div class="kpi-sub" id="kpi-real-pct"></div></div>
     <div class="kpi teal"><div class="kpi-label">Saldo Financeiro</div><div class="kpi-value" id="kpi-saldo">R$0</div><div class="kpi-sub">receitas − despesas</div></div>
   </div>
+
+  <!-- 4. Atalhos rápidos (4 ações principais) -->
+  <div class="quick-shortcuts">
+    <button class="quick-card" onclick="openModalDiario()">
+      <span class="quick-icon">📷</span>
+      <span class="quick-label">Diário do dia</span>
+      <span class="quick-sub">com fotos</span>
+    </button>
+    <button class="quick-card quick-ia" onclick="nav('captura',null)">
+      <span class="quick-icon">🤖</span>
+      <span class="quick-label">Captura IA</span>
+      <span class="quick-sub">WhatsApp/email</span>
+    </button>
+    <button class="quick-card" onclick="openModalFin('Despesa')">
+      <span class="quick-icon">💸</span>
+      <span class="quick-label">Despesa</span>
+      <span class="quick-sub">lançar agora</span>
+    </button>
+    <button class="quick-card" onclick="nav('relatorio',null)">
+      <span class="quick-icon">📄</span>
+      <span class="quick-label">Relatório</span>
+      <span class="quick-sub">PDF / WhatsApp</span>
+    </button>
+  </div>
+
+  <!-- 5. Ações pendentes + comunicações recentes (lado a lado) -->
   <div class="dash-row">
     <div class="section dash-col"><div class="section-hdr"><div class="section-title">🔥 Próximas Ações</div></div><div id="dash-acoes"></div></div>
     <div class="section dash-col"><div class="section-hdr"><div class="section-title">📡 Últimas Comunicações</div><button class="btn btn-outline btn-xs" onclick="nav('captura',null)" style="font-size:11px;padding:4px 10px">Ver todas →</button></div><div id="dash-coms"></div></div>
   </div>
+
+  <!-- 6. Obras em andamento -->
   <div class="section"><div class="section-hdr"><div class="section-title">Projetos e Obras em Andamento</div></div><div class="cards-grid" id="dash-obras"></div></div>
+
+  <!-- 7. Últimas movimentações financeiras -->
   <div class="section"><div class="section-hdr"><div class="section-title">Últimas Movimentações</div></div><div id="dash-fin"></div></div>
 </div>
 
@@ -1136,6 +1177,64 @@
   </div>
 </div></div>
 
+<!-- ONBOARDING — Boas-vindas (primeiro acesso) -->
+<div class="modal-bg" id="modal-onboarding"><div class="modal" style="max-width:560px">
+  <div class="modal-title">👋 Bem-vindo ao EJH Gestão de Obras!</div>
+  <div style="font-size:13.5px;color:var(--muted);margin-bottom:18px;line-height:1.5">
+    Vamos configurar tudo em <strong>menos de 3 minutos</strong>. Siga os passos abaixo:
+  </div>
+
+  <div id="onb-step-1" class="onb-step" onclick="onbAcao(1)">
+    <div class="onb-num"><span>1</span></div>
+    <div class="onb-body">
+      <div class="onb-title">⚙️ Configure seu perfil profissional</div>
+      <div class="onb-desc">Nome do engenheiro, CREA, nome da empresa e logo. Aparecem em todos os relatórios em PDF.</div>
+      <button class="onb-cta">Configurar agora →</button>
+    </div>
+    <div class="onb-arrow">›</div>
+  </div>
+
+  <div id="onb-step-2" class="onb-step" onclick="onbAcao(2)">
+    <div class="onb-num"><span>2</span></div>
+    <div class="onb-body">
+      <div class="onb-title">🏗 Cadastre sua primeira obra</div>
+      <div class="onb-desc">Defina nome, cliente, área e datas. Você poderá gerenciar diário, orçamento, medições e financeiro a partir dela.</div>
+      <button class="onb-cta">Criar obra →</button>
+    </div>
+    <div class="onb-arrow">›</div>
+  </div>
+
+  <div id="onb-step-3" class="onb-step" onclick="onbAcao(3)">
+    <div class="onb-num"><span>3</span></div>
+    <div class="onb-body">
+      <div class="onb-title">☁ Login com Google (sincronização)</div>
+      <div class="onb-desc">Sincronize seus dados entre PC, celular e tablet. Sem login os dados ficam só neste navegador.</div>
+      <button class="onb-cta">Fazer login →</button>
+    </div>
+    <div class="onb-arrow">›</div>
+  </div>
+
+  <div id="onb-step-4" class="onb-step onb-ia" onclick="onbAcao(4)">
+    <div class="onb-num"><span>4</span></div>
+    <div class="onb-body">
+      <div class="onb-title">🤖 IA Inteligente (recomendado)</div>
+      <div class="onb-desc">Cole texto do WhatsApp ou tire foto da obra — a IA Claude classifica e preenche automaticamente. Requer chave Anthropic (~R$ 30 inicial).</div>
+      <button class="onb-cta">Configurar IA →</button>
+    </div>
+    <div class="onb-arrow">›</div>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);cursor:pointer">
+      <input type="checkbox" id="onb-no-show" style="cursor:pointer"> Não mostrar novamente
+    </label>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-outline" onclick="onbFechar()">Pular agora</button>
+      <button class="btn btn-primary" onclick="onbFechar(true)">Concluir mais tarde</button>
+    </div>
+  </div>
+</div></div>
+
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
   <span class="lightbox-close">✕</span>
   <img id="lightbox-img" src="" alt="">
@@ -1150,14 +1249,14 @@
   <button class="bn-item" onclick="nav('obras',null);setBnActive(this)">
     <span class="bn-icon">🏗</span><span class="bn-label">Obras</span>
   </button>
+  <button class="bn-item bn-ia" onclick="nav('captura',null);setBnActive(this)">
+    <span class="bn-icon">🤖</span><span class="bn-label">IA</span>
+  </button>
   <button class="bn-item" onclick="openModalDiario();setBnActive(this)">
     <span class="bn-icon">📷</span><span class="bn-label">Diário</span>
   </button>
   <button class="bn-item" onclick="nav('orcamento',null);setBnActive(this)">
     <span class="bn-icon">💰</span><span class="bn-label">Orçam.</span>
-  </button>
-  <button class="bn-item" onclick="nav('propostas',null);setBnActive(this)">
-    <span class="bn-icon">📝</span><span class="bn-label">Propostas</span>
   </button>
 </nav>
 
