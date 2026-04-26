@@ -1,6 +1,6 @@
 // modules/orcamento.js — Orçamento por obra
-import { fmt, fmtD, pad, safeInner, showToast, openModal, closeModal, markDeleted } from '../utils.js?v=20260425m';
-import { iaCall } from '../services.js?v=20260425m';
+import { fmt, fmtD, pad, safeInner, showToast, openModal, closeModal, markDeleted } from '../utils.js?v=20260425n';
+import { iaCall } from '../services.js?v=20260425n';
 
 export function addOrc(state) {
   const obraId = document.getElementById('f-orc-obra')?.value;

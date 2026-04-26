@@ -1,6 +1,6 @@
 // modules/diario.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName, escapeHtml, markDeleted } from '../utils.js?v=20260425m';
-import { iaCall } from '../services.js?v=20260425m';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName, escapeHtml, markDeleted } from '../utils.js?v=20260425n';
+import { iaCall } from '../services.js?v=20260425n';
 
 let _diarioLimit = 20;
 let _pendingFotos = [];
@@ -22,6 +22,7 @@ export function addDiario(state){
       dataUrl: f.dataUrl,
       name: f.name
     })).filter(f => f.dataUrl);
+    const sig = window._diarioGetSig?.() || null;
     const dadosForm = {
       obraId: obraId,
       data:   data,
@@ -30,6 +31,7 @@ export function addDiario(state){
       clima:  document.getElementById('f-dia-clima')?.value || '',
       ocorr:  document.getElementById('f-dia-ocorr')?.value || '',
       fotos:  fotosFinais,
+      assinatura: sig ? { dataUrl: sig, data: new Date().toLocaleDateString('pt-BR') } : null,
     };
 
     if (editId) {
@@ -42,6 +44,7 @@ export function addDiario(state){
     }
     _pendingFotos = [];
     renderFotoPreview();
+    window._diarioSetSig?.(null);
     closeModal('modal-diario');
     showToast(editId ? '✅ Registro atualizado!' : '✅ Registro salvo!');
     return true;
@@ -66,6 +69,8 @@ export function openEditDiario(state, id) {
   set('f-dia-equipe', d.equipe);
   set('f-dia-clima', d.clima);
   set('f-dia-ocorr', d.ocorr);
+  // Carrega assinatura existente (se houver)
+  window._diarioSetSig?.(d.assinatura?.dataUrl || null);
   const t = document.querySelector('#modal-diario .modal-title');
   if (t) t.textContent = '✏️ Editar registro do diário';
   openModal('modal-diario');
@@ -144,6 +149,7 @@ export function removePendingFoto(state, i){
 export function openModalDiario(state){
   _pendingFotos=[];
   renderFotoPreview();
+  window._diarioSetSig?.(null); // limpa assinatura
   popularSelectsObras(state);
   // limpa modo edição e campos
   ['f-dia-id','f-dia-desc','f-dia-equipe','f-dia-ocorr'].forEach(k => { const el = document.getElementById(k); if (el) el.value = ''; });
@@ -156,6 +162,7 @@ export function openModalDiario(state){
 export function cancelarDiario(){
   _pendingFotos=[];
   renderFotoPreview();
+  window._diarioSetSig?.(null);
   closeModal('modal-diario');
 }
 
@@ -181,8 +188,13 @@ export function renderDiario(state){
               <span class="badge badge-blue">${d.equipe}</span>
               <span class="badge badge-amber">${d.clima}</span>
               ${fotos.length?`<span class="badge badge-purple">📷 ${fotos.length} foto${fotos.length>1?'s':''}</span>`:''}
+              ${d.assinatura?.dataUrl?`<span class="badge badge-teal">✍️ Assinado</span>`:''}
             </div>
             ${galeriaHtml}
+            ${d.assinatura?.dataUrl?`<div style="margin-top:10px;padding:8px 12px;background:#fafbff;border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;gap:10px">
+              <img src="${d.assinatura.dataUrl}" style="height:40px;max-width:160px" alt="Assinatura">
+              <span style="font-size:11.5px;color:var(--muted)">Assinado em ${d.assinatura.data || ''} — ${state.engNome || 'Resp. Técnico'}${state.engRegistro?` (${state.engRegistro})`:''}</span>
+            </div>`:''}
           </div>
           <div style="display:flex;gap:6px;margin-left:12px;align-self:flex-start">
             <button class="btn btn-outline btn-xs" onclick="openEditDiario('${d.id}')" style="color:var(--amber);border-color:var(--amber)" title="Editar registro">✏️</button>

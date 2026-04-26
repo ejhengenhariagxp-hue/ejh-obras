@@ -4,35 +4,35 @@
 import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
          openModal, closeModal, statusBadge, tipoLabel,
          popularSelectsObras, modalidadeIcon, verificarAvisosObra,
-         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260425m';
+         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260425n';
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
          fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA,
-         getIaKey, setIaKey, hasIaKey } from './services.js?v=20260425m';
-import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260425m';
-import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260425m';
-import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260425m';
-import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js?v=20260425m';
-import { addFin, delFin, openModalFin, renderFinanceiro, toggleHideRT } from './modules/financeiro.js?v=20260425m';
-import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260425m';
-import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260425m';
+         getIaKey, setIaKey, hasIaKey } from './services.js?v=20260425n';
+import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260425n';
+import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260425n';
+import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260425n';
+import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js?v=20260425n';
+import { addFin, delFin, openModalFin, renderFinanceiro, toggleHideRT } from './modules/financeiro.js?v=20260425n';
+import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260425n';
+import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260425n';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
          saveProposta, delProposta, editProposta, printProposta, compartilharWhatsApp,
          colherAssinaturaProposta, importFromOrcamento, addObraItem,
-         addProjServico, addProjExtra, toggleModoGlobal, renderPropostas } from './modules/propostas.js?v=20260425m';
-import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260425m';
-import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260425m';
-import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260425m';
-import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js?v=20260425m';
+         addProjServico, addProjExtra, toggleModoGlobal, renderPropostas } from './modules/propostas.js?v=20260425n';
+import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260425n';
+import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260425n';
+import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260425n';
+import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js?v=20260425n';
 import { novaComposicao, addInsumoComp, renderInsumosComp, calcTotalComp,
          salvarComposicao, delComposicao, renderComposicoes, filtrarComposicoes,
          popularSelectComposicoes, preencherDadosComposicao, calcTotalComposicaoSel,
          inserirComposicaoNoOrcamento, editarComposicao,
          abrirCopiaSinapi, _setCopiaSrc, _filtrarCopiaSinapi, _copiarDeSinapi,
-         setInsumoField, removeInsumoAt } from './modules/composicoes.js?v=20260425m';
-import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js?v=20260425m';
+         setInsumoField, removeInsumoAt } from './modules/composicoes.js?v=20260425n';
+import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js?v=20260425n';
 import { importExcel, importCSV, importPDF, importManual, applyMapping,
          _selectSheet, _updateImportItem, _removeImportItem, addImportRow,
-         cancelImport, confirmImport } from './modules/importar.js?v=20260425m';
+         cancelImport, confirmImport } from './modules/importar.js?v=20260425n';
 
 // ── Estado global ────────────────────────────────────────────────────
 const DEFAULT_STATE = {
@@ -449,6 +449,53 @@ function openSigModal() {
   setTimeout(() => initSigPad('sig-eng-canvas','sig-eng-wrap','sig-eng-ph','eng'), 100);
 }
 
+// ── ASSINATURA DO DIÁRIO ────────────────────────────────────────────
+let _diaSigPending = null; // dataUrl temporário enquanto modal está aberto
+function abrirAssinaturaDiario() {
+  // Se já tem uma assinatura existente (edição), pré-carrega no canvas
+  openModal('modal-assinatura-diario');
+  setTimeout(() => {
+    initSigPad('sig-dia-canvas','sig-dia-wrap','sig-dia-ph','dia');
+    if (_diaSigPending) {
+      const c = document.getElementById('sig-dia-canvas');
+      const ctx = c?.getContext('2d');
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        const ph = document.getElementById('sig-dia-ph');
+        if (ph) ph.style.display = 'none';
+      };
+      img.src = _diaSigPending;
+    }
+  }, 100);
+}
+function salvarAssinaturaDiario() {
+  const canvas = sigPads['dia'];
+  if (!canvas) return;
+  _diaSigPending = canvas.toDataURL('image/png');
+  atualizarPreviewAssinaturaDiario();
+  closeModal('modal-assinatura-diario');
+  showToast('✅ Assinatura coletada — salve o registro');
+}
+function atualizarPreviewAssinaturaDiario() {
+  const el = document.getElementById('dia-sig-preview');
+  if (!el) return;
+  if (_diaSigPending) {
+    el.innerHTML = `<img src="${_diaSigPending}" style="max-height:60px;max-width:100%" alt="Assinatura">`;
+    el.style.background = '#f0fdf4';
+    el.style.borderColor = '#86efac';
+    el.style.color = 'var(--green)';
+  } else {
+    el.innerHTML = 'Sem assinatura coletada';
+    el.style.background = '#fafbff';
+    el.style.borderColor = 'var(--border)';
+    el.style.color = 'var(--muted)';
+  }
+}
+// Expostas para módulo diario.js usar (set/get)
+window._diarioGetSig = () => _diaSigPending;
+window._diarioSetSig = (sig) => { _diaSigPending = sig || null; atualizarPreviewAssinaturaDiario(); };
+
 function saveCliSig(state) {
   const medId = document.getElementById('sig-cli-med-id')?.value;
   const canvas = sigPads['cli'];
@@ -550,6 +597,8 @@ G.fbLogout = fbLogout;
 G.openSigModal = openSigModal;
 G.saveSig = saveSig;
 G.clearSig = clearSig;
+G.abrirAssinaturaDiario = abrirAssinaturaDiario;
+G.salvarAssinaturaDiario = salvarAssinaturaDiario;
 G.saveIaConfig = () => {
   const key = document.getElementById('set-ia-key')?.value?.trim();
   const savedKey = getIaKey();
@@ -696,6 +745,13 @@ G.gerarDiarioPDF = () => {
             <div class="fotos">
               ${e.fotos.map(f => `<img src="${f.url || f.dataUrl || ''}">`).join('')}
             </div>` : ''}
+          ${e.assinatura?.dataUrl ? `
+            <div class="sig-block">
+              <img src="${e.assinatura.dataUrl}" class="sig-img" alt="Assinatura">
+              <div class="sig-line"></div>
+              <div class="sig-name">${state.engNome || 'Responsável Técnico'}</div>
+              <div class="sig-meta">${state.engRegistro || ''} ${e.assinatura.data ? '• Assinado em '+e.assinatura.data : ''}</div>
+            </div>` : ''}
         </div>
       `).join('') : '<div class="vazio">Sem registros de diário.</div>'}
     `;
@@ -722,6 +778,11 @@ G.gerarDiarioPDF = () => {
       .fotos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0}
       .vazio{color:#64748b;font-size:13px;padding:20px;text-align:center;border:1px dashed #e2e8f0;border-radius:8px}
       .footer{margin-top:24px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;display:flex;justify-content:space-between}
+      .sig-block{margin-top:12px;padding-top:10px;border-top:1px dashed #cbd5e1;text-align:center;page-break-inside:avoid}
+      .sig-img{height:50px;max-width:200px;object-fit:contain}
+      .sig-line{border-top:1px solid #94a3b8;margin:4px auto 4px;width:220px}
+      .sig-name{font-weight:700;font-size:11.5px;color:#0f2744}
+      .sig-meta{font-size:10.5px;color:#64748b}
       @media print{body{padding:18px}}
     </style></head><body>
     <div class="hdr">

@@ -19,14 +19,14 @@
 
 
 <!-- build:20260424_1930 -->
-<link rel="stylesheet" href="./styles.css?v=20260425m">
+<link rel="stylesheet" href="./styles.css?v=20260425n">
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260425m"></script>
+<script type="module" src="./app.js?v=20260425n"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Lucide icons (modern SVG icon library) -->
@@ -157,7 +157,10 @@
 <!-- OBRAS -->
 <div id="page-obras" class="page">
   <div class="page-hdr"><div><div class="page-title">Obras e Projetos</div><div class="page-sub">Gestão de Projetos e Obras</div></div><button class="btn btn-primary" onclick="resetFormObra();openModal('modal-obra')">＋ Novo Projeto / Obra</button></div>
-  <div class="table-wrap"><table><thead><tr><th>Tipo</th><th>ID</th><th>Nome</th><th>Cliente</th><th>Área</th><th>Início</th><th>Fim</th><th>Status</th><th></th></tr></thead><tbody id="tbody-obras"></tbody></table></div>
+  <!-- Tabela (desktop) -->
+  <div class="table-wrap only-desktop"><table><thead><tr><th>Tipo</th><th>ID</th><th>Nome</th><th>Cliente</th><th>Área</th><th>Início</th><th>Fim</th><th>Status</th><th></th></tr></thead><tbody id="tbody-obras"></tbody></table></div>
+  <!-- Cards (mobile/tablet) -->
+  <div id="cards-obras-mobile" class="only-mobile"></div>
 </div>
 
 <!-- ORÇAMENTO -->
@@ -712,11 +715,45 @@
       <div class="foto-preview-grid" id="foto-preview"></div>
     </div>
   </div>
-  <div id="dia-ia-loading" style="display:none;text-align:center;padding:12px;color:var(--muted)">⏳ IA analisando fotos…</div>
+  <div id="dia-ia-loading" style="display:none;text-align:center;padding:12px;color:var(--muted)">⏳ IAsô analisando fotos…</div>
+
+  <!-- Assinatura do Responsável Técnico -->
+  <div class="form-grid" style="margin-top:12px">
+    <div class="fg full">
+      <label style="display:flex;justify-content:space-between;align-items:center">
+        <span>✍️ Assinatura do Responsável Técnico (opcional)</span>
+        <button type="button" class="btn btn-outline btn-xs" onclick="abrirAssinaturaDiario()" style="color:var(--blue);border-color:var(--blue)">Colher / Substituir</button>
+      </label>
+      <div id="dia-sig-preview" style="margin-top:8px;padding:10px;background:#fafbff;border:1px dashed var(--border);border-radius:9px;text-align:center;min-height:60px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">
+        Sem assinatura coletada
+      </div>
+    </div>
+  </div>
+
   <div class="modal-actions">
     <button class="btn btn-outline" onclick="cancelarDiario()">Cancelar</button>
     <button class="btn btn-secondary" id="dia-ia-btn" onclick="gerarDiarioComFoto()" style="background:rgba(168,85,247,.2);color:#a855f7">👷 IAsô analisa a foto</button>
     <button class="btn btn-primary" onclick="addDiario()">Salvar</button>
+  </div>
+</div></div>
+
+<!-- Modal de assinatura do Diário -->
+<div class="modal-bg" id="modal-assinatura-diario"><div class="modal" style="max-width:520px">
+  <div class="modal-title">✍️ Assinatura do Diário</div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:14px">
+    Desenhe sua assinatura abaixo. Ela será salva neste registro de diário e aparecerá no PDF.
+  </div>
+  <div id="sig-dia-wrap" style="position:relative;border:2px solid var(--border);border-radius:10px;background:#fff;height:180px">
+    <canvas id="sig-dia-canvas" width="560" height="180" style="width:100%;height:100%;border-radius:8px;touch-action:none"></canvas>
+    <div id="sig-dia-ph" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#cbd5e1;pointer-events:none;font-size:13px">Desenhe aqui ↑</div>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px">
+    <button class="btn btn-outline btn-sm" onclick="clearSig('dia')">🧹 Limpar</button>
+    <span style="color:var(--muted)">Use mouse, dedo (mobile) ou caneta</span>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-outline" onclick="closeModal('modal-assinatura-diario')">Cancelar</button>
+    <button class="btn btn-primary" onclick="salvarAssinaturaDiario()">💾 Salvar Assinatura</button>
   </div>
 </div></div>
 

@@ -2,7 +2,7 @@
 // modules/obras.js — CRUD de obras, validação e renderização
 // ══════════════════════════════════════════════════════════════════════
 
-import { fmt, fmtD, pad, safeInner, showToast, statusBadge, tipoLabel, openModal, closeModal, modalidadeIcon, verificarAvisosObra, escapeHtml, markDeleted } from '../utils.js?v=20260425m';
+import { fmt, fmtD, pad, safeInner, showToast, statusBadge, tipoLabel, openModal, closeModal, modalidadeIcon, verificarAvisosObra, escapeHtml, markDeleted } from '../utils.js?v=20260425n';
 
 const val = id => document.getElementById(id)?.value?.trim() || '';
 const num = id => +document.getElementById(id)?.value || 0;
@@ -143,6 +143,7 @@ export function registrarMedicaoRapida(state, obraId) {
 
 // Renderizar tabela de obras
 export function renderObras(state) {
+  // Tabela (desktop) ──────────────────────────────────────────────
   safeInner('tbody-obras', state.obras.map(o => {
     const aviso = verificarAvisosObra(o);
     const avisoHtml = aviso
@@ -168,6 +169,43 @@ export function renderObras(state) {
       </td>
     </tr>`;
   }).join(''));
+
+  // Cards (mobile/tablet) ─────────────────────────────────────────
+  safeInner('cards-obras-mobile', state.obras.length ? state.obras.map(o => {
+    const aviso = verificarAvisosObra(o);
+    const avisoHtml = aviso
+      ? `<span style="font-size:10.5px;padding:2px 7px;border-radius:8px;font-weight:700;background:${aviso.tipo==='vencida'?'#fee2e2':'#fef3c7'};color:${aviso.tipo==='vencida'?'#991b1b':'#92400e'}">
+          ${aviso.tipo==='vencida'?'⚠️ Med. '+aviso.dias+'d atraso':'🔔 Med. em '+aviso.dias+'d'}
+        </span>` : '';
+    const tipoBadgeClass = o.tipo==='acompanhamento' ? 'badge-teal'
+                         : (o.tipo==='projeto' || o.tipo==='R1' ? 'badge-purple' : 'badge-blue');
+    const tipoBadgeIcon  = o.tipo==='acompanhamento' ? '🔍 ' : '';
+    return `<div class="obra-mobile-card">
+      <div class="obra-mobile-hdr">
+        <div style="flex:1;min-width:0">
+          <div class="obra-mobile-nome">${escapeHtml(o.nome)}</div>
+          <div class="obra-mobile-cliente">👤 ${escapeHtml(o.cliente||'—')}</div>
+        </div>
+        ${statusBadge(o.status)}
+      </div>
+      <div class="obra-mobile-tags">
+        <span class="badge ${tipoBadgeClass}">${tipoBadgeIcon}${tipoLabel(o.tipo)}</span>
+        <span class="badge badge-blue">${(o.area||0).toLocaleString('pt-BR')} m²</span>
+        <span class="badge badge-amber">${o.id}</span>
+        ${avisoHtml}
+      </div>
+      ${o.inicio||o.fim?`<div class="obra-mobile-datas">📅 ${fmtD(o.inicio)} → ${fmtD(o.fim)}</div>`:''}
+      <div class="obra-mobile-acoes">
+        <button onclick="registrarMedicaoRapida('${o.id}')" class="btn btn-outline btn-sm" style="color:var(--blue);border-color:var(--blue);flex:1">📏 Medição</button>
+        <button onclick="openEditObra('${o.id}')" class="btn btn-outline btn-sm" style="color:var(--amber);border-color:var(--amber);flex:1">✏️ Editar</button>
+        <button onclick="delObra('${o.id}')" class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red)">✕</button>
+      </div>
+    </div>`;
+  }).join('') : `<div style="background:var(--card);border-radius:var(--radius);padding:36px 20px;text-align:center;border:1.5px dashed var(--border)">
+    <div style="font-size:32px;margin-bottom:8px">🏗</div>
+    <div style="font-weight:600;color:var(--navy);font-size:14px;margin-bottom:4px">Nenhuma obra cadastrada</div>
+    <button class="btn btn-primary btn-sm" onclick="resetFormObra();openModal('modal-obra')">＋ Cadastrar primeira obra</button>
+  </div>`);
 }
 
 
