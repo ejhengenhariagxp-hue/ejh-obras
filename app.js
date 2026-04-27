@@ -4,35 +4,35 @@
 import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
          openModal, closeModal, statusBadge, tipoLabel,
          popularSelectsObras, modalidadeIcon, verificarAvisosObra,
-         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260425n';
+         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260425o';
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
          fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA,
-         getIaKey, setIaKey, hasIaKey } from './services.js?v=20260425n';
-import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260425n';
-import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260425n';
-import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260425n';
-import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js?v=20260425n';
-import { addFin, delFin, openModalFin, renderFinanceiro, toggleHideRT } from './modules/financeiro.js?v=20260425n';
-import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260425n';
-import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260425n';
+         getIaKey, setIaKey, hasIaKey } from './services.js?v=20260425o';
+import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260425o';
+import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260425o';
+import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260425o';
+import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js?v=20260425o';
+import { addFin, delFin, openModalFin, renderFinanceiro, toggleHideRT } from './modules/financeiro.js?v=20260425o';
+import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260425o';
+import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260425o';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
          saveProposta, delProposta, editProposta, printProposta, compartilharWhatsApp,
          colherAssinaturaProposta, importFromOrcamento, addObraItem,
-         addProjServico, addProjExtra, toggleModoGlobal, renderPropostas } from './modules/propostas.js?v=20260425n';
-import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260425n';
-import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260425n';
-import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260425n';
-import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js?v=20260425n';
+         addProjServico, addProjExtra, toggleModoGlobal, renderPropostas } from './modules/propostas.js?v=20260425o';
+import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260425o';
+import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260425o';
+import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260425o';
+import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js?v=20260425o';
 import { novaComposicao, addInsumoComp, renderInsumosComp, calcTotalComp,
          salvarComposicao, delComposicao, renderComposicoes, filtrarComposicoes,
          popularSelectComposicoes, preencherDadosComposicao, calcTotalComposicaoSel,
          inserirComposicaoNoOrcamento, editarComposicao,
          abrirCopiaSinapi, _setCopiaSrc, _filtrarCopiaSinapi, _copiarDeSinapi,
-         setInsumoField, removeInsumoAt } from './modules/composicoes.js?v=20260425n';
-import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js?v=20260425n';
+         setInsumoField, removeInsumoAt } from './modules/composicoes.js?v=20260425o';
+import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js?v=20260425o';
 import { importExcel, importCSV, importPDF, importManual, applyMapping,
          _selectSheet, _updateImportItem, _removeImportItem, addImportRow,
-         cancelImport, confirmImport } from './modules/importar.js?v=20260425n';
+         cancelImport, confirmImport } from './modules/importar.js?v=20260425o';
 
 // ── Estado global ────────────────────────────────────────────────────
 const DEFAULT_STATE = {
@@ -386,6 +386,7 @@ function openSettings() {
   document.getElementById('set-eng-reg').value   = state.engRegistro || '';
   document.getElementById('set-emp-nome').value  = state.empNome || '';
   document.getElementById('set-rel-rodape').value = state.relatorioRodape || '';
+  atualizarPreviewLogo();
   openModal('modal-settings');
 }
 function saveSettings() {
@@ -404,12 +405,36 @@ function handleLogoUpload(input) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
-    state.logoData = e.target.result;
-    saveStateLocal();
-    if (window._fbUser) { clearTimeout(_fbSaveTimer); _fbSaveTimer = setTimeout(()=>saveToCloud(),400); }
-    showToast('✅ Logo carregada e salva!');
+    // Comprime para max 200px de altura, qualidade 0.85 (~30-50KB)
+    // Logo grande estoura limite do Firestore e fica lenta ao gerar PDF
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxH = 200;
+      let w = img.width, h = img.height;
+      if (h > maxH) { w = (w * maxH) / h; h = maxH; }
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      // PNG preserva transparência da logo
+      state.logoData = canvas.toDataURL('image/png');
+      atualizarPreviewLogo();
+      saveStateLocal();
+      if (window._fbUser) { clearTimeout(_fbSaveTimer); _fbSaveTimer = setTimeout(()=>saveToCloud(),400); }
+      showToast('✅ Logo carregada e salva!');
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
+}
+function atualizarPreviewLogo() {
+  const el = document.getElementById('set-logo-preview');
+  if (!el) return;
+  if (state.logoData) {
+    el.innerHTML = `<img src="${state.logoData}" style="max-height:60px;max-width:160px;object-fit:contain" alt="Logo">`;
+  } else {
+    el.innerHTML = '<span style="font-size:12px;color:var(--muted)">Clique para subir sua logomarca</span>';
+  }
 }
 
 function abrirLogin() { openModal('modal-login'); }
@@ -495,6 +520,93 @@ function atualizarPreviewAssinaturaDiario() {
 // Expostas para módulo diario.js usar (set/get)
 window._diarioGetSig = () => _diaSigPending;
 window._diarioSetSig = (sig) => { _diaSigPending = sig || null; atualizarPreviewAssinaturaDiario(); };
+
+// ── EQUIPE DO DIÁRIO ────────────────────────────────────────────────
+const PROFISSOES_PADRAO = [
+  { cargo: 'Pedreiro',         icon: '🧱' },
+  { cargo: 'Carpinteiro',      icon: '🪚' },
+  { cargo: 'Pintor',           icon: '🎨' },
+  { cargo: 'Soldador',         icon: '🔥' },
+  { cargo: 'Eletricista',      icon: '⚡' },
+  { cargo: 'Encanador',        icon: '🚿' },
+  { cargo: 'Ajudante',         icon: '🛠️' },
+  { cargo: 'Montador',         icon: '🔧' },
+  { cargo: 'Operador máquina', icon: '🚜' },
+];
+let _equipeAtual = []; // [{cargo, qtd, custom?:true}]
+
+function renderEquipeGrid() {
+  const grid = document.getElementById('f-dia-equipe-grid');
+  if (!grid) return;
+  // Mescla padrão + customs já adicionados
+  const customs = _equipeAtual.filter(e => e.custom);
+  const itens = [...PROFISSOES_PADRAO.map(p => {
+    const ja = _equipeAtual.find(e => e.cargo === p.cargo && !e.custom);
+    return { ...p, qtd: ja?.qtd || 0, checked: !!ja };
+  }), ...customs.map(c => ({ cargo: c.cargo, icon: '⭐', qtd: c.qtd, checked: true, custom: true }))];
+
+  grid.innerHTML = itens.map((p, i) => `
+    <label class="equipe-item ${p.checked ? 'checked' : ''} ${p.custom ? 'equipe-custom' : ''}">
+      <input type="checkbox" ${p.checked ? 'checked' : ''} onchange="toggleEquipeItem('${escapeJs(p.cargo)}', this.checked, ${p.custom || false})">
+      <span class="equipe-icon">${p.icon}</span>
+      <span class="equipe-label">${p.cargo}</span>
+      <input type="number" min="0" max="999" value="${p.qtd}" ${!p.checked?'disabled':''}
+        onchange="updateEquipeQtd('${escapeJs(p.cargo)}', +this.value, ${p.custom || false})"
+        onclick="event.stopPropagation()">
+      ${p.custom ? `<button type="button" class="equipe-rm" onclick="event.preventDefault();removeEquipeCustom('${escapeJs(p.cargo)}')" title="Remover">✕</button>` : ''}
+    </label>
+  `).join('');
+  atualizarCampoEquipe();
+}
+
+function escapeJs(s) { return String(s).replace(/'/g, "\\'"); }
+
+function toggleEquipeItem(cargo, checked, isCustom) {
+  if (checked) {
+    if (!_equipeAtual.find(e => e.cargo === cargo)) {
+      _equipeAtual.push({ cargo, qtd: 1, custom: isCustom });
+    }
+  } else {
+    _equipeAtual = _equipeAtual.filter(e => e.cargo !== cargo);
+  }
+  renderEquipeGrid();
+}
+function updateEquipeQtd(cargo, qtd, isCustom) {
+  const item = _equipeAtual.find(e => e.cargo === cargo);
+  if (item) item.qtd = qtd;
+  atualizarCampoEquipe();
+}
+function adicionarEquipeOutro() {
+  const desc = document.getElementById('f-dia-equipe-outro')?.value?.trim();
+  const qtd = +document.getElementById('f-dia-equipe-outro-qtd')?.value || 1;
+  if (!desc) { showToast('⚠️ Descreva o profissional/máquina'); return; }
+  if (_equipeAtual.find(e => e.cargo === desc)) { showToast('⚠️ Já adicionado'); return; }
+  _equipeAtual.push({ cargo: desc, qtd, custom: true });
+  document.getElementById('f-dia-equipe-outro').value = '';
+  document.getElementById('f-dia-equipe-outro-qtd').value = '';
+  renderEquipeGrid();
+}
+function removeEquipeCustom(cargo) {
+  _equipeAtual = _equipeAtual.filter(e => e.cargo !== cargo);
+  renderEquipeGrid();
+}
+function atualizarCampoEquipe() {
+  // Gera string legível para retrocompat: "3 Pedreiros, 2 Ajudantes, 1 Eletricista"
+  const txt = _equipeAtual
+    .filter(e => e.qtd > 0)
+    .map(e => `${e.qtd} ${e.cargo}${e.qtd > 1 && !e.custom ? 's' : ''}`)
+    .join(', ');
+  const el = document.getElementById('f-dia-equipe');
+  if (el) el.value = txt;
+}
+
+// Expor para módulo diario.js
+window._diarioGetEquipe = () => [..._equipeAtual];
+window._diarioSetEquipe = (list) => {
+  _equipeAtual = Array.isArray(list) ? list.map(e => ({...e})) : [];
+  // Renderiza após próximo tick (modal pode não estar montado)
+  setTimeout(renderEquipeGrid, 50);
+};
 
 function saveCliSig(state) {
   const medId = document.getElementById('sig-cli-med-id')?.value;
@@ -599,6 +711,10 @@ G.saveSig = saveSig;
 G.clearSig = clearSig;
 G.abrirAssinaturaDiario = abrirAssinaturaDiario;
 G.salvarAssinaturaDiario = salvarAssinaturaDiario;
+G.toggleEquipeItem = toggleEquipeItem;
+G.updateEquipeQtd = updateEquipeQtd;
+G.adicionarEquipeOutro = adicionarEquipeOutro;
+G.removeEquipeCustom = removeEquipeCustom;
 G.saveIaConfig = () => {
   const key = document.getElementById('set-ia-key')?.value?.trim();
   const savedKey = getIaKey();
@@ -735,10 +851,21 @@ G.gerarDiarioPDF = () => {
     return `
       <h2>${o.nome}</h2>
       <div class="meta">👤 ${o.cliente || '—'}${o.area ? ' • 📐 '+o.area+' m²' : ''}</div>
-      ${ents.length ? ents.map(e => `
+      ${ents.length ? ents.map(e => {
+        const ativs = (e.desc || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+        const ativsHtml = ativs.length
+          ? `<ul class="ativs">${ativs.map(a => `<li>${a.replace(/</g,'&lt;')}</li>`).join('')}</ul>`
+          : '<div class="muted" style="font-style:italic">Sem descrição</div>';
+        const eqList = Array.isArray(e.equipeList) ? e.equipeList : [];
+        const equipeHtml = eqList.length
+          ? `<div class="equipe-pdf">${eqList.map(eq => `<span class="eq-chip">👷 ${eq.qtd} ${(eq.cargo||'').replace(/</g,'&lt;')}</span>`).join('')}</div>`
+          : (e.equipe ? `<div class="muted" style="margin-top:4px">👷 ${(e.equipe||'').replace(/</g,'&lt;')}</div>` : '');
+        return `
         <div class="entry">
-          <div class="entry-h"><strong>${fmtD(e.data)}</strong> <span class="muted">${e.clima || ''} • Equipe: ${e.equipe || '—'}</span></div>
-          <div class="entry-b">${(e.desc || '').replace(/</g,'&lt;')}</div>
+          <div class="entry-h"><strong>${fmtD(e.data)}</strong> <span class="muted">${e.clima || ''}</span></div>
+          <div class="entry-section">📋 Atividades realizadas</div>
+          ${ativsHtml}
+          ${equipeHtml ? `<div class="entry-section">👷 Equipe</div>${equipeHtml}` : ''}
           ${e.ocorr && e.ocorr !== 'Sem ocorrências' && e.ocorr !== 'Nenhuma'
             ? `<div class="ocorr">⚠️ ${(e.ocorr || '').replace(/</g,'&lt;')}</div>` : ''}
           ${e.fotos && e.fotos.length ? `
@@ -752,8 +879,8 @@ G.gerarDiarioPDF = () => {
               <div class="sig-name">${state.engNome || 'Responsável Técnico'}</div>
               <div class="sig-meta">${state.engRegistro || ''} ${e.assinatura.data ? '• Assinado em '+e.assinatura.data : ''}</div>
             </div>` : ''}
-        </div>
-      `).join('') : '<div class="vazio">Sem registros de diário.</div>'}
+        </div>`;
+      }).join('') : '<div class="vazio">Sem registros de diário.</div>'}
     `;
   }).join('');
   w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
@@ -770,8 +897,14 @@ G.gerarDiarioPDF = () => {
       h2{font-family:'Syne',sans-serif;font-size:18px;color:#0f2744;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin:24px 0 12px}
       .meta{font-size:12px;color:#64748b;margin-bottom:12px}
       .entry{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:10px;page-break-inside:avoid}
-      .entry-h{display:flex;justify-content:space-between;border-bottom:1px solid #f1f5f9;padding-bottom:6px;margin-bottom:8px}
+      .entry-h{display:flex;justify-content:space-between;border-bottom:1px solid #f1f5f9;padding-bottom:6px;margin-bottom:8px;font-size:13px}
       .entry-b{font-size:13px;white-space:pre-wrap}
+      .entry-section{font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.6px;margin-top:8px;margin-bottom:5px}
+      .ativs{margin:2px 0 6px;padding-left:0;list-style:none}
+      .ativs li{position:relative;padding:5px 8px 5px 22px;font-size:12.5px;color:#1e293b;background:#f0f7ff;border-radius:6px;margin-bottom:3px;line-height:1.35;border-left:3px solid #2563eb}
+      .ativs li::before{content:'✓';position:absolute;left:6px;top:5px;color:#2563eb;font-weight:800;font-size:11.5px}
+      .equipe-pdf{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px;margin-bottom:6px}
+      .eq-chip{display:inline-block;padding:3px 10px;background:#dbeafe;color:#1e40af;border-radius:12px;font-size:11px;font-weight:600;border:1px solid #93c5fd}
       .muted{font-size:11.5px;color:#64748b}
       .ocorr{margin-top:8px;font-size:12px;color:#b91c1c;background:#fef2f2;padding:8px;border-radius:6px}
       .fotos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
@@ -1109,18 +1242,23 @@ function saveStateLocal() {
 }
 
 // Remove dataUrls grandes de qualquer item (recursivo, raso) para caber no
-// limite de 1MB do Firestore. Mantém URLs externas/Storage e metadados.
-function stripDataUrls(obj) {
-  if (Array.isArray(obj)) return obj.map(stripDataUrls);
+// limite de 1MB do Firestore. Mantém URLs externas/Storage, metadados e
+// chaves WHITELIST (logo, assinaturas — usuário precisa que persistam).
+const KEEP_DATAURL_KEYS = new Set(['logoData', 'engSig', 'dataUrl']);
+function stripDataUrls(obj, parentKey) {
+  if (Array.isArray(obj)) return obj.map(x => stripDataUrls(x));
   if (obj && typeof obj === 'object') {
     const out = {};
     for (const k of Object.keys(obj)) {
       const v = obj[k];
       if (typeof v === 'string' && v.startsWith('data:') && v.length > 8000) {
-        // dataUrl pesado: descarta; lightbox/local cuidam
+        if (KEEP_DATAURL_KEYS.has(k)) {
+          out[k] = v; // preserva logo, assinatura
+        }
+        // senão: dataUrl pesado descartado (fotos do diário, etc)
         continue;
       }
-      out[k] = stripDataUrls(v);
+      out[k] = stripDataUrls(v, k);
     }
     return out;
   }

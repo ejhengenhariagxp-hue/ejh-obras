@@ -19,14 +19,14 @@
 
 
 <!-- build:20260424_1930 -->
-<link rel="stylesheet" href="./styles.css?v=20260425n">
+<link rel="stylesheet" href="./styles.css?v=20260425o">
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260425n"></script>
+<script type="module" src="./app.js?v=20260425o"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Lucide icons (modern SVG icon library) -->
@@ -692,8 +692,20 @@
   <div class="form-grid">
     <div class="form-group"><label>Obra</label><select id="f-dia-obra"></select></div>
     <div class="form-group"><label>Data</label><input id="f-dia-data" type="date"></div>
-    <div class="form-group full"><label>Descrição das Atividades</label><textarea id="f-dia-desc" placeholder="Descreva as atividades…"></textarea></div>
-    <div class="form-group"><label>Equipe</label><input id="f-dia-equipe" placeholder="Ex: 8 operários"></div>
+    <div class="form-group full">
+      <label>Descrição das Atividades <span style="color:var(--muted);font-weight:400;font-size:11px">(uma por linha — Enter para nova)</span></label>
+      <textarea id="f-dia-desc" rows="5" placeholder="Concretagem da laje 2&#10;Alvenaria do banheiro&#10;Instalação elétrica do quarto&#10;Limpeza geral"></textarea>
+    </div>
+    <div class="form-group full">
+      <label>Equipe — Marque os profissionais e quantidade</label>
+      <div id="f-dia-equipe-grid" class="equipe-grid"></div>
+      <input type="hidden" id="f-dia-equipe">
+      <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
+        <input id="f-dia-equipe-outro" placeholder="Outro: máquina, função…" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px">
+        <input id="f-dia-equipe-outro-qtd" type="number" min="0" placeholder="Qtd" style="width:65px;padding:7px;border:1px solid var(--border);border-radius:7px;font-size:12.5px;text-align:center">
+        <button type="button" class="btn btn-outline btn-xs" onclick="adicionarEquipeOutro()" style="color:var(--blue);border-color:var(--blue)">＋ Add</button>
+      </div>
+    </div>
     <div class="form-group"><label>Clima</label><select id="f-dia-clima">
       <option>☀️ Ensolarado</option><option>⛅ Parcialmente nublado</option>
       <option>🌧 Chuva</option><option>⛈ Tempestade</option><option>🌥 Nublado</option>

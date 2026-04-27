@@ -193,6 +193,13 @@ textarea{resize:vertical;min-height:70px}
 .divider{height:1px;background:var(--border);margin:14px 0}
 /* DIÁRIO */
 .diario-item{background:var(--card);border-radius:var(--radius);padding:14px 18px;box-shadow:var(--shadow);margin-bottom:10px;border-left:4px solid var(--purple)}
+.diario-section-title{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:8px;margin-bottom:6px}
+.diario-ativs{margin:4px 0 6px;padding-left:0;list-style:none}
+.diario-ativs li{position:relative;padding:6px 10px 6px 26px;font-size:13.5px;color:var(--text);background:#f0f7ff;border-radius:7px;margin-bottom:4px;line-height:1.4;border-left:3px solid var(--blue)}
+.diario-ativs li::before{content:'✓';position:absolute;left:8px;top:6px;color:var(--blue);font-weight:800;font-size:13px}
+.diario-equipe-chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+.equipe-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:#dbeafe;color:#1e40af;border-radius:14px;font-size:12px;font-weight:600;border:1px solid #93c5fd}
+.diario-ocorr{margin-top:8px;padding:8px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:7px;font-size:12.5px;color:#991b1b;font-weight:600}
 .foto-galeria{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .foto-galeria img{width:56px;height:56px;object-fit:cover;border-radius:7px;cursor:pointer;transition:transform .15s}
 .foto-galeria img:hover{transform:scale(1.08)}
@@ -221,6 +228,18 @@ textarea{resize:vertical;min-height:70px}
 .fab-menu.open{opacity:1;pointer-events:all;transform:translateY(0)}
 .fab-item{display:flex;align-items:center;gap:9px;padding:9px 14px;border-radius:11px;border:none;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;color:var(--navy);box-shadow:0 4px 14px rgba(15,39,68,.14);white-space:nowrap;transition:transform .15s}
 .fab-item:hover{transform:translateX(-3px)}
+/* EQUIPE GRID (Diário) */
+.equipe-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;margin-top:6px}
+.equipe-item{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1.5px solid var(--border);border-radius:9px;background:#fafbff;font-size:12.5px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.equipe-item.checked{background:#dbeafe;border-color:var(--blue)}
+.equipe-item input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--blue)}
+.equipe-item .equipe-icon{font-size:15px;line-height:1}
+.equipe-item .equipe-label{flex:1;color:var(--navy);font-weight:600}
+.equipe-item input[type=number]{width:48px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;font-size:12px;text-align:center;font-family:'DM Sans',sans-serif}
+.equipe-item.checked input[type=number]{border-color:var(--blue);background:#fff}
+.equipe-item .equipe-rm{background:transparent;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 4px;line-height:1}
+.equipe-item.equipe-custom{background:#fef3c7;border-color:#fcd34d}
+
 /* RESPONSIVO — Visibilidade alternada de tabela vs cards */
 .only-mobile{display:none}
 .only-desktop{display:block}

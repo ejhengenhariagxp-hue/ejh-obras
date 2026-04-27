@@ -1,6 +1,6 @@
 // modules/diario.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName, escapeHtml, markDeleted } from '../utils.js?v=20260425n';
-import { iaCall } from '../services.js?v=20260425n';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName, escapeHtml, markDeleted } from '../utils.js?v=20260425o';
+import { iaCall } from '../services.js?v=20260425o';
 
 let _diarioLimit = 20;
 let _pendingFotos = [];
@@ -23,11 +23,13 @@ export function addDiario(state){
       name: f.name
     })).filter(f => f.dataUrl);
     const sig = window._diarioGetSig?.() || null;
+    const equipeList = window._diarioGetEquipe?.() || [];
     const dadosForm = {
       obraId: obraId,
       data:   data,
       desc:   document.getElementById('f-dia-desc')?.value || '',
       equipe: document.getElementById('f-dia-equipe')?.value || '',
+      equipeList: equipeList.filter(e => e.qtd > 0),
       clima:  document.getElementById('f-dia-clima')?.value || '',
       ocorr:  document.getElementById('f-dia-ocorr')?.value || '',
       fotos:  fotosFinais,
@@ -45,6 +47,7 @@ export function addDiario(state){
     _pendingFotos = [];
     renderFotoPreview();
     window._diarioSetSig?.(null);
+    window._diarioSetEquipe?.([]);
     closeModal('modal-diario');
     showToast(editId ? '✅ Registro atualizado!' : '✅ Registro salvo!');
     return true;
@@ -71,6 +74,12 @@ export function openEditDiario(state, id) {
   set('f-dia-ocorr', d.ocorr);
   // Carrega assinatura existente (se houver)
   window._diarioSetSig?.(d.assinatura?.dataUrl || null);
+  // Carrega equipe estruturada (ou tenta inferir de string legada)
+  if (Array.isArray(d.equipeList) && d.equipeList.length) {
+    window._diarioSetEquipe?.(d.equipeList);
+  } else {
+    window._diarioSetEquipe?.([]);
+  }
   const t = document.querySelector('#modal-diario .modal-title');
   if (t) t.textContent = '✏️ Editar registro do diário';
   openModal('modal-diario');
@@ -150,9 +159,10 @@ export function openModalDiario(state){
   _pendingFotos=[];
   renderFotoPreview();
   window._diarioSetSig?.(null); // limpa assinatura
+  window._diarioSetEquipe?.([]); // limpa equipe
   popularSelectsObras(state);
   // limpa modo edição e campos
-  ['f-dia-id','f-dia-desc','f-dia-equipe','f-dia-ocorr'].forEach(k => { const el = document.getElementById(k); if (el) el.value = ''; });
+  ['f-dia-id','f-dia-desc','f-dia-equipe','f-dia-ocorr','f-dia-equipe-outro','f-dia-equipe-outro-qtd'].forEach(k => { const el = document.getElementById(k); if (el) el.value = ''; });
   if(document.getElementById('f-dia-data')) document.getElementById('f-dia-data').value = new Date().toISOString().split('T')[0];
   const t = document.querySelector('#modal-diario .modal-title');
   if (t) t.textContent = '📋 Novo registro do diário';
@@ -163,6 +173,7 @@ export function cancelarDiario(){
   _pendingFotos=[];
   renderFotoPreview();
   window._diarioSetSig?.(null);
+  window._diarioSetEquipe?.([]);
   closeModal('modal-diario');
 }
 
@@ -178,14 +189,25 @@ export function renderDiario(state){
             onclick="openLightbox('${src}','${obraName(state, d.obraId)} — ${fmtD(d.data)} — Foto ${i+1}')"
             title="${f.name||'foto'}">`}).join('')}
         </div>`:'';
+      // Atividades em tópicos: cada linha vira um item
+      const ativs = (d.desc || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      const ativsHtml = ativs.length
+        ? `<ul class="diario-ativs">${ativs.map(a => `<li>${escapeHtml(a)}</li>`).join('')}</ul>`
+        : `<div class="diario-body" style="color:var(--muted);font-style:italic">Sem descrição</div>`;
+      // Equipe estruturada com chips
+      const eqList = Array.isArray(d.equipeList) ? d.equipeList : [];
+      const equipeChips = eqList.length
+        ? `<div class="diario-equipe-chips">${eqList.map(e => `<span class="equipe-chip">👷 ${e.qtd} ${escapeHtml(e.cargo)}</span>`).join('')}</div>`
+        : (d.equipe ? `<div class="diario-equipe-chips"><span class="equipe-chip">👷 ${escapeHtml(d.equipe)}</span></div>` : '');
       return `<div class="diario-item">
         <div style="display:flex;justify-content:space-between">
           <div style="flex:1">
             <div class="diario-date">${fmtD(d.data)} — ${obraName(state, d.obraId)}</div>
-            <div class="diario-body">${escapeHtml(d.desc)}</div>
-            ${d.ocorr&&d.ocorr!=='Sem ocorrências' && d.ocorr!=='Nenhuma'?`<div style="margin-top:5px;font-size:12px;color:var(--red)">⚠️ ${escapeHtml(d.ocorr)}</div>`:''}
+            <div class="diario-section-title">📋 Atividades realizadas</div>
+            ${ativsHtml}
+            ${equipeChips ? `<div class="diario-section-title" style="margin-top:10px">👷 Equipe</div>${equipeChips}` : ''}
+            ${d.ocorr&&d.ocorr!=='Sem ocorrências' && d.ocorr!=='Nenhuma'?`<div class="diario-ocorr">⚠️ ${escapeHtml(d.ocorr)}</div>`:''}
             <div class="diario-tags">
-              <span class="badge badge-blue">${d.equipe}</span>
               <span class="badge badge-amber">${d.clima}</span>
               ${fotos.length?`<span class="badge badge-purple">📷 ${fotos.length} foto${fotos.length>1?'s':''}</span>`:''}
               ${d.assinatura?.dataUrl?`<span class="badge badge-teal">✍️ Assinado</span>`:''}
