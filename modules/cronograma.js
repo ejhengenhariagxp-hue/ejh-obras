@@ -1,5 +1,5 @@
 // modules/cronograma.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName, escapeHtml, markDeleted } from '../utils.js?v=20260425p';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName, escapeHtml, markDeleted } from '../utils.js?v=20260425q';
 
 export function addCron(state){
   const etapa=document.getElementById('f-cron-etapa').value.trim();

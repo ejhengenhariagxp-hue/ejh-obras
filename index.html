@@ -19,14 +19,14 @@
 
 
 <!-- build:20260424_1930 -->
-<link rel="stylesheet" href="./styles.css?v=20260425p">
+<link rel="stylesheet" href="./styles.css?v=20260425q">
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260425p"></script>
+<script type="module" src="./app.js?v=20260425q"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Lucide icons (modern SVG icon library) -->
@@ -282,11 +282,14 @@
   <!-- Dashboard Financeiro Avançado (Indicadores e % YoY) -->
   <div id="dash-fin-avancado"></div>
 
+  <!-- Custos Fixos da Empresa (recorrentes) -->
+  <div id="fin-custos-fixos"></div>
+
   <!-- Lançamentos Agendados (próximos 90 dias) -->
   <div id="fin-agendamentos"></div>
 
-  <div class="section"><div class="section-hdr"><div class="section-title">Projetos</div></div><div class="table-wrap"><table><thead><tr><th>Projeto</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="tbody-fin-r1"></tbody></table></div></div>
-  <div class="section"><div class="section-hdr"><div class="section-title">Obras</div></div><div class="table-wrap"><table><thead><tr><th>Obra</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="tbody-fin-r2"></tbody></table></div></div>
+  <div class="section"><div class="section-hdr"><div class="section-title">Projetos</div></div><div class="table-wrap"><table><thead><tr><th>Projeto</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tbody-fin-r1"></tbody></table></div></div>
+  <div class="section"><div class="section-hdr"><div class="section-title">Obras</div></div><div class="table-wrap"><table><thead><tr><th>Obra</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tbody-fin-r2"></tbody></table></div></div>
   <div class="section">
     <div class="section-hdr" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
       <div class="section-title">Lançamentos</div>
@@ -808,6 +811,67 @@
 </div></div>
 
 <!-- Financeiro -->
+<!-- Modal Custo Fixo -->
+<div class="modal-bg" id="modal-custo-fixo"><div class="modal">
+  <div class="modal-title">＋ Novo Custo Fixo</div>
+  <input type="hidden" id="f-cf-id">
+  <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Atalhos rápidos:</div>
+  <div id="cf-padrao-wrap" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px"></div>
+  <div class="form-grid">
+    <div class="form-group full">
+      <label>Descrição</label>
+      <input id="f-cf-desc" placeholder="Ex: Aluguel do escritório">
+    </div>
+    <div class="form-group">
+      <label>Ícone</label>
+      <select id="f-cf-icon" style="font-size:18px">
+        <option>💼</option><option>🏢</option><option>🌐</option><option>⚡</option><option>💧</option>
+        <option>📞</option><option>⛽</option><option>📑</option><option>🛡</option><option>🚗</option>
+        <option>📱</option><option>🍽</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Valor mensal (R$)</label>
+      <input id="f-cf-valor" type="number" step="0.01" placeholder="0,00">
+    </div>
+    <div class="form-group full">
+      <label>Dia do vencimento (1-28)</label>
+      <input id="f-cf-dia" type="number" min="1" max="28" value="5">
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-outline" onclick="closeModal('modal-custo-fixo')">Cancelar</button>
+    <button class="btn btn-primary" onclick="addCustoFixo()" style="background:#7c3aed">💾 Salvar</button>
+  </div>
+</div></div>
+
+<!-- Modal Despesas Padrão por Obra -->
+<div class="modal-bg" id="modal-despesas-padrao"><div class="modal modal-wide">
+  <div class="modal-title">📋 Despesas Padrão</div>
+  <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">
+    Marque os itens, preencha os valores e salve. Será criado um lançamento de despesa para cada item marcado.
+  </div>
+  <div class="form-grid" style="margin-bottom:14px">
+    <div class="form-group">
+      <label>Data dos lançamentos</label>
+      <input id="dp-data" type="date">
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="dp-status">
+        <option value="pago">✅ Pago / Recebido</option>
+        <option value="pendente">⏳ Pendente</option>
+        <option value="agendado">📅 Agendado</option>
+      </select>
+    </div>
+  </div>
+  <div id="dp-grid" style="max-height:50vh;overflow-y:auto"></div>
+  <div class="modal-actions">
+    <button class="btn btn-outline" onclick="closeModal('modal-despesas-padrao')">Cancelar</button>
+    <button class="btn btn-primary" onclick="salvarDespesasPadraoObra()" style="background:#7c3aed">💾 Salvar Despesas</button>
+  </div>
+</div></div>
+
 <div class="modal-bg" id="modal-fin"><div class="modal">
   <div class="modal-title" id="fin-modal-title">＋ Lançamento</div>
   <input type="hidden" id="f-fin-id">

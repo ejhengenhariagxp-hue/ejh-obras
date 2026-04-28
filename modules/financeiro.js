@@ -1,5 +1,5 @@
 // modules/financeiro.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260425p';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260425q';
 
 let _finLimit = 20;
 let _hideRT = false;
@@ -115,6 +115,299 @@ export function openModalFin(state, tipo){
   openModal('modal-fin');
 }
 
+// ── CUSTOS FIXOS DA EMPRESA ─────────────────────────────────────────
+// Estrutura: { id, desc, valor, diaVencimento, ativo, icon }
+// São despesas mensais recorrentes (aluguel, internet, combustível, etc.)
+// que se transformam em lançamentos via "Gerar lançamentos do mês".
+
+const CUSTOS_FIXOS_PADRAO = [
+  { desc: 'Aluguel do escritório', icon: '🏢' },
+  { desc: 'Internet', icon: '🌐' },
+  { desc: 'Energia (escritório)', icon: '⚡' },
+  { desc: 'Água (escritório)', icon: '💧' },
+  { desc: 'Telefone', icon: '📞' },
+  { desc: 'Combustível', icon: '⛽' },
+  { desc: 'Material de escritório (papel, tinta, etc)', icon: '📑' },
+  { desc: 'Contador', icon: '💼' },
+  { desc: 'Seguro', icon: '🛡' },
+];
+
+export function addCustoFixo(state) {
+  const desc = document.getElementById('f-cf-desc')?.value?.trim();
+  const valor = +document.getElementById('f-cf-valor')?.value || 0;
+  const dia = +document.getElementById('f-cf-dia')?.value || 1;
+  const icon = document.getElementById('f-cf-icon')?.value || '💼';
+  if (!desc) { showToast('⚠️ Informe a descrição'); return false; }
+  if (valor <= 0) { showToast('⚠️ Valor deve ser maior que zero'); return false; }
+  if (dia < 1 || dia > 28) { showToast('⚠️ Dia entre 1 e 28'); return false; }
+
+  if (!Array.isArray(state.custosFixos)) state.custosFixos = [];
+  if (!state.counters.cf) state.counters.cf = 1;
+
+  const editId = document.getElementById('f-cf-id')?.value;
+  const dados = { desc, valor, diaVencimento: dia, icon, ativo: true };
+
+  if (editId) {
+    const idx = state.custosFixos.findIndex(c => c.id === editId);
+    if (idx < 0) { showToast('⚠️ Não encontrado'); return false; }
+    state.custosFixos[idx] = { ...state.custosFixos[idx], ...dados };
+    showToast('✅ Custo fixo atualizado!');
+  } else {
+    state.custosFixos.push({ id: 'CF-' + pad(state.counters.cf), ...dados });
+    state.counters.cf++;
+    showToast('✅ Custo fixo cadastrado!');
+  }
+  closeModal('modal-custo-fixo');
+  return true;
+}
+
+export function delCustoFixo(state, id) {
+  if (!confirm('Excluir este custo fixo? (Lançamentos já gerados continuam)')) return false;
+  state.custosFixos = (state.custosFixos || []).filter(c => c.id !== id);
+  markDeleted(state, 'custosFixos', id);
+  return true;
+}
+
+export function toggleCustoFixoAtivo(state, id) {
+  const c = (state.custosFixos || []).find(x => x.id === id);
+  if (!c) return false;
+  c.ativo = !c.ativo;
+  return true;
+}
+
+export function openEditCustoFixo(state, id) {
+  const c = (state.custosFixos || []).find(x => x.id === id);
+  if (!c) return;
+  const set = (k, v) => { const el = document.getElementById(k); if (el) el.value = v ?? ''; };
+  set('f-cf-id', c.id);
+  set('f-cf-desc', c.desc);
+  set('f-cf-valor', c.valor);
+  set('f-cf-dia', c.diaVencimento);
+  set('f-cf-icon', c.icon || '💼');
+  const t = document.querySelector('#modal-custo-fixo .modal-title');
+  if (t) t.textContent = '✏️ Editar Custo Fixo — ' + c.id;
+  openModal('modal-custo-fixo');
+}
+
+export function abrirModalCustoFixo() {
+  ['f-cf-id','f-cf-desc','f-cf-valor'].forEach(k => {
+    const el = document.getElementById(k); if (el) el.value = '';
+  });
+  if (document.getElementById('f-cf-dia')) document.getElementById('f-cf-dia').value = '5';
+  if (document.getElementById('f-cf-icon')) document.getElementById('f-cf-icon').value = '💼';
+  const t = document.querySelector('#modal-custo-fixo .modal-title');
+  if (t) t.textContent = '＋ Novo Custo Fixo';
+  // Renderiza atalhos de custos padrão
+  const wrap = document.getElementById('cf-padrao-wrap');
+  if (wrap) {
+    wrap.innerHTML = CUSTOS_FIXOS_PADRAO.map(p => `
+      <button type="button" class="btn btn-outline btn-xs" onclick="preencherCustoFixoPadrao('${p.desc.replace(/'/g,"\\'")}','${p.icon}')" style="font-size:11.5px">
+        ${p.icon} ${p.desc}
+      </button>
+    `).join('');
+  }
+  openModal('modal-custo-fixo');
+}
+
+export function preencherCustoFixoPadrao(desc, icon) {
+  const dEl = document.getElementById('f-cf-desc');
+  const iEl = document.getElementById('f-cf-icon');
+  if (dEl) dEl.value = desc;
+  if (iEl) iEl.value = icon;
+  document.getElementById('f-cf-valor')?.focus();
+}
+
+// Gera lançamentos de despesa para todos os custos fixos ATIVOS no mês selecionado
+export function gerarLancamentosCustosFixos(state) {
+  const sel = document.getElementById('cf-mes-gerar');
+  const mes = sel?.value; // formato 'YYYY-MM'
+  if (!mes) { showToast('⚠️ Selecione o mês'); return false; }
+  const ativos = (state.custosFixos || []).filter(c => c.ativo);
+  if (!ativos.length) { showToast('⚠️ Nenhum custo fixo ativo'); return false; }
+
+  // Verifica duplicatas: se já existe lançamento desse custoFixoId nesse mês, pula
+  const [ano, mm] = mes.split('-');
+  const jaExistentes = (state.fin || []).filter(f =>
+    f.custoFixoId && f.data?.startsWith(mes)
+  ).map(f => f.custoFixoId);
+
+  const novosIds = ativos.filter(c => !jaExistentes.includes(c.id));
+  if (!novosIds.length) {
+    showToast('ℹ️ Todos os custos fixos do mês já foram gerados.');
+    return false;
+  }
+
+  if (!confirm(`Gerar ${novosIds.length} lançamento${novosIds.length>1?'s':''} de despesa para ${mes}?`)) return false;
+
+  if (!state.counters.fin) state.counters.fin = 1;
+  novosIds.forEach(c => {
+    const dia = String(c.diaVencimento).padStart(2,'0');
+    const data = `${ano}-${mm}-${dia}`;
+    const hojeStr = new Date().toISOString().split('T')[0];
+    const status = data > hojeStr ? 'agendado' : (data === hojeStr ? 'pendente' : 'agendado');
+    state.fin.push({
+      id: 'FIN-' + pad(state.counters.fin),
+      tipo: 'Despesa',
+      obraId: '__empresa__', // identificador especial
+      data,
+      desc: `${c.icon || '💼'} ${c.desc} — ${mes}`,
+      cat: '🏢 Custo Fixo (Empresa)',
+      status,
+      valor: c.valor,
+      obs: 'Gerado automaticamente do custo fixo ' + c.id,
+      custoFixoId: c.id,
+    });
+    state.counters.fin++;
+  });
+  showToast(`✅ ${novosIds.length} lançamento${novosIds.length>1?'s':''} criado${novosIds.length>1?'s':''}!`);
+  return true;
+}
+
+// Renderiza a seção "Custos Fixos da Empresa" na tela financeiro
+export function renderCustosFixos(state) {
+  const el = document.getElementById('fin-custos-fixos');
+  if (!el) return;
+
+  const lista = state.custosFixos || [];
+  const totalMensal = lista.filter(c => c.ativo).reduce((a,x) => a + (x.valor||0), 0);
+
+  // Sugere mês atual no select
+  const hoje = new Date();
+  const mesAtual = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0');
+  const mesProx = new Date(hoje.getFullYear(), hoje.getMonth()+1, 1);
+  const mesProxStr = mesProx.getFullYear() + '-' + String(mesProx.getMonth()+1).padStart(2,'0');
+
+  el.innerHTML = `
+    <div class="section" style="border-left:4px solid #7c3aed">
+      <div class="section-hdr" style="flex-wrap:wrap;gap:10px">
+        <div class="section-title">💼 Custos Fixos da Empresa</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <span style="padding:4px 10px;background:#ede9fe;color:#5b21b6;border-radius:8px;font-size:12px;font-weight:700">Total mensal: ${fmt(totalMensal)}</span>
+          <button class="btn btn-outline btn-sm" onclick="abrirModalCustoFixo()" style="color:#7c3aed;border-color:#7c3aed">＋ Novo Custo Fixo</button>
+        </div>
+      </div>
+      ${lista.length ? `
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+          ${lista.map(c => `
+            <div class="cf-card ${c.ativo ? '' : 'cf-inativo'}">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:18px;line-height:1">${c.icon||'💼'}</div>
+                  <div class="cf-desc">${c.desc}</div>
+                  <div class="cf-meta">Vence dia ${c.diaVencimento} • <strong>${fmt(c.valor)}</strong>/mês</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end">
+                  <label style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;cursor:pointer;color:var(--muted)">
+                    <input type="checkbox" ${c.ativo?'checked':''} onchange="toggleCustoFixoAtivo('${c.id}')" style="cursor:pointer;accent-color:#7c3aed">
+                    ${c.ativo?'Ativo':'Inativo'}
+                  </label>
+                  <div style="display:flex;gap:3px">
+                    <button class="btn btn-outline btn-xs" onclick="openEditCustoFixo('${c.id}')" style="color:var(--amber);border-color:var(--amber);font-size:10px;padding:2px 6px">✏️</button>
+                    <button class="btn btn-outline btn-xs" onclick="delCustoFixo('${c.id}')" style="color:var(--red);border-color:var(--red);font-size:10px;padding:2px 6px">✕</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px;background:#f8faff;border-radius:9px">
+          <label style="font-size:12.5px;font-weight:600;color:var(--navy)">📅 Gerar lançamentos do mês:</label>
+          <select id="cf-mes-gerar" style="padding:7px 11px;border:1px solid var(--border);border-radius:7px;font-size:13px">
+            <option value="${mesAtual}">${mesAtual} (atual)</option>
+            <option value="${mesProxStr}" selected>${mesProxStr} (próximo)</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="gerarLancamentosCustosFixos()" style="background:#7c3aed">⚡ Gerar Lançamentos</button>
+          <span style="font-size:11.5px;color:var(--muted)">Cria as despesas como "Agendado" — você marca como "Pago" depois</span>
+        </div>
+      ` : `
+        <div style="background:#fafbff;padding:24px;border-radius:10px;text-align:center;color:var(--muted);font-size:13px">
+          Nenhum custo fixo cadastrado. Cadastre os recorrentes (aluguel, internet, combustível...) e gere os lançamentos do mês com 1 clique.
+        </div>
+      `}
+    </div>
+  `;
+}
+
+// ── DESPESAS PADRÃO POR OBRA ─────────────────────────────────────────
+const DESPESAS_PADRAO_OBRA = [
+  { desc: 'ART (Anotação de Resp. Técnica)', icon: '📜', cat: '📜 RT / ART / RRT' },
+  { desc: 'Placa de Obra', icon: '🪧', cat: '🧾 Outros (Despesa)' },
+  { desc: 'CRI (Registro de Imóveis)', icon: '📋', cat: '🏛 Taxas / Impostos' },
+  { desc: 'Plotagens / Cópias', icon: '🖨', cat: '🖨 Plotagens / Cópias' },
+  { desc: 'Alvará de Construção', icon: '📑', cat: '🏛 Taxas / Impostos' },
+  { desc: 'Habite-se / Vistoria', icon: '✅', cat: '🏛 Taxas / Impostos' },
+  { desc: 'Ligação de Água', icon: '💧', cat: '🧾 Outros (Despesa)' },
+  { desc: 'Ligação de Energia', icon: '⚡', cat: '🧾 Outros (Despesa)' },
+  { desc: 'Caçamba / Entulho', icon: '🚛', cat: '🧾 Outros (Despesa)' },
+  { desc: 'Sondagem do solo', icon: '⛏', cat: '🔧 Serviço Terceirizado' },
+  { desc: 'Topografia', icon: '📐', cat: '🔧 Serviço Terceirizado' },
+  { desc: 'EPI / Segurança', icon: '🦺', cat: '🧱 Material' },
+];
+
+export function abrirDespesasPadraoObra(state, obraId) {
+  const obra = state.obras.find(o => o.id === obraId);
+  if (!obra) return;
+  window._dpObraId = obraId;
+  // Título
+  const t = document.querySelector('#modal-despesas-padrao .modal-title');
+  if (t) t.textContent = '📋 Despesas Padrão — ' + obra.nome;
+  // Renderiza checkboxes
+  const grid = document.getElementById('dp-grid');
+  if (grid) {
+    grid.innerHTML = DESPESAS_PADRAO_OBRA.map((d, i) => `
+      <div class="dp-row">
+        <label style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="dp-chk-${i}" data-idx="${i}" style="width:16px;height:16px;accent-color:#7c3aed;cursor:pointer">
+          <span style="font-size:18px">${d.icon}</span>
+          <span style="font-weight:600;color:var(--navy)">${d.desc}</span>
+        </label>
+        <input type="number" id="dp-val-${i}" min="0" step="0.01" placeholder="R$ 0,00" style="width:120px;padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;text-align:right">
+      </div>
+    `).join('');
+  }
+  // Reseta data
+  const d = document.getElementById('dp-data');
+  if (d) d.value = new Date().toISOString().split('T')[0];
+  const s = document.getElementById('dp-status');
+  if (s) s.value = 'pago';
+  openModal('modal-despesas-padrao');
+}
+
+export function salvarDespesasPadraoObra(state) {
+  const obraId = window._dpObraId;
+  if (!obraId) { showToast('⚠️ Obra não identificada'); return false; }
+  const data = document.getElementById('dp-data')?.value;
+  const status = document.getElementById('dp-status')?.value || 'pago';
+  if (!data) { showToast('⚠️ Selecione a data'); return false; }
+
+  const items = [];
+  DESPESAS_PADRAO_OBRA.forEach((d, i) => {
+    const chk = document.getElementById('dp-chk-' + i);
+    const val = +document.getElementById('dp-val-' + i)?.value || 0;
+    if (chk?.checked && val > 0) items.push({ ...d, valor: val });
+  });
+  if (!items.length) { showToast('⚠️ Marque ao menos um item com valor'); return false; }
+
+  if (!state.counters.fin) state.counters.fin = 1;
+  items.forEach(it => {
+    state.fin.push({
+      id: 'FIN-' + pad(state.counters.fin),
+      tipo: 'Despesa',
+      obraId,
+      data,
+      desc: `${it.icon} ${it.desc}`,
+      cat: it.cat,
+      status,
+      valor: it.valor,
+      obs: 'Despesa padrão de obra',
+    });
+    state.counters.fin++;
+  });
+  closeModal('modal-despesas-padrao');
+  showToast(`✅ ${items.length} despesa${items.length>1?'s':''} cadastrada${items.length>1?'s':''}!`);
+  return true;
+}
+
 // Renderiza card de lançamentos agendados/pendentes (3 meses à frente)
 export function renderAgendamentos(state) {
   const el = document.getElementById('fin-agendamentos');
@@ -226,6 +519,9 @@ export function renderFinanceiro(state){
   // Novo Dashboard Avançado
   renderDashFinAvancado(state);
 
+  // Custos Fixos da Empresa (recorrentes)
+  renderCustosFixos(state);
+
   // Card de Lançamentos Agendados (próximos 90 dias)
   renderAgendamentos(state);
 
@@ -239,6 +535,7 @@ export function renderFinanceiro(state){
       <td style="color:var(--red);font-weight:600">${fmt(d)}</td>
       <td style="font-weight:800;color:${s>=0?'var(--green)':'var(--red)'}">${fmt(s)}</td>
       <td>${statusBadge(o.status)}</td>
+      <td><button class="btn btn-outline btn-xs" onclick="abrirDespesasPadraoObra('${o.id}')" style="color:#7c3aed;border-color:#7c3aed;font-size:10.5px;padding:3px 8px" title="Adicionar despesas padrão (ART, placa, CRI...)">📋 Despesas padrão</button></td>
     </tr>`;
   };
 
@@ -246,14 +543,14 @@ export function renderFinanceiro(state){
   const tbR1 = document.getElementById('tbody-fin-r1');
   if(tbR1) {
     const obrasR1 = state.obras.filter(o => o.tipo === 'R1' || o.tipo === 'projeto');
-    tbR1.innerHTML = obrasR1.map(renderObraRow).join('') || '<tr><td colspan="5" style="color:var(--muted);padding:10px">Nenhum R1 (Projeto) encontrado.</td></tr>';
+    tbR1.innerHTML = obrasR1.map(renderObraRow).join('') || '<tr><td colspan="6" style="color:var(--muted);padding:10px">Nenhum R1 (Projeto) encontrado.</td></tr>';
   }
 
   // Por categoria R2 (Obras)
   const tbR2 = document.getElementById('tbody-fin-r2');
   if(tbR2) {
     const obrasR2 = state.obras.filter(o => o.tipo === 'R2' || o.tipo === 'obra' || !o.tipo);
-    tbR2.innerHTML = obrasR2.map(renderObraRow).join('') || '<tr><td colspan="5" style="color:var(--muted);padding:10px">Nenhum R2 (Obra) encontrado.</td></tr>';
+    tbR2.innerHTML = obrasR2.map(renderObraRow).join('') || '<tr><td colspan="6" style="color:var(--muted);padding:10px">Nenhum R2 (Obra) encontrado.</td></tr>';
   }
 
   // Lançamentos — com paginação
