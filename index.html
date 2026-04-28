@@ -19,14 +19,14 @@
 
 
 <!-- build:20260424_1930 -->
-<link rel="stylesheet" href="./styles.css?v=20260425o">
+<link rel="stylesheet" href="./styles.css?v=20260425p">
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260425o"></script>
+<script type="module" src="./app.js?v=20260425p"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Lucide icons (modern SVG icon library) -->
@@ -281,6 +281,9 @@
   </div>
   <!-- Dashboard Financeiro Avançado (Indicadores e % YoY) -->
   <div id="dash-fin-avancado"></div>
+
+  <!-- Lançamentos Agendados (próximos 90 dias) -->
+  <div id="fin-agendamentos"></div>
 
   <div class="section"><div class="section-hdr"><div class="section-title">Projetos</div></div><div class="table-wrap"><table><thead><tr><th>Projeto</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="tbody-fin-r1"></tbody></table></div></div>
   <div class="section"><div class="section-hdr"><div class="section-title">Obras</div></div><div class="table-wrap"><table><thead><tr><th>Obra</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th></tr></thead><tbody id="tbody-fin-r2"></tbody></table></div></div>
@@ -807,25 +810,21 @@
 <!-- Financeiro -->
 <div class="modal-bg" id="modal-fin"><div class="modal">
   <div class="modal-title" id="fin-modal-title">＋ Lançamento</div>
+  <input type="hidden" id="f-fin-id">
   <div class="form-grid">
-    <div class="form-group"><label>Tipo</label><select id="f-fin-tipo"><option>Receita</option><option>Despesa</option></select></div>
+    <div class="form-group"><label>Tipo</label><select id="f-fin-tipo" onchange="atualizarCategoriasFin()"><option>Receita</option><option>Despesa</option></select></div>
     <div class="form-group"><label>Data</label><input id="f-fin-data" type="date"></div>
     <div class="form-group full"><label>Obra</label><select id="f-fin-obra"></select></div>
     <div class="form-group full"><label>Descrição</label><input id="f-fin-desc" placeholder="Ex: Medição nº 1, Compra de cimento…"></div>
-    <div class="form-group"><label>Categoria</label><select id="f-fin-cat">
-      <option>Entrada de Projeto</option><option>Medição</option><option>Adiantamento</option>
-      <option>ART</option><option>Plotagem</option><option>Taxas/Impostos</option>
-      <option>Custo Fixo</option><option>Material</option><option>Mão de obra</option>
-      <option>Mão de Obra</option>
-      <option>Material</option>
-      <option>Equipamento</option>
-      <option>Serviço terceirizado</option>
-      <option>RT / ART / RRT</option>
-      <option>Plotagens / Cópias</option>
-      <option>Taxas / Impostos</option>
-      <option>Gestão de Projeto (Entrada)</option>
-      <option>Outros</option>
-    </select></div>
+    <div class="form-group"><label>Categoria</label>
+      <select id="f-fin-cat" onchange="toggleCatPersonalizada()">
+        <!-- preenchido por atualizarCategoriasFin() -->
+      </select>
+    </div>
+    <div class="form-group" id="f-fin-cat-custom-wrap" style="display:none">
+      <label>📝 Categoria personalizada</label>
+      <input id="f-fin-cat-custom" placeholder="Ex: Aluguel de andaime, Comissão...">
+    </div>
     <div class="form-group"><label>Status</label><select id="f-fin-status">
       <option value="pago">✅ Pago / Recebido</option>
       <option value="pendente">⏳ Pendente / A vencer</option>

@@ -1,5 +1,5 @@
 // modules/checklist.js — Checklist de Qualidade (templates NBR)
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal } from '../utils.js?v=20260425o';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal } from '../utils.js?v=20260425p';
 
 export const CK_TEMPLATES = {
   'Fundações':['Locação conforme projeto aprovado','Profundidade da escavação atingida',

@@ -1,5 +1,5 @@
 // modules/financeiro.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260425o';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260425p';
 
 let _finLimit = 20;
 let _hideRT = false;
@@ -24,22 +24,70 @@ export function addFin(state){
   }
   document.getElementById('f-fin-desc').style.border='';
   document.getElementById('f-fin-valor').style.border='';
-  
-  state.fin.push({
-    id:    'FIN-'+pad(state.counters.fin),
+
+  // Lê categoria — se for "Personalizada" pega do campo custom
+  const catSel = document.getElementById('f-fin-cat').value;
+  const catCustom = document.getElementById('f-fin-cat-custom')?.value?.trim();
+  let cat = catSel;
+  if (catSel === '__custom__') {
+    if (!catCustom) { showToast('⚠️ Digite a categoria personalizada'); return; }
+    cat = catCustom;
+  }
+
+  const editId = document.getElementById('f-fin-id')?.value;
+  const dados = {
     tipo:   document.getElementById('f-fin-tipo').value,
     obraId: document.getElementById('f-fin-obra').value,
     data:   document.getElementById('f-fin-data').value,
     desc:   desc,
-    cat:    document.getElementById('f-fin-cat').value,
-    status: document.getElementById('f-fin-status').value, // Novo campo
+    cat:    cat,
+    status: document.getElementById('f-fin-status').value,
     valor:  valor,
     obs:    document.getElementById('f-fin-obs').value,
-  });
-  state.counters.fin++;
+  };
+
+  if (editId) {
+    const idx = state.fin.findIndex(x => x.id === editId);
+    if (idx < 0) { showToast('⚠️ Lançamento não encontrado'); return false; }
+    state.fin[idx] = { ...state.fin[idx], ...dados };
+    showToast('✅ Lançamento atualizado!');
+  } else {
+    state.fin.push({ id: 'FIN-'+pad(state.counters.fin), ...dados });
+    state.counters.fin++;
+    showToast('✅ Lançamento registrado!');
+  }
   closeModal('modal-fin');
-  showToast('✅ Lançamento registrado!');
   return true;
+}
+
+export function openEditFin(state, id) {
+  const f = state.fin.find(x => x.id === id);
+  if (!f) { showToast('⚠️ Lançamento não encontrado'); return; }
+  popularSelectsObras(state);
+  const set = (k, v) => { const el = document.getElementById(k); if (el) el.value = v ?? ''; };
+  set('f-fin-id', f.id);
+  set('f-fin-tipo', f.tipo);
+  // Atualiza categorias do tipo escolhido antes de setar
+  if (typeof window.atualizarCategoriasFin === 'function') window.atualizarCategoriasFin();
+  set('f-fin-obra', f.obraId);
+  set('f-fin-data', f.data);
+  set('f-fin-desc', f.desc);
+  set('f-fin-status', f.status || 'pago');
+  set('f-fin-valor', f.valor);
+  set('f-fin-obs', f.obs);
+  // Categoria: se existe na lista padrão usa, senão é personalizada
+  const sel = document.getElementById('f-fin-cat');
+  const opcoes = Array.from(sel?.options || []).map(o => o.value);
+  if (opcoes.includes(f.cat)) {
+    sel.value = f.cat;
+  } else {
+    sel.value = '__custom__';
+    const inp = document.getElementById('f-fin-cat-custom');
+    if (inp) inp.value = f.cat;
+  }
+  if (typeof window.toggleCatPersonalizada === 'function') window.toggleCatPersonalizada();
+  if(document.getElementById('fin-modal-title')) document.getElementById('fin-modal-title').textContent = '✏️ Editar Lançamento';
+  openModal('modal-fin');
 }
 
 export function delFin(state, id){
@@ -54,10 +102,113 @@ export function delFin(state, id){
 
 export function openModalFin(state, tipo){
   popularSelectsObras(state);
+  // Limpa modo edição
+  ['f-fin-id','f-fin-desc','f-fin-valor','f-fin-obs','f-fin-cat-custom'].forEach(k => {
+    const el = document.getElementById(k); if (el) el.value = '';
+  });
   if(document.getElementById('f-fin-tipo')) document.getElementById('f-fin-tipo').value=tipo;
+  // Popula categorias filtradas pelo tipo
+  if (typeof window.atualizarCategoriasFin === 'function') window.atualizarCategoriasFin();
+  if(document.getElementById('f-fin-status')) document.getElementById('f-fin-status').value='pago';
   if(document.getElementById('fin-modal-title')) document.getElementById('fin-modal-title').textContent=(tipo==='Receita'?'💚 Nova Receita':'🔴 Nova Despesa');
   if(document.getElementById('f-fin-data')) document.getElementById('f-fin-data').value = new Date().toISOString().split('T')[0];
   openModal('modal-fin');
+}
+
+// Renderiza card de lançamentos agendados/pendentes (3 meses à frente)
+export function renderAgendamentos(state) {
+  const el = document.getElementById('fin-agendamentos');
+  if (!el) return;
+
+  const hoje = new Date();
+  const hojeStr = hoje.toISOString().split('T')[0];
+  const limite = new Date(hoje.getTime() + 90*86400000); // próximos 90 dias
+  const limiteStr = limite.toISOString().split('T')[0];
+
+  const futuros = state.fin
+    .filter(f => (f.status === 'agendado' || f.status === 'pendente') && f.data >= hojeStr && f.data <= limiteStr)
+    .sort((a,b) => a.data.localeCompare(b.data));
+
+  if (!futuros.length) {
+    el.innerHTML = '';
+    return;
+  }
+
+  // Agrupar por mês
+  const meses = {};
+  futuros.forEach(f => {
+    const mesKey = f.data.substring(0,7); // YYYY-MM
+    (meses[mesKey] = meses[mesKey] || []).push(f);
+  });
+
+  const totalReceita = futuros.filter(f => f.tipo === 'Receita').reduce((a,x) => a + x.valor, 0);
+  const totalDespesa = futuros.filter(f => f.tipo === 'Despesa').reduce((a,x) => a + x.valor, 0);
+  const saldoPrevisto = totalReceita - totalDespesa;
+
+  const mesNome = m => {
+    const [y, mo] = m.split('-');
+    return new Date(+y, +mo-1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  };
+
+  el.innerHTML = `
+    <div class="section" style="border-left:4px solid #2563eb">
+      <div class="section-hdr">
+        <div class="section-title">📅 Lançamentos Agendados — Próximos 90 dias</div>
+        <div style="display:flex;gap:8px;font-size:12px;flex-wrap:wrap">
+          <span style="padding:4px 10px;background:#f0fdf4;color:var(--green);border-radius:8px;font-weight:600">↗ ${fmt(totalReceita)} a receber</span>
+          <span style="padding:4px 10px;background:#fef2f2;color:var(--red);border-radius:8px;font-weight:600">↘ ${fmt(totalDespesa)} a pagar</span>
+          <span style="padding:4px 10px;background:${saldoPrevisto>=0?'#eff6ff':'#fee2e2'};color:${saldoPrevisto>=0?'var(--blue)':'var(--red)'};border-radius:8px;font-weight:700">Saldo previsto: ${fmt(saldoPrevisto)}</span>
+        </div>
+      </div>
+      ${Object.keys(meses).sort().map(mesKey => {
+        const lista = meses[mesKey];
+        const subRec = lista.filter(f => f.tipo === 'Receita').reduce((a,x) => a + x.valor, 0);
+        const subDes = lista.filter(f => f.tipo === 'Despesa').reduce((a,x) => a + x.valor, 0);
+        return `
+          <div style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8faff;border-radius:8px;margin-bottom:8px">
+              <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--navy);font-size:13.5px;text-transform:capitalize">📆 ${mesNome(mesKey)}</div>
+              <div style="font-size:12px;color:var(--muted)">
+                ${subRec>0?`<span style="color:var(--green);font-weight:600">+${fmt(subRec)}</span>`:''}
+                ${subRec>0&&subDes>0?' · ':''}
+                ${subDes>0?`<span style="color:var(--red);font-weight:600">-${fmt(subDes)}</span>`:''}
+              </div>
+            </div>
+            ${lista.map(f => {
+              const obra = obraName(state, f.obraId);
+              const cor = f.tipo === 'Receita' ? 'var(--green)' : 'var(--red)';
+              const sIcon = f.status === 'agendado' ? '📅' : '⏳';
+              const diasFalta = Math.ceil((new Date(f.data) - hoje) / 86400000);
+              const urgencia = diasFalta <= 3 ? '#fee2e2' : diasFalta <= 7 ? '#fef3c7' : '#fff';
+              return `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;background:${urgencia};border-radius:6px;margin-bottom:3px">
+                  <div style="flex:1;min-width:0">
+                    <div style="font-weight:600;color:var(--navy)">${sIcon} ${f.desc}</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:2px">${fmtD(f.data)} ${diasFalta>=0?`(em ${diasFalta} dia${diasFalta!==1?'s':''})`:''} · ${obra} · ${f.cat}</div>
+                  </div>
+                  <div style="text-align:right;margin-left:10px">
+                    <div style="font-weight:700;color:${cor};font-size:13.5px;white-space:nowrap">${f.tipo==='Receita'?'+':'-'}${fmt(f.valor)}</div>
+                    <div style="display:flex;gap:4px;margin-top:4px;justify-content:flex-end">
+                      <button class="btn btn-outline btn-xs" onclick="marcarFinPago('${f.id}')" style="color:var(--green);border-color:var(--green);font-size:10px;padding:2px 7px" title="Marcar como pago">✓ Pagar</button>
+                      <button class="btn btn-outline btn-xs" onclick="openEditFin('${f.id}')" style="color:var(--amber);border-color:var(--amber);font-size:10px;padding:2px 7px" title="Editar">✏️</button>
+                    </div>
+                  </div>
+                </div>`;
+            }).join('')}
+          </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+// Marca um lançamento como pago/recebido (botão rápido nos agendamentos)
+export function marcarFinPago(state, id) {
+  const f = state.fin.find(x => x.id === id);
+  if (!f) return false;
+  if (!confirm(`Marcar "${f.desc}" (${f.tipo}: ${fmt(f.valor)}) como ${f.tipo === 'Receita' ? 'recebido' : 'pago'}?`)) return false;
+  f.status = 'pago';
+  showToast('✅ Marcado como pago!');
+  return true;
 }
 
 export function renderFinanceiro(state){
@@ -74,6 +225,9 @@ export function renderFinanceiro(state){
 
   // Novo Dashboard Avançado
   renderDashFinAvancado(state);
+
+  // Card de Lançamentos Agendados (próximos 90 dias)
+  renderAgendamentos(state);
 
   const renderObraRow = o => {
     const r=state.fin.filter(x=>x.obraId===o.id&&x.tipo==='Receita').reduce((a,x)=>a+x.valor,0);
@@ -134,7 +288,10 @@ export function renderFinanceiro(state){
       <td><span class="badge badge-blue" style="font-size:10px">${f.cat}</span></td>
       <td>${sBadge}</td>
       <td style="font-weight:700;color:${f.tipo==='Receita'?'var(--green)':'var(--red)'}">${f.tipo==='Receita'?'+':'-'}${fmt(f.valor)}</td>
-      <td><button class="btn btn-outline btn-xs" onclick="delFin('${f.id}')" style="color:var(--red);border-color:var(--red)">✕</button></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-outline btn-xs" onclick="openEditFin('${f.id}')" style="color:var(--amber);border-color:var(--amber);margin-right:3px" title="Editar">✏️</button>
+        <button class="btn btn-outline btn-xs" onclick="delFin('${f.id}')" style="color:var(--red);border-color:var(--red)" title="Excluir">✕</button>
+      </td>
     </tr>`}).join('');
   
   safeInner('tbody-fin', htmlFin);

@@ -1,6 +1,6 @@
 // modules/diario.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName, escapeHtml, markDeleted } from '../utils.js?v=20260425o';
-import { iaCall } from '../services.js?v=20260425o';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName, escapeHtml, markDeleted } from '../utils.js?v=20260425p';
+import { iaCall } from '../services.js?v=20260425p';
 
 let _diarioLimit = 20;
 let _pendingFotos = [];
