@@ -1,5 +1,5 @@
 // modules/sinapi.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras } from '../utils.js?v=20260425q';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras } from '../utils.js?v=20260425s';
 
 let currentTabelaSource = 'sinapi';
 let selectedSinapiItem = null;

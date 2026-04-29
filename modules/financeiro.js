@@ -1,5 +1,5 @@
 // modules/financeiro.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260425q';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260425s';
 
 let _finLimit = 20;
 let _hideRT = false;
@@ -7,6 +7,23 @@ let _hideRT = false;
 export function toggleHideRT(state, cb) {
   _hideRT = !!(cb && cb.checked);
   return true;
+}
+
+// Atualiza status dos lançamentos não pagos conforme a data:
+// - data >= hoje  → 'a_vencer'
+// - data <  hoje  → 'pendente' (vencido)
+// Compatibiliza status legado 'agendado' migrando para 'a_vencer'.
+export function atualizarStatusVencimentos(state) {
+  if (!state || !Array.isArray(state.fin)) return false;
+  const hojeStr = new Date().toISOString().split('T')[0];
+  let mudou = false;
+  state.fin.forEach(f => {
+    if (f.status === 'agendado') { f.status = 'a_vencer'; mudou = true; }
+    if (f.status === 'pago') return;
+    const novo = (f.data && f.data >= hojeStr) ? 'a_vencer' : 'pendente';
+    if (f.status !== novo) { f.status = novo; mudou = true; }
+  });
+  return mudou;
 }
 
 export function addFin(state){
@@ -369,7 +386,7 @@ export function gerarParcelas(state) {
     const dt = new Date(dataBase);
     dt.setDate(dt.getDate() + i * intervaloDias);
     const dataStr = dt.toISOString().split('T')[0];
-    const status = dataStr <= hojeStr ? 'pendente' : 'agendado';
+    const status = dataStr < hojeStr ? 'pendente' : 'a_vencer';
     state.fin.push({
       id: 'FIN-' + pad(state.counters.fin),
       tipo, obraId, data: dataStr, contaId,
@@ -547,7 +564,7 @@ export function gerarLancamentosCustosFixos(state) {
     const dia = String(c.diaVencimento).padStart(2,'0');
     const data = `${ano}-${mm}-${dia}`;
     const hojeStr = new Date().toISOString().split('T')[0];
-    const status = data > hojeStr ? 'agendado' : (data === hojeStr ? 'pendente' : 'agendado');
+    const status = data < hojeStr ? 'pendente' : 'a_vencer';
     state.fin.push({
       id: 'FIN-' + pad(state.counters.fin),
       tipo: 'Despesa',
@@ -711,7 +728,7 @@ export function salvarDespesasPadraoObra(state) {
   return true;
 }
 
-// Renderiza card de lançamentos agendados/pendentes (3 meses à frente)
+// Renderiza card de lançamentos a vencer/pendentes (3 meses à frente)
 export function renderAgendamentos(state) {
   const el = document.getElementById('fin-agendamentos');
   if (!el) return;
@@ -722,7 +739,7 @@ export function renderAgendamentos(state) {
   const limiteStr = limite.toISOString().split('T')[0];
 
   const futuros = state.fin
-    .filter(f => (f.status === 'agendado' || f.status === 'pendente') && f.data >= hojeStr && f.data <= limiteStr)
+    .filter(f => (f.status === 'a_vencer' || f.status === 'pendente') && f.data >= hojeStr && f.data <= limiteStr)
     .sort((a,b) => a.data.localeCompare(b.data));
 
   if (!futuros.length) {
@@ -773,7 +790,7 @@ export function renderAgendamentos(state) {
             ${lista.map(f => {
               const obra = obraName(state, f.obraId);
               const cor = f.tipo === 'Receita' ? 'var(--green)' : 'var(--red)';
-              const sIcon = f.status === 'agendado' ? '📅' : '⏳';
+              const sIcon = f.status === 'a_vencer' ? '📅' : '⚠️';
               const diasFalta = Math.ceil((new Date(f.data) - hoje) / 86400000);
               const urgencia = diasFalta <= 3 ? '#fee2e2' : diasFalta <= 7 ? '#fef3c7' : '#fff';
               return `
@@ -808,6 +825,9 @@ export function marcarFinPago(state, id) {
 }
 
 export function renderFinanceiro(state){
+  // Auto-atualiza status (a_vencer/pendente) conforme as datas
+  atualizarStatusVencimentos(state);
+
   const rec=state.fin.filter(x=>x.tipo==='Receita').reduce((a,x)=>a+x.valor,0);
   const des=state.fin.filter(x=>x.tipo==='Despesa').reduce((a,x)=>a+x.valor,0);
   const sal=rec-des;
@@ -885,7 +905,10 @@ export function renderFinanceiro(state){
   const visiveisFin = sortedFin.slice(0, _finLimit);
   const htmlFin = visiveisFin.map(f=>{
     const s = f.status || 'pago';
-    const sBadge = `<span class="badge" style="background:${s==='pago'?'#f0fdf4':s==='pendente'?'#fef2f2':'#eff6ff'};color:${s==='pago'?'var(--green)':s==='pendente'?'var(--red)':'var(--blue)'}">${s==='pago'?'✅ Pago':s==='pendente'?'⏳ Pendente':'📅 Agendado'}</span>`;
+    const sBg = s==='pago' ? '#f0fdf4' : s==='pendente' ? '#fef2f2' : '#eff6ff';
+    const sFg = s==='pago' ? 'var(--green)' : s==='pendente' ? 'var(--red)' : 'var(--blue)';
+    const sLabel = s==='pago' ? '✅ Pago' : s==='pendente' ? '⚠️ Pendente' : '📅 A vencer';
+    const sBadge = `<span class="badge" style="background:${sBg};color:${sFg}">${sLabel}</span>`;
     const conta = (state.contas || []).find(c => c.id === f.contaId);
     const contaTxt = conta ? `<span style="font-size:10px;color:var(--muted);display:block;margin-top:2px">🏦 ${conta.nome}</span>` : '';
     return `<tr>
@@ -923,14 +946,16 @@ export function renderDashFinAvancado(state) {
   const hojeStr = now.toISOString().split('T')[0];
 
   // Novos KPIs: A Receber, A Pagar, Média Mensal YTD
-  const aReceber = (state.fin || []).filter(f => f.tipo === 'Receita' && (f.status === 'agendado' || f.status === 'pendente') && f.data >= hojeStr).reduce((a,x) => a + (+x.valor||0), 0);
-  const aPagar = (state.fin || []).filter(f => f.tipo === 'Despesa' && (f.status === 'agendado' || f.status === 'pendente') && f.data >= hojeStr).reduce((a,x) => a + (+x.valor||0), 0);
+  const aReceber = (state.fin || []).filter(f => f.tipo === 'Receita' && f.status !== 'pago').reduce((a,x) => a + (+x.valor||0), 0);
+  const aPagar = (state.fin || []).filter(f => f.tipo === 'Despesa' && f.status !== 'pago').reduce((a,x) => a + (+x.valor||0), 0);
+  const vencidoRec = (state.fin || []).filter(f => f.tipo === 'Receita' && f.status === 'pendente').reduce((a,x) => a + (+x.valor||0), 0);
+  const vencidoDes = (state.fin || []).filter(f => f.tipo === 'Despesa' && f.status === 'pendente').reduce((a,x) => a + (+x.valor||0), 0);
   // Renderiza KPIs adicionais
   const kpiExtra = document.getElementById('fin-kpis-extras');
   if (kpiExtra) {
     kpiExtra.innerHTML = `
-      <div class="kpi blue"><div class="kpi-label">A Receber</div><div class="kpi-value">${fmt(aReceber)}</div><div class="kpi-sub">agendado/pendente</div></div>
-      <div class="kpi amber"><div class="kpi-label">A Pagar</div><div class="kpi-value">${fmt(aPagar)}</div><div class="kpi-sub">agendado/pendente</div></div>
+      <div class="kpi blue"><div class="kpi-label">A Receber</div><div class="kpi-value">${fmt(aReceber)}</div><div class="kpi-sub">${vencidoRec>0?`⚠️ ${fmt(vencidoRec)} vencido`:'a vencer'}</div></div>
+      <div class="kpi amber"><div class="kpi-label">A Pagar</div><div class="kpi-value">${fmt(aPagar)}</div><div class="kpi-sub">${vencidoDes>0?`⚠️ ${fmt(vencidoDes)} vencido`:'a vencer'}</div></div>
     `;
   }
 

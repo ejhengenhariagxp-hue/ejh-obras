@@ -4,40 +4,41 @@
 import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
          openModal, closeModal, statusBadge, tipoLabel,
          popularSelectsObras, modalidadeIcon, verificarAvisosObra,
-         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260425q';
+         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260425s';
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
          fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA,
-         getIaKey, setIaKey, hasIaKey } from './services.js?v=20260425q';
-import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260425q';
-import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260425q';
-import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260425q';
-import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js?v=20260425q';
+         getIaKey, setIaKey, hasIaKey } from './services.js?v=20260425s';
+import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260425s';
+import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260425s';
+import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260425s';
+import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario } from './modules/diario.js?v=20260425s';
 import { addFin, delFin, openEditFin, openModalFin, renderFinanceiro, toggleHideRT, marcarFinPago,
          addCustoFixo, delCustoFixo, toggleCustoFixoAtivo, openEditCustoFixo, abrirModalCustoFixo,
          preencherCustoFixoPadrao, gerarLancamentosCustosFixos,
          abrirDespesasPadraoObra, salvarDespesasPadraoObra,
          addConta, delConta, openEditConta, abrirModalConta,
-         gerarParcelas, toggleParcFin, aplicarFiltrosFin, limparFiltrosFin } from './modules/financeiro.js?v=20260425r';
-import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260425q';
-import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260425q';
+         gerarParcelas, toggleParcFin, aplicarFiltrosFin, limparFiltrosFin,
+         atualizarStatusVencimentos } from './modules/financeiro.js?v=20260425s';
+import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260425s';
+import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260425s';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
          saveProposta, delProposta, editProposta, printProposta, compartilharWhatsApp,
          colherAssinaturaProposta, importFromOrcamento, addObraItem,
-         addProjServico, addProjExtra, toggleModoGlobal, renderPropostas } from './modules/propostas.js?v=20260425q';
-import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260425q';
-import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260425q';
-import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260425q';
-import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js?v=20260425q';
+         addProjServico, addProjExtra, toggleModoGlobal, renderPropostas } from './modules/propostas.js?v=20260425s';
+import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260425s';
+import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260425s';
+import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260425s';
+import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js?v=20260425s';
 import { novaComposicao, addInsumoComp, renderInsumosComp, calcTotalComp,
          salvarComposicao, delComposicao, renderComposicoes, filtrarComposicoes,
          popularSelectComposicoes, preencherDadosComposicao, calcTotalComposicaoSel,
          inserirComposicaoNoOrcamento, editarComposicao,
          abrirCopiaSinapi, _setCopiaSrc, _filtrarCopiaSinapi, _copiarDeSinapi,
-         setInsumoField, removeInsumoAt } from './modules/composicoes.js?v=20260425q';
-import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js?v=20260425q';
+         setInsumoField, removeInsumoAt } from './modules/composicoes.js?v=20260425s';
+import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js?v=20260425s';
 import { importExcel, importCSV, importPDF, importManual, applyMapping,
          _selectSheet, _updateImportItem, _removeImportItem, addImportRow,
-         cancelImport, confirmImport } from './modules/importar.js?v=20260425q';
+         cancelImport, confirmImport } from './modules/importar.js?v=20260425s';
 
 // ── Estado global ────────────────────────────────────────────────────
 const DEFAULT_STATE = {
@@ -107,6 +108,7 @@ function calcHash(s) {
 export function renderAtiva() {
   const ativa = document.querySelector('.page.active');
   const id = ativa?.id?.replace('page-','') || 'dashboard';
+  try { atualizarStatusVencimentos(state); } catch(e) {}
   try { renderDashboard(); } catch(e) {}
   try { const fn = PAGE_RENDER_MAP[id]; if (fn) fn(); } catch(e) { console.error('Render error', id, e); }
   popularSelectsObras(state);
@@ -723,29 +725,16 @@ G.adicionarEquipeOutro = adicionarEquipeOutro;
 G.removeEquipeCustom = removeEquipeCustom;
 
 // ── CATEGORIAS FINANCEIRAS ──────────────────────────────────────────
+// Três áreas de atuação: Projetos, Acompanhamento/Visitas, Gestão de Obras
 const CAT_RECEITA = [
-  '💼 Acompanhamento Técnico',
-  '📐 Entrada de Projeto',
-  '📊 Gestão de Projeto (Entrada)',
-  '📏 Medição',
-  '💰 Adiantamento',
-  '🏗 Empreita / Etapa de Obra',
-  '📜 Consultoria / RT',
-  '🧾 Outros (Receita)',
+  '📐 Projetos',
+  '👷 Acompanhamento de Obra / Visitas',
+  '🏗 Gestão de Obras',
 ];
 const CAT_DESPESA = [
-  '💸 Retirada Pessoal',
-  '🧱 Material',
-  '👷 Mão de Obra',
-  '🚜 Equipamento',
-  '🔧 Serviço Terceirizado',
-  '📜 RT / ART / RRT',
-  '🖨 Plotagens / Cópias',
-  '🏛 Taxas / Impostos',
-  '🏢 Custo Fixo (aluguel, conta, etc)',
-  '⛽ Combustível / Deslocamento',
-  '🍽 Alimentação / Hospedagem',
-  '🧾 Outros (Despesa)',
+  '📐 Projetos',
+  '👷 Acompanhamento de Obra / Visitas',
+  '🏗 Gestão de Obras',
 ];
 function atualizarCategoriasFin() {
   const tipo = document.getElementById('f-fin-tipo')?.value || 'Receita';

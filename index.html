@@ -19,14 +19,14 @@
 
 
 <!-- build:20260424_1930 -->
-<link rel="stylesheet" href="./styles.css?v=20260425q">
+<link rel="stylesheet" href="./styles.css?v=20260425s">
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260425q"></script>
+<script type="module" src="./app.js?v=20260425s"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Lucide icons (modern SVG icon library) -->
@@ -311,8 +311,8 @@
       <select id="fil-fin-status" onchange="aplicarFiltrosFin()" style="padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px">
         <option value="">Todos status</option>
         <option value="pago">✅ Pago</option>
-        <option value="pendente">⏳ Pendente</option>
-        <option value="agendado">📅 Agendado</option>
+        <option value="a_vencer">📅 A vencer</option>
+        <option value="pendente">⚠️ Pendente (vencido)</option>
       </select>
       <input id="fil-fin-q" oninput="aplicarFiltrosFin()" placeholder="🔍 Buscar..." style="padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px;font-family:'DM Sans',sans-serif">
       <button class="btn btn-outline btn-sm" onclick="limparFiltrosFin()" style="font-size:11.5px">✕ Limpar</button>
@@ -879,8 +879,8 @@
       <label>Status</label>
       <select id="dp-status">
         <option value="pago">✅ Pago / Recebido</option>
-        <option value="pendente">⏳ Pendente</option>
-        <option value="agendado">📅 Agendado</option>
+        <option value="a_vencer">📅 A vencer</option>
+        <option value="pendente">⚠️ Pendente (vencido)</option>
       </select>
     </div>
   </div>
@@ -910,8 +910,8 @@
     </div>
     <div class="form-group"><label>Status</label><select id="f-fin-status">
       <option value="pago">✅ Pago / Recebido</option>
-      <option value="pendente">⏳ Pendente / A vencer</option>
-      <option value="agendado">📅 Agendado / Futuro</option>
+      <option value="a_vencer">📅 A vencer</option>
+      <option value="pendente">⚠️ Pendente (vencido)</option>
     </select></div>
     <div class="form-group"><label>Valor (R$)</label><input id="f-fin-valor" type="number" step="0.01" placeholder="0,00"></div>
     <div class="form-group full">
