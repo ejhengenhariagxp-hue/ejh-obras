@@ -725,16 +725,18 @@ G.adicionarEquipeOutro = adicionarEquipeOutro;
 G.removeEquipeCustom = removeEquipeCustom;
 
 // ── CATEGORIAS FINANCEIRAS ──────────────────────────────────────────
-// Três áreas de atuação: Projetos, Acompanhamento/Visitas, Gestão de Obras
+// Tipos de serviço reais do escritório
 const CAT_RECEITA = [
-  '📐 Projetos',
-  '👷 Acompanhamento de Obra / Visitas',
-  '🏗 Gestão de Obras',
+  '📐 Projetos (sem acompanhamento)',
+  '📐👷 Projetos c/ Acompanhamento da Execução',
+  '📐🏗 Projetos e Gestão da Obra',
+  '🏗 Gestão de Obra',
 ];
 const CAT_DESPESA = [
-  '📐 Projetos',
-  '👷 Acompanhamento de Obra / Visitas',
-  '🏗 Gestão de Obras',
+  '📐 Projetos (sem acompanhamento)',
+  '📐👷 Projetos c/ Acompanhamento da Execução',
+  '📐🏗 Projetos e Gestão da Obra',
+  '🏗 Gestão de Obra',
 ];
 function atualizarCategoriasFin() {
   const tipo = document.getElementById('f-fin-tipo')?.value || 'Receita';
