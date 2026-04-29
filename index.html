@@ -257,15 +257,18 @@
 <!-- DIÁRIO -->
 <div id="page-diario" class="page">
   <div class="page-hdr">
-    <div><div class="page-title">Diário de Obra</div><div class="page-sub">Registro diário com fotos</div></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <select id="dia-pdf-obra" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px"><option value="">Todas as obras</option></select>
-      <button class="btn btn-outline" onclick="gerarDiarioWpp()" title="Compartilhar Diário no WhatsApp" style="color:#25d366;border-color:#25d366">📱 WhatsApp</button>
-      <button class="btn btn-outline" onclick="gerarDiarioPDF()" title="Gerar PDF do Diário">🖨 PDF do Diário</button>
-      <button class="btn btn-primary" onclick="openModalDiario()">＋ Registro</button>
+    <div id="dia-page-hdr-left">
+      <div class="page-title">Diário de Obra</div>
+      <div class="page-sub">Selecione uma obra para ver os registros</div>
+    </div>
+    <div id="dia-page-hdr-right" style="display:flex;gap:8px;flex-wrap:wrap">
+      <select id="dia-pdf-obra" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;display:none"><option value="">Todas as obras</option></select>
+      <button class="btn btn-primary" onclick="openModalDiario()">＋ Novo Registro</button>
     </div>
   </div>
+  <div id="dia-obras-list"></div>
   <div id="list-diario"></div>
+  <div id="dia-ver-mais-wrap"></div>
 </div>
 
 <!-- FINANCEIRO -->

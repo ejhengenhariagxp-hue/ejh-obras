@@ -4,6 +4,19 @@ import { iaCall } from '../services.js?v=20260425s';
 
 let _diarioLimit = 20;
 let _pendingFotos = [];
+let _diarObraAtiva = null; // null = lista de obras | obraId = ver registros da obra
+
+export function abrirDiarioObra(obraId) {
+  _diarObraAtiva = obraId;
+  _diarioLimit = 99;
+  return true;
+}
+
+export function voltarDiarioObras() {
+  _diarObraAtiva = null;
+  _diarioLimit = 20;
+  return true;
+}
 
 export function addDiario(state){
   try {
@@ -164,6 +177,11 @@ export function openModalDiario(state){
   // limpa modo edição e campos
   ['f-dia-id','f-dia-desc','f-dia-equipe','f-dia-ocorr','f-dia-equipe-outro','f-dia-equipe-outro-qtd'].forEach(k => { const el = document.getElementById(k); if (el) el.value = ''; });
   if(document.getElementById('f-dia-data')) document.getElementById('f-dia-data').value = new Date().toISOString().split('T')[0];
+  // Pré-seleciona a obra ativa (quando chamado de dentro de uma obra)
+  if (_diarObraAtiva) {
+    const sel = document.getElementById('f-dia-obra');
+    if (sel) sel.value = _diarObraAtiva;
+  }
   const t = document.querySelector('#modal-diario .modal-title');
   if (t) t.textContent = '📋 Novo registro do diário';
   openModal('modal-diario');
@@ -177,68 +195,188 @@ export function cancelarDiario(){
   closeModal('modal-diario');
 }
 
-export function renderDiario(state){
-  const sorted = [...state.diario].sort((a,b)=>b.data.localeCompare(a.data));
-  const total = sorted.length;
-  const visiveis = sorted.slice(0, _diarioLimit);
-  const html = visiveis.map(d=>{
-      const fotos=d.fotos||[];
-      const galeriaHtml=fotos.length?`
-        <div class="foto-galeria">
-          ${fotos.map((f,i)=>{const src=f.url||f.dataUrl||'';return `<img src="${src}" alt="${f.name||'foto'}"
-            onclick="openLightbox('${src}','${obraName(state, d.obraId)} — ${fmtD(d.data)} — Foto ${i+1}')"
-            title="${f.name||'foto'}">`}).join('')}
-        </div>`:'';
-      // Atividades em tópicos: cada linha vira um item
-      const ativs = (d.desc || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-      const ativsHtml = ativs.length
-        ? `<ul class="diario-ativs">${ativs.map(a => `<li>${escapeHtml(a)}</li>`).join('')}</ul>`
-        : `<div class="diario-body" style="color:var(--muted);font-style:italic">Sem descrição</div>`;
-      // Equipe estruturada com chips
-      const eqList = Array.isArray(d.equipeList) ? d.equipeList : [];
-      const equipeChips = eqList.length
-        ? `<div class="diario-equipe-chips">${eqList.map(e => `<span class="equipe-chip">👷 ${e.qtd} ${escapeHtml(e.cargo)}</span>`).join('')}</div>`
-        : (d.equipe ? `<div class="diario-equipe-chips"><span class="equipe-chip">👷 ${escapeHtml(d.equipe)}</span></div>` : '');
-      return `<div class="diario-item">
-        <div style="display:flex;justify-content:space-between">
-          <div style="flex:1">
-            <div class="diario-date">${fmtD(d.data)} — ${obraName(state, d.obraId)}</div>
-            <div class="diario-section-title">📋 Atividades realizadas</div>
-            ${ativsHtml}
-            ${equipeChips ? `<div class="diario-section-title" style="margin-top:10px">👷 Equipe</div>${equipeChips}` : ''}
-            ${d.ocorr&&d.ocorr!=='Sem ocorrências' && d.ocorr!=='Nenhuma'?`<div class="diario-ocorr">⚠️ ${escapeHtml(d.ocorr)}</div>`:''}
-            <div class="diario-tags">
-              <span class="badge badge-amber">${d.clima}</span>
-              ${fotos.length?`<span class="badge badge-purple">📷 ${fotos.length} foto${fotos.length>1?'s':''}</span>`:''}
-              ${d.assinatura?.dataUrl?`<span class="badge badge-teal">✍️ Assinado</span>`:''}
-            </div>
-            ${galeriaHtml}
-            ${d.assinatura?.dataUrl?`<div style="margin-top:10px;padding:8px 12px;background:#fafbff;border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;gap:10px">
-              <img src="${d.assinatura.dataUrl}" style="height:40px;max-width:160px" alt="Assinatura">
-              <span style="font-size:11.5px;color:var(--muted)">Assinado em ${d.assinatura.data || ''} — ${state.engNome || 'Resp. Técnico'}${state.engRegistro?` (${state.engRegistro})`:''}</span>
-            </div>`:''}
-          </div>
-          <div style="display:flex;gap:6px;margin-left:12px;align-self:flex-start">
-            <button class="btn btn-outline btn-xs" onclick="openEditDiario('${d.id}')" style="color:var(--amber);border-color:var(--amber)" title="Editar registro">✏️</button>
-            <button class="btn btn-outline btn-xs" onclick="delDiario('${d.id}')" style="color:var(--red);border-color:var(--red)" title="Excluir">✕</button>
+// ── helpers de renderização de card de registro ──────────────────────
+function _cardDiario(state, d) {
+  const fotos = d.fotos || [];
+  const galeriaHtml = fotos.length ? `
+    <div class="foto-galeria">
+      ${fotos.map((f,i) => {
+        const src = f.url || f.dataUrl || '';
+        return `<img src="${src}" alt="${f.name||'foto'}"
+          onclick="openLightbox('${src}','${obraName(state, d.obraId)} — ${fmtD(d.data)} — Foto ${i+1}')"
+          title="${f.name||'foto'}">`;
+      }).join('')}
+    </div>` : '';
+  const ativs = (d.desc || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  const ativsHtml = ativs.length
+    ? `<ul class="diario-ativs">${ativs.map(a => `<li>${escapeHtml(a)}</li>`).join('')}</ul>`
+    : `<div class="diario-body" style="color:var(--muted);font-style:italic">Sem descrição</div>`;
+  const eqList = Array.isArray(d.equipeList) ? d.equipeList : [];
+  const equipeChips = eqList.length
+    ? `<div class="diario-equipe-chips">${eqList.map(e => `<span class="equipe-chip">👷 ${e.qtd} ${escapeHtml(e.cargo)}</span>`).join('')}</div>`
+    : (d.equipe ? `<div class="diario-equipe-chips"><span class="equipe-chip">👷 ${escapeHtml(d.equipe)}</span></div>` : '');
+  return `<div class="diario-item">
+    <div style="display:flex;justify-content:space-between">
+      <div style="flex:1">
+        <div class="diario-date">${fmtD(d.data)}</div>
+        <div class="diario-section-title">📋 Atividades realizadas</div>
+        ${ativsHtml}
+        ${equipeChips ? `<div class="diario-section-title" style="margin-top:10px">👷 Equipe</div>${equipeChips}` : ''}
+        ${d.ocorr && d.ocorr !== 'Sem ocorrências' && d.ocorr !== 'Nenhuma'
+          ? `<div class="diario-ocorr">⚠️ ${escapeHtml(d.ocorr)}</div>` : ''}
+        <div class="diario-tags">
+          <span class="badge badge-amber">${d.clima}</span>
+          ${fotos.length ? `<span class="badge badge-purple">📷 ${fotos.length} foto${fotos.length>1?'s':''}</span>` : ''}
+          ${d.assinatura?.dataUrl ? `<span class="badge badge-teal">✍️ Assinado</span>` : ''}
+        </div>
+        ${galeriaHtml}
+        ${d.assinatura?.dataUrl ? `<div style="margin-top:10px;padding:8px 12px;background:#fafbff;border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;gap:10px">
+          <img src="${d.assinatura.dataUrl}" style="height:40px;max-width:160px" alt="Assinatura">
+          <span style="font-size:11.5px;color:var(--muted)">Assinado em ${d.assinatura.data || ''} — ${state.engNome || 'Resp. Técnico'}${state.engRegistro ? ` (${state.engRegistro})` : ''}</span>
+        </div>` : ''}
+      </div>
+      <div style="display:flex;gap:6px;margin-left:12px;align-self:flex-start">
+        <button class="btn btn-outline btn-xs" onclick="openEditDiario('${d.id}')" style="color:var(--amber);border-color:var(--amber)" title="Editar">✏️</button>
+        <button class="btn btn-outline btn-xs" onclick="delDiario('${d.id}')" style="color:var(--red);border-color:var(--red)" title="Excluir">✕</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+export function renderDiario(state) {
+  if (!_diarObraAtiva) {
+    _renderDiarioObras(state);
+  } else {
+    _renderDiarioMeses(state, _diarObraAtiva);
+  }
+}
+
+// NÍVEL 1 — cards de obras
+function _renderDiarioObras(state) {
+  // Header: título geral
+  const hdrLeft = document.getElementById('dia-page-hdr-left');
+  const hdrRight = document.getElementById('dia-page-hdr-right');
+  if (hdrLeft) hdrLeft.innerHTML = `
+    <div class="page-title">Diário de Obra</div>
+    <div class="page-sub">Selecione uma obra para ver os registros</div>`;
+  if (hdrRight) hdrRight.innerHTML = `
+    <button class="btn btn-primary" onclick="openModalDiario()">＋ Novo Registro</button>`;
+
+  const obras = state.obras || [];
+  if (!obras.length) {
+    safeInner('dia-obras-list', `<div style="background:var(--card);border-radius:var(--radius);padding:36px 20px;text-align:center;border:1.5px dashed var(--border)">
+      <div style="font-size:32px;margin-bottom:8px">🏗</div>
+      <div style="font-weight:600;color:var(--navy)">Nenhuma obra cadastrada</div>
+    </div>`);
+    safeInner('list-diario', '');
+    return;
+  }
+
+  const html = obras.map(o => {
+    const registros = (state.diario || []).filter(d => d.obraId === o.id);
+    const total = registros.length;
+    const ultimo = total
+      ? [...registros].sort((a,b) => b.data.localeCompare(a.data))[0]
+      : null;
+    const fotos = registros.reduce((acc, d) => acc + (d.fotos?.length || 0), 0);
+    const statusCor = o.status === 'Em andamento' ? '#22c55e' : o.status === 'Concluído' ? '#64748b' : '#f59e0b';
+
+    return `<div class="card" style="cursor:pointer;border-left:4px solid ${statusCor};transition:box-shadow .15s"
+        onclick="abrirDiarioObra('${o.id}')"
+        onmouseover="this.style.boxShadow='0 4px 18px rgba(0,0,0,.1)'"
+        onmouseout="this.style.boxShadow=''">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div style="flex:1;min-width:0">
+          <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--navy);font-size:15px;margin-bottom:3px">${escapeHtml(o.nome)}</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px">${escapeHtml(o.cliente||'')}${o.tipo ? ` · ${o.tipo}` : ''}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${total ? `<span class="badge badge-blue">📋 ${total} registro${total!==1?'s':''}</span>` : `<span class="badge" style="background:#f1f5f9;color:var(--muted)">Sem registros</span>`}
+            ${fotos ? `<span class="badge badge-purple">📷 ${fotos} foto${fotos!==1?'s':''}</span>` : ''}
+            ${ultimo ? `<span class="badge" style="background:#f0fdf4;color:var(--green)">Último: ${fmtD(ultimo.data)}</span>` : ''}
           </div>
         </div>
-      </div>`;
-    }).join('')||`<div style="background:var(--card);border-radius:var(--radius);padding:36px 20px;text-align:center;border:1.5px dashed var(--border)">
-      <div style="font-size:32px;margin-bottom:8px">📋</div>
-      <div style="font-weight:600;color:var(--navy);font-size:14px;margin-bottom:4px">Nenhum registro de diário</div>
-      <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">Documente o que aconteceu na obra hoje — fotos, equipe, clima e ocorrências</div>
-      <button class="btn btn-primary btn-sm" onclick="openModalDiario()">＋ Primeiro Registro</button>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="badge" style="background:${statusCor}22;color:${statusCor};font-weight:700">${o.status||'Ativo'}</span>
+          <span style="font-size:22px;color:${statusCor};opacity:.7">›</span>
+        </div>
+      </div>
     </div>`;
-    
-  safeInner('list-diario', html);
-  
-  const verMaisWrap = document.getElementById('dia-ver-mais-wrap');
-  if(total > _diarioLimit && verMaisWrap){
-    verMaisWrap.innerHTML = `<button class="btn btn-outline" onclick="window._state.diaLimit+=20; renderAtiva()">Ver mais (${total-_diarioLimit} restantes)</button>`;
-  } else if (verMaisWrap) {
-    verMaisWrap.innerHTML = '';
+  }).join('');
+
+  safeInner('dia-obras-list', `<div style="display:flex;flex-direction:column;gap:10px">${html}</div>`);
+  safeInner('list-diario', '');
+  const vmw = document.getElementById('dia-ver-mais-wrap');
+  if (vmw) vmw.innerHTML = '';
+}
+
+// NÍVEL 2 — registros de uma obra, agrupados por mês
+function _renderDiarioMeses(state, obraId) {
+  const obra = (state.obras || []).find(o => o.id === obraId);
+  const nomObra = obra ? obra.nome : obraId;
+
+  // Header: botão voltar + nome da obra
+  const hdrLeft = document.getElementById('dia-page-hdr-left');
+  const hdrRight = document.getElementById('dia-page-hdr-right');
+  if (hdrLeft) hdrLeft.innerHTML = `
+    <button class="btn btn-outline btn-sm" onclick="voltarDiarioObras()" style="margin-bottom:6px;font-size:12px">← Voltar</button>
+    <div class="page-title" style="font-size:17px">${escapeHtml(nomObra)}</div>
+    <div class="page-sub">${escapeHtml(obra?.cliente||'')}${obra?.status ? ` · ${obra.status}` : ''}</div>`;
+  if (hdrRight) hdrRight.innerHTML = `
+    <select id="dia-pdf-obra" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;display:none"></select>
+    <button class="btn btn-outline" onclick="gerarDiarioWpp()" style="color:#25d366;border-color:#25d366">📱 WhatsApp</button>
+    <button class="btn btn-outline" onclick="gerarDiarioPDF()">🖨 PDF</button>
+    <button class="btn btn-primary" onclick="openModalDiario()">＋ Registro</button>`;
+
+  // Atualiza o select oculto de PDF com a obra ativa
+  const sel = document.getElementById('dia-pdf-obra');
+  if (sel) { sel.innerHTML = `<option value="${obraId}">${escapeHtml(nomObra)}</option>`; sel.value = obraId; }
+
+  const registros = [...(state.diario || [])]
+    .filter(d => d.obraId === obraId)
+    .sort((a, b) => b.data.localeCompare(a.data));
+
+  safeInner('dia-obras-list', '');
+
+  if (!registros.length) {
+    safeInner('list-diario', `<div style="background:var(--card);border-radius:var(--radius);padding:36px 20px;text-align:center;border:1.5px dashed var(--border)">
+      <div style="font-size:32px;margin-bottom:8px">📋</div>
+      <div style="font-weight:600;color:var(--navy);font-size:14px;margin-bottom:4px">Nenhum registro para esta obra</div>
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">Documente as atividades, fotos e equipe</div>
+      <button class="btn btn-primary btn-sm" onclick="openModalDiario()">＋ Primeiro Registro</button>
+    </div>`);
+    return;
   }
+
+  // Agrupar por mês (YYYY-MM)
+  const porMes = {};
+  registros.forEach(d => {
+    const k = d.data.substring(0, 7);
+    (porMes[k] = porMes[k] || []).push(d);
+  });
+
+  const mesNome = k => {
+    const [y, m] = k.split('-');
+    return new Date(+y, +m - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  };
+
+  const html = Object.keys(porMes).sort().reverse().map(mesKey => {
+    const lista = porMes[mesKey];
+    const fotos = lista.reduce((a, d) => a + (d.fotos?.length || 0), 0);
+    return `
+      <div style="margin-bottom:20px">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--navy);color:#fff;border-radius:10px 10px 0 0;margin-bottom:0">
+          <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;text-transform:capitalize">📆 ${mesNome(mesKey)}</span>
+          <span style="font-size:11px;opacity:.75;margin-left:auto">${lista.length} registro${lista.length!==1?'s':''} · ${fotos} foto${fotos!==1?'s':''}</span>
+        </div>
+        <div style="border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow:hidden">
+          ${lista.map(d => _cardDiario(state, d)).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  safeInner('list-diario', html);
+  const vmw = document.getElementById('dia-ver-mais-wrap');
+  if (vmw) vmw.innerHTML = '';
 }
 
 export function renderFotoPreview(){
