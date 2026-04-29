@@ -15,7 +15,9 @@ import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, 
 import { addFin, delFin, openEditFin, openModalFin, renderFinanceiro, toggleHideRT, marcarFinPago,
          addCustoFixo, delCustoFixo, toggleCustoFixoAtivo, openEditCustoFixo, abrirModalCustoFixo,
          preencherCustoFixoPadrao, gerarLancamentosCustosFixos,
-         abrirDespesasPadraoObra, salvarDespesasPadraoObra } from './modules/financeiro.js?v=20260425q';
+         abrirDespesasPadraoObra, salvarDespesasPadraoObra,
+         addConta, delConta, openEditConta, abrirModalConta,
+         gerarParcelas, toggleParcFin, aplicarFiltrosFin, limparFiltrosFin } from './modules/financeiro.js?v=20260425r';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260425q';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260425q';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
@@ -41,8 +43,8 @@ import { importExcel, importCSV, importPDF, importManual, applyMapping,
 const DEFAULT_STATE = {
   obras:[], orc:[], cron:[], diario:[], fin:[],
   medicoes:[], empreita:[], propostas:[], checklists:[], capturas:[], composicoes:[],
-  custosFixos:[],
-  counters:{ obra:1, orc:1, cron:1, dia:1, fin:1, med:1, emp:1, prop:1, ck:1, comp:1, cf:1 },
+  custosFixos:[], contas:[],
+  counters:{ obra:1, orc:1, cron:1, dia:1, fin:1, med:1, emp:1, prop:1, ck:1, comp:1, cf:1, cb:1 },
   engNome:'', engRegistro:'', engCrea:'', engSig:'',
   relatorioRodape:'', logoData:'', sinapiMes:'',
   tabelaSource:'sinapi', sinapiCatFilter:'Todos',
@@ -52,7 +54,7 @@ export let state = loadState(DEFAULT_STATE);
 window._state = state;
 
 function initFields() {
-  ['obras','orc','cron','diario','fin','medicoes','empreita','propostas','checklists','capturas','composicoes','custosFixos']
+  ['obras','orc','cron','diario','fin','medicoes','empreita','propostas','checklists','capturas','composicoes','custosFixos','contas']
     .forEach(k => { if (!Array.isArray(state[k])) state[k] = []; });
   if (!state.counters) state.counters = { ...DEFAULT_STATE.counters };
   Object.keys(DEFAULT_STATE.counters).forEach(k => {
@@ -94,7 +96,7 @@ function calcHash(s) {
   const str = JSON.stringify({obras:s.obras,orc:s.orc,cron:s.cron,fin:s.fin,
     diario: diaLite,
     medicoes:s.medicoes,empreita:s.empreita,propostas:s.propostas,
-    checklists:s.checklists,capturas:s.capturas,composicoes:s.composicoes,custosFixos:s.custosFixos,
+    checklists:s.checklists,capturas:s.capturas,composicoes:s.composicoes,custosFixos:s.custosFixos,contas:s.contas,
     engNome:s.engNome, engRegistro:s.engRegistro, empNome:s.empNome,
     relatorioRodape:s.relatorioRodape, logoLen:(s.logoData||'').length});
   let h = 0;
@@ -865,6 +867,14 @@ G.preencherCustoFixoPadrao = (desc, icon) => preencherCustoFixoPadrao(desc, icon
 G.gerarLancamentosCustosFixos = () => { if(gerarLancamentosCustosFixos(state)) renderAtiva(); };
 G.abrirDespesasPadraoObra = obraId => abrirDespesasPadraoObra(state, obraId);
 G.salvarDespesasPadraoObra = () => { if(salvarDespesasPadraoObra(state)) renderAtiva(); };
+G.addConta = () => { if(addConta(state)) renderAtiva(); };
+G.delConta = id => { if(delConta(state, id)) renderAtiva(); };
+G.openEditConta = id => openEditConta(state, id);
+G.abrirModalConta = abrirModalConta;
+G.gerarParcelas = () => { if(gerarParcelas(state)) renderAtiva(); };
+G.toggleParcFin = toggleParcFin;
+G.aplicarFiltrosFin = () => { aplicarFiltrosFin(); renderAtiva(); };
+G.limparFiltrosFin = () => { limparFiltrosFin(); renderAtiva(); };
 G.toggleHideRT = cb => { toggleHideRT(state, cb); renderAtiva(); };
 G.openModalMedicao = () => openModalMedicao(state);
 G.openEditMedicao = id => openEditMedicao(state, id);

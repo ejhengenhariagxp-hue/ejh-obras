@@ -36,14 +36,15 @@ export function addFin(state){
 
   const editId = document.getElementById('f-fin-id')?.value;
   const dados = {
-    tipo:   document.getElementById('f-fin-tipo').value,
-    obraId: document.getElementById('f-fin-obra').value,
-    data:   document.getElementById('f-fin-data').value,
-    desc:   desc,
-    cat:    cat,
-    status: document.getElementById('f-fin-status').value,
-    valor:  valor,
-    obs:    document.getElementById('f-fin-obs').value,
+    tipo:    document.getElementById('f-fin-tipo').value,
+    obraId:  document.getElementById('f-fin-obra').value,
+    data:    document.getElementById('f-fin-data').value,
+    desc:    desc,
+    cat:     cat,
+    status:  document.getElementById('f-fin-status').value,
+    valor:   valor,
+    obs:     document.getElementById('f-fin-obs').value,
+    contaId: document.getElementById('f-fin-conta')?.value || '',
   };
 
   if (editId) {
@@ -75,6 +76,8 @@ export function openEditFin(state, id) {
   set('f-fin-status', f.status || 'pago');
   set('f-fin-valor', f.valor);
   set('f-fin-obs', f.obs);
+  popularContasSelect(state, 'f-fin-conta');
+  set('f-fin-conta', f.contaId || '');
   // Categoria: se existe na lista padrão usa, senão é personalizada
   const sel = document.getElementById('f-fin-cat');
   const opcoes = Array.from(sel?.options || []).map(o => o.value);
@@ -102,10 +105,18 @@ export function delFin(state, id){
 
 export function openModalFin(state, tipo){
   popularSelectsObras(state);
+  popularContasSelect(state, 'f-fin-conta');
   // Limpa modo edição
-  ['f-fin-id','f-fin-desc','f-fin-valor','f-fin-obs','f-fin-cat-custom'].forEach(k => {
+  ['f-fin-id','f-fin-desc','f-fin-valor','f-fin-obs','f-fin-cat-custom','f-fin-parc-num','f-fin-parc-entrada'].forEach(k => {
     const el = document.getElementById(k); if (el) el.value = '';
   });
+  // Reset do bloco de parcelamento
+  const cbParc = document.getElementById('f-fin-parc-on');
+  if (cbParc) cbParc.checked = false;
+  const wrapParc = document.getElementById('f-fin-parc-wrap');
+  if (wrapParc) wrapParc.style.display = 'none';
+  if (document.getElementById('f-fin-parc-dias')) document.getElementById('f-fin-parc-dias').value = '30';
+
   if(document.getElementById('f-fin-tipo')) document.getElementById('f-fin-tipo').value=tipo;
   // Popula categorias filtradas pelo tipo
   if (typeof window.atualizarCategoriasFin === 'function') window.atualizarCategoriasFin();
@@ -113,6 +124,298 @@ export function openModalFin(state, tipo){
   if(document.getElementById('fin-modal-title')) document.getElementById('fin-modal-title').textContent=(tipo==='Receita'?'💚 Nova Receita':'🔴 Nova Despesa');
   if(document.getElementById('f-fin-data')) document.getElementById('f-fin-data').value = new Date().toISOString().split('T')[0];
   openModal('modal-fin');
+}
+
+// Toggle do bloco de parcelamento
+export function toggleParcFin() {
+  const cb = document.getElementById('f-fin-parc-on');
+  const wrap = document.getElementById('f-fin-parc-wrap');
+  const btnSalvar = document.getElementById('f-fin-btn-salvar');
+  const btnGerar = document.getElementById('f-fin-btn-gerar');
+  if (!cb || !wrap) return;
+  if (cb.checked) {
+    wrap.style.display = '';
+    if (btnSalvar) btnSalvar.style.display = 'none';
+    if (btnGerar) btnGerar.style.display = '';
+  } else {
+    wrap.style.display = 'none';
+    if (btnSalvar) btnSalvar.style.display = '';
+    if (btnGerar) btnGerar.style.display = 'none';
+  }
+}
+
+// ── CONTAS BANCÁRIAS ────────────────────────────────────────────────
+// Estrutura: { id, nome, banco, agencia, conta, tipo, saldoInicial, ativo, cor }
+const BANCOS_PADRAO = [
+  { nome: 'Banco do Brasil', cor: '#fef08a' },
+  { nome: 'Caixa', cor: '#bfdbfe' },
+  { nome: 'Bradesco', cor: '#fecaca' },
+  { nome: 'Itaú', cor: '#fed7aa' },
+  { nome: 'Santander', cor: '#fecaca' },
+  { nome: 'Nubank', cor: '#e9d5ff' },
+  { nome: 'Inter', cor: '#fed7aa' },
+  { nome: 'Sicoob', cor: '#bbf7d0' },
+  { nome: 'Sicredi', cor: '#bbf7d0' },
+  { nome: 'PicPay', cor: '#bbf7d0' },
+  { nome: 'Mercado Pago', cor: '#bfdbfe' },
+  { nome: 'Dinheiro / Caixinha', cor: '#fef9c3' },
+  { nome: 'Outro', cor: '#e2e8f0' },
+];
+
+export function addConta(state) {
+  const nome = document.getElementById('f-cb-nome')?.value?.trim();
+  const banco = document.getElementById('f-cb-banco')?.value || '';
+  const agencia = document.getElementById('f-cb-agencia')?.value?.trim() || '';
+  const conta = document.getElementById('f-cb-conta')?.value?.trim() || '';
+  const tipo = document.getElementById('f-cb-tipo')?.value || 'Corrente';
+  const saldoInicial = +document.getElementById('f-cb-saldo')?.value || 0;
+  if (!nome) { showToast('⚠️ Informe o apelido da conta'); return false; }
+
+  if (!Array.isArray(state.contas)) state.contas = [];
+  if (!state.counters.cb) state.counters.cb = 1;
+  const cor = (BANCOS_PADRAO.find(b => b.nome === banco) || {}).cor || '#e2e8f0';
+
+  const editId = document.getElementById('f-cb-id')?.value;
+  const dados = { nome, banco, agencia, conta, tipo, saldoInicial, ativo: true, cor };
+  if (editId) {
+    const idx = state.contas.findIndex(c => c.id === editId);
+    if (idx < 0) return false;
+    state.contas[idx] = { ...state.contas[idx], ...dados };
+    showToast('✅ Conta atualizada!');
+  } else {
+    state.contas.push({ id: 'CB-' + pad(state.counters.cb), ...dados });
+    state.counters.cb++;
+    showToast('✅ Conta cadastrada!');
+  }
+  closeModal('modal-conta-bancaria');
+  return true;
+}
+
+export function delConta(state, id) {
+  if (!confirm('Excluir esta conta? (Lançamentos vinculados continuam, mas sem conta)')) return false;
+  state.contas = (state.contas || []).filter(c => c.id !== id);
+  markDeleted(state, 'contas', id);
+  return true;
+}
+
+export function openEditConta(state, id) {
+  const c = (state.contas || []).find(x => x.id === id);
+  if (!c) return;
+  const set = (k, v) => { const el = document.getElementById(k); if (el) el.value = v ?? ''; };
+  set('f-cb-id', c.id);
+  set('f-cb-nome', c.nome);
+  set('f-cb-banco', c.banco || '');
+  set('f-cb-agencia', c.agencia);
+  set('f-cb-conta', c.conta);
+  set('f-cb-tipo', c.tipo || 'Corrente');
+  set('f-cb-saldo', c.saldoInicial);
+  const t = document.querySelector('#modal-conta-bancaria .modal-title');
+  if (t) t.textContent = '✏️ Editar Conta — ' + c.id;
+  popularOpcoesBanco();
+  openModal('modal-conta-bancaria');
+}
+
+export function abrirModalConta() {
+  ['f-cb-id','f-cb-nome','f-cb-agencia','f-cb-conta','f-cb-saldo'].forEach(k => {
+    const el = document.getElementById(k); if (el) el.value = '';
+  });
+  if (document.getElementById('f-cb-tipo')) document.getElementById('f-cb-tipo').value = 'Corrente';
+  if (document.getElementById('f-cb-saldo')) document.getElementById('f-cb-saldo').value = '0';
+  popularOpcoesBanco();
+  const t = document.querySelector('#modal-conta-bancaria .modal-title');
+  if (t) t.textContent = '🏦 Nova Conta Bancária';
+  openModal('modal-conta-bancaria');
+}
+
+function popularOpcoesBanco() {
+  const sel = document.getElementById('f-cb-banco');
+  if (!sel) return;
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">— Selecione —</option>' +
+    BANCOS_PADRAO.map(b => `<option value="${b.nome}">${b.nome}</option>`).join('');
+  if (atual) sel.value = atual;
+}
+
+// Popula select de conta no modal de lançamento financeiro
+export function popularContasSelect(state, selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const atual = sel.value;
+  const ativas = (state.contas || []).filter(c => c.ativo !== false);
+  sel.innerHTML = '<option value="">— Sem conta —</option>' +
+    ativas.map(c => `<option value="${c.id}">${c.nome}${c.banco?' ('+c.banco+')':''}</option>`).join('');
+  if (atual) sel.value = atual;
+}
+
+function calcSaldoConta(state, contaId) {
+  const c = (state.contas || []).find(x => x.id === contaId);
+  if (!c) return 0;
+  const movs = (state.fin || []).filter(f => f.contaId === contaId && f.status === 'pago');
+  const entradas = movs.filter(f => f.tipo === 'Receita').reduce((a,x) => a + (+x.valor||0), 0);
+  const saidas = movs.filter(f => f.tipo === 'Despesa').reduce((a,x) => a + (+x.valor||0), 0);
+  return (c.saldoInicial || 0) + entradas - saidas;
+}
+
+export function renderContasBancarias(state) {
+  const el = document.getElementById('fin-contas');
+  if (!el) return;
+  const lista = state.contas || [];
+  if (!lista.length) {
+    el.innerHTML = `
+      <div class="section" style="border-left:4px solid var(--teal)">
+        <div class="section-hdr">
+          <div class="section-title">🏦 Contas Bancárias</div>
+          <button class="btn btn-outline btn-sm" onclick="abrirModalConta()" style="color:var(--teal);border-color:var(--teal)">＋ Nova Conta</button>
+        </div>
+        <div style="padding:18px;text-align:center;color:var(--muted);font-size:13px;background:#fafbff;border-radius:9px">
+          Nenhuma conta cadastrada. Cadastre suas contas bancárias para acompanhar saldos por origem (BB, Caixa, Nubank, etc.)
+        </div>
+      </div>`;
+    return;
+  }
+  const totalGeral = lista.reduce((a,c) => a + calcSaldoConta(state, c.id), 0);
+  el.innerHTML = `
+    <div class="section" style="border-left:4px solid var(--teal)">
+      <div class="section-hdr" style="flex-wrap:wrap;gap:10px">
+        <div class="section-title">🏦 Contas Bancárias</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span style="padding:4px 10px;background:#ccfbf1;color:#0f766e;border-radius:8px;font-size:12px;font-weight:700">Saldo total: ${fmt(totalGeral)}</span>
+          <button class="btn btn-outline btn-sm" onclick="abrirModalConta()" style="color:var(--teal);border-color:var(--teal)">＋ Nova Conta</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px">
+        ${lista.map(c => {
+          const saldo = calcSaldoConta(state, c.id);
+          return `
+            <div class="conta-card" style="background:${c.cor||'#fff'}">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+                <div style="flex:1;min-width:0">
+                  <div class="conta-nome">🏦 ${c.nome}</div>
+                  <div class="conta-meta">${c.banco||''} ${c.agencia?'· Ag '+c.agencia:''} ${c.conta?'· '+c.conta:''}</div>
+                  <div class="conta-saldo" style="color:${saldo>=0?'#0f766e':'var(--red)'}">${fmt(saldo)}</div>
+                  <div class="conta-meta" style="font-size:10.5px">${c.tipo||'Corrente'}</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:3px">
+                  <button class="btn btn-outline btn-xs" onclick="openEditConta('${c.id}')" style="color:var(--amber);border-color:var(--amber);font-size:10px;padding:2px 6px">✏️</button>
+                  <button class="btn btn-outline btn-xs" onclick="delConta('${c.id}')" style="color:var(--red);border-color:var(--red);font-size:10px;padding:2px 6px">✕</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ── PARCELAMENTO ─────────────────────────────────────────────────────
+// Cria múltiplos lançamentos parcelados a partir do modal de lançamento
+export function gerarParcelas(state) {
+  const desc = document.getElementById('f-fin-desc')?.value?.trim();
+  const valor = +document.getElementById('f-fin-valor')?.value || 0;
+  const tipo = document.getElementById('f-fin-tipo')?.value || 'Receita';
+  const obraId = document.getElementById('f-fin-obra')?.value || '';
+  const data = document.getElementById('f-fin-data')?.value;
+  const contaId = document.getElementById('f-fin-conta')?.value || '';
+  const obs = document.getElementById('f-fin-obs')?.value || '';
+
+  // Lê categoria
+  const catSel = document.getElementById('f-fin-cat').value;
+  const catCustom = document.getElementById('f-fin-cat-custom')?.value?.trim();
+  let cat = catSel;
+  if (catSel === '__custom__') {
+    if (!catCustom) { showToast('⚠️ Digite a categoria personalizada'); return false; }
+    cat = catCustom;
+  }
+
+  const numParcelas = +document.getElementById('f-fin-parc-num')?.value || 1;
+  const valorEntrada = +document.getElementById('f-fin-parc-entrada')?.value || 0;
+  const intervaloDias = +document.getElementById('f-fin-parc-dias')?.value || 30;
+
+  if (!desc) { showToast('⚠️ Informe a descrição'); return false; }
+  if (valor <= 0) { showToast('⚠️ Valor total deve ser > 0'); return false; }
+  if (!data) { showToast('⚠️ Informe a data inicial'); return false; }
+  if (numParcelas < 1 || numParcelas > 60) { showToast('⚠️ Parcelas: 1 a 60'); return false; }
+  if (valorEntrada < 0 || valorEntrada > valor) { showToast('⚠️ Entrada inválida'); return false; }
+
+  const parcelaGroupId = 'PG-' + Date.now().toString(36);
+  const restante = valor - valorEntrada;
+  const valorParc = numParcelas > 0 ? restante / numParcelas : 0;
+  const totalLancamentos = (valorEntrada > 0 ? 1 : 0) + numParcelas;
+
+  if (!confirm(`Gerar ${totalLancamentos} lançamento${totalLancamentos>1?'s':''}?\n\n` +
+    (valorEntrada > 0 ? `Entrada: ${fmt(valorEntrada)} (em ${data})\n` : '') +
+    `${numParcelas}x de ${fmt(valorParc)} a cada ${intervaloDias} dias`)) return false;
+
+  if (!state.counters.fin) state.counters.fin = 1;
+  const dataBase = new Date(data + 'T12:00:00');
+  const hojeStr = new Date().toISOString().split('T')[0];
+
+  // Lançamento de entrada (se houver)
+  let totalGerados = 0;
+  if (valorEntrada > 0) {
+    state.fin.push({
+      id: 'FIN-' + pad(state.counters.fin),
+      tipo, obraId, data, contaId,
+      desc: `${desc} (Entrada)`,
+      cat, status: 'pago', valor: valorEntrada,
+      obs, parcelaGroupId, parcelaInfo: 'Entrada',
+    });
+    state.counters.fin++; totalGerados++;
+  }
+
+  // Demais parcelas
+  for (let i = 1; i <= numParcelas; i++) {
+    const dt = new Date(dataBase);
+    dt.setDate(dt.getDate() + i * intervaloDias);
+    const dataStr = dt.toISOString().split('T')[0];
+    const status = dataStr <= hojeStr ? 'pendente' : 'agendado';
+    state.fin.push({
+      id: 'FIN-' + pad(state.counters.fin),
+      tipo, obraId, data: dataStr, contaId,
+      desc: `${desc} (${i}/${numParcelas})`,
+      cat, status, valor: valorParc, obs, parcelaGroupId,
+      parcelaInfo: `${i}/${numParcelas}`,
+    });
+    state.counters.fin++; totalGerados++;
+  }
+
+  closeModal('modal-fin');
+  showToast(`✅ ${totalGerados} parcelas geradas!`);
+  return true;
+}
+
+// ── FILTROS DA TELA FINANCEIRO ──────────────────────────────────────
+let _finFiltros = { obraId:'', cat:'', contaId:'', status:'', q:'' };
+export function aplicarFiltrosFin() {
+  _finFiltros = {
+    obraId: document.getElementById('fil-fin-obra')?.value || '',
+    cat: document.getElementById('fil-fin-cat')?.value || '',
+    contaId: document.getElementById('fil-fin-conta')?.value || '',
+    status: document.getElementById('fil-fin-status')?.value || '',
+    q: (document.getElementById('fil-fin-q')?.value || '').toLowerCase().trim(),
+  };
+  return true;
+}
+export function limparFiltrosFin() {
+  _finFiltros = { obraId:'', cat:'', contaId:'', status:'', q:'' };
+  ['fil-fin-obra','fil-fin-cat','fil-fin-conta','fil-fin-status','fil-fin-q'].forEach(k => {
+    const el = document.getElementById(k); if (el) el.value = '';
+  });
+  return true;
+}
+function aplicarFiltrosLista(lista) {
+  return lista.filter(f => {
+    if (_finFiltros.obraId && f.obraId !== _finFiltros.obraId) return false;
+    if (_finFiltros.cat && f.cat !== _finFiltros.cat) return false;
+    if (_finFiltros.contaId && f.contaId !== _finFiltros.contaId) return false;
+    if (_finFiltros.status && f.status !== _finFiltros.status) return false;
+    if (_finFiltros.q) {
+      const txt = `${f.desc||''} ${f.cat||''} ${f.obs||''}`.toLowerCase();
+      if (!txt.includes(_finFiltros.q)) return false;
+    }
+    return true;
+  });
 }
 
 // ── CUSTOS FIXOS DA EMPRESA ─────────────────────────────────────────
@@ -516,8 +819,11 @@ export function renderFinanceiro(state){
     salEl.className='kpi-value '+(sal>=0?'saldo-positivo':'saldo-negativo');
   }
 
-  // Novo Dashboard Avançado
+  // Novo Dashboard Avançado (KPIs adicionais inclusos)
   renderDashFinAvancado(state);
+
+  // Contas Bancárias com saldos
+  renderContasBancarias(state);
 
   // Custos Fixos da Empresa (recorrentes)
   renderCustosFixos(state);
@@ -569,19 +875,24 @@ export function renderFinanceiro(state){
     return;
   }
   const rtIds = new Set(state.obras.filter(o => o.tipo === 'acompanhamento').map(o => o.id));
-  const baseFin = _hideRT ? state.fin.filter(f => !rtIds.has(f.obraId)) : state.fin;
+  const baseFin0 = _hideRT ? state.fin.filter(f => !rtIds.has(f.obraId)) : state.fin;
+  // Aplica filtros do usuário
+  const baseFin = aplicarFiltrosLista(baseFin0);
+  // Popula opções dos filtros (selects)
+  popularFiltrosFin(state);
   const sortedFin = [...baseFin].sort((a,b)=>b.data.localeCompare(a.data));
   const totalFin = sortedFin.length;
   const visiveisFin = sortedFin.slice(0, _finLimit);
   const htmlFin = visiveisFin.map(f=>{
     const s = f.status || 'pago';
     const sBadge = `<span class="badge" style="background:${s==='pago'?'#f0fdf4':s==='pendente'?'#fef2f2':'#eff6ff'};color:${s==='pago'?'var(--green)':s==='pendente'?'var(--red)':'var(--blue)'}">${s==='pago'?'✅ Pago':s==='pendente'?'⏳ Pendente':'📅 Agendado'}</span>`;
-    
+    const conta = (state.contas || []).find(c => c.id === f.contaId);
+    const contaTxt = conta ? `<span style="font-size:10px;color:var(--muted);display:block;margin-top:2px">🏦 ${conta.nome}</span>` : '';
     return `<tr>
       <td>${fmtD(f.data)}</td>
       <td><span class="badge ${f.tipo==='Receita'?'badge-green':'badge-red'}">${f.tipo}</span></td>
       <td style="font-size:12px">${obraName(state, f.obraId)}</td>
-      <td style="font-weight:500">${f.desc}</td>
+      <td style="font-weight:500">${f.desc}${contaTxt}</td>
       <td><span class="badge badge-blue" style="font-size:10px">${f.cat}</span></td>
       <td>${sBadge}</td>
       <td style="font-weight:700;color:${f.tipo==='Receita'?'var(--green)':'var(--red)'}">${f.tipo==='Receita'?'+':'-'}${fmt(f.valor)}</td>
@@ -609,6 +920,19 @@ export function renderDashFinAvancado(state) {
   const yearNow = now.getFullYear();
   const yearLast = yearNow - 1;
   const monthNow = now.getMonth() + 1;
+  const hojeStr = now.toISOString().split('T')[0];
+
+  // Novos KPIs: A Receber, A Pagar, Média Mensal YTD
+  const aReceber = (state.fin || []).filter(f => f.tipo === 'Receita' && (f.status === 'agendado' || f.status === 'pendente') && f.data >= hojeStr).reduce((a,x) => a + (+x.valor||0), 0);
+  const aPagar = (state.fin || []).filter(f => f.tipo === 'Despesa' && (f.status === 'agendado' || f.status === 'pendente') && f.data >= hojeStr).reduce((a,x) => a + (+x.valor||0), 0);
+  // Renderiza KPIs adicionais
+  const kpiExtra = document.getElementById('fin-kpis-extras');
+  if (kpiExtra) {
+    kpiExtra.innerHTML = `
+      <div class="kpi blue"><div class="kpi-label">A Receber</div><div class="kpi-value">${fmt(aReceber)}</div><div class="kpi-sub">agendado/pendente</div></div>
+      <div class="kpi amber"><div class="kpi-label">A Pagar</div><div class="kpi-value">${fmt(aPagar)}</div><div class="kpi-sub">agendado/pendente</div></div>
+    `;
+  }
 
   const finR1 = state.fin.filter(f => {
     const o = state.obras.find(x => x.id === f.obraId);
@@ -662,3 +986,34 @@ export function renderDashFinAvancado(state) {
     </div>
   `;
 }
+
+
+// Popula selects de filtros com obras, categorias, contas existentes
+function popularFiltrosFin(state) {
+  // Obras
+  const selO = document.getElementById("fil-fin-obra");
+  if (selO) {
+    const atual = selO.value;
+    selO.innerHTML = "<option value=\"\">Todas as obras</option>" +
+      (state.obras || []).map(o => `<option value="${o.id}">${o.nome}</option>`).join("");
+    if (atual) selO.value = atual;
+  }
+  // Categorias únicas
+  const selC = document.getElementById("fil-fin-cat");
+  if (selC) {
+    const atual = selC.value;
+    const cats = [...new Set((state.fin || []).map(f => f.cat).filter(Boolean))].sort();
+    selC.innerHTML = "<option value=\"\">Todas categorias</option>" +
+      cats.map(c => `<option value="${c}">${c}</option>`).join("");
+    if (atual) selC.value = atual;
+  }
+  // Contas
+  const selB = document.getElementById("fil-fin-conta");
+  if (selB) {
+    const atual = selB.value;
+    selB.innerHTML = "<option value=\"\">Todas contas</option>" +
+      (state.contas || []).map(c => `<option value="${c.id}">${c.nome}</option>`).join("");
+    if (atual) selB.value = atual;
+  }
+}
+

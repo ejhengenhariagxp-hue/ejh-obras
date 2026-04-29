@@ -279,8 +279,13 @@
     <div class="kpi red"><div class="kpi-label">Despesas</div><div class="kpi-value" id="fin-kpi-des">R$0</div></div>
     <div class="kpi teal"><div class="kpi-label">Saldo</div><div class="kpi-value" id="fin-kpi-sal">R$0</div></div>
   </div>
+  <!-- KPIs extras: A Receber / A Pagar -->
+  <div class="kpi-grid" id="fin-kpis-extras" style="grid-template-columns:repeat(2,1fr);margin-bottom:18px"></div>
   <!-- Dashboard Financeiro Avançado (Indicadores e % YoY) -->
   <div id="dash-fin-avancado"></div>
+
+  <!-- Contas Bancárias -->
+  <div id="fin-contas"></div>
 
   <!-- Custos Fixos da Empresa (recorrentes) -->
   <div id="fin-custos-fixos"></div>
@@ -297,6 +302,20 @@
         <input type="checkbox" id="fin-hide-rt" onchange="toggleHideRT(this)" style="cursor:pointer">
         Ocultar obras de Acompanhamento (RT)
       </label>
+    </div>
+    <!-- Filtros -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px;padding:10px;background:#f8faff;border-radius:9px">
+      <select id="fil-fin-obra" onchange="aplicarFiltrosFin()" style="padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px"></select>
+      <select id="fil-fin-cat" onchange="aplicarFiltrosFin()" style="padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px"></select>
+      <select id="fil-fin-conta" onchange="aplicarFiltrosFin()" style="padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px"></select>
+      <select id="fil-fin-status" onchange="aplicarFiltrosFin()" style="padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px">
+        <option value="">Todos status</option>
+        <option value="pago">✅ Pago</option>
+        <option value="pendente">⏳ Pendente</option>
+        <option value="agendado">📅 Agendado</option>
+      </select>
+      <input id="fil-fin-q" oninput="aplicarFiltrosFin()" placeholder="🔍 Buscar..." style="padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px;font-family:'DM Sans',sans-serif">
+      <button class="btn btn-outline btn-sm" onclick="limparFiltrosFin()" style="font-size:11.5px">✕ Limpar</button>
     </div>
     <div class="table-wrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Obra</th><th>Descrição</th><th>Categoria</th><th>Status</th><th>Valor</th><th></th></tr></thead><tbody id="tbody-fin"></tbody></table></div>
   </div>
@@ -895,11 +914,85 @@
       <option value="agendado">📅 Agendado / Futuro</option>
     </select></div>
     <div class="form-group"><label>Valor (R$)</label><input id="f-fin-valor" type="number" step="0.01" placeholder="0,00"></div>
+    <div class="form-group full">
+      <label>🏦 Conta bancária <span style="color:var(--muted);font-weight:400;font-size:11px">(onde entrou/saiu o dinheiro)</span></label>
+      <select id="f-fin-conta"></select>
+    </div>
     <div class="form-group full"><label>Observações</label><input id="f-fin-obs" placeholder="Nota fiscal, referência…"></div>
+    <!-- Parcelamento -->
+    <div class="form-group full" style="border-top:1px dashed var(--border);padding-top:12px;margin-top:6px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="f-fin-parc-on" onchange="toggleParcFin()" style="cursor:pointer;width:16px;height:16px;accent-color:#7c3aed">
+        <span style="font-weight:700;color:#5b21b6">📅 Parcelar (entrada + N parcelas a cada X dias)</span>
+      </label>
+      <div id="f-fin-parc-wrap" style="display:none;margin-top:10px;padding:12px;background:#ede9fe;border-radius:9px">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+          <div>
+            <label style="font-size:11.5px;font-weight:700;color:#5b21b6">Entrada (R$)</label>
+            <input id="f-fin-parc-entrada" type="number" step="0.01" min="0" placeholder="0 (sem entrada)" style="padding:7px 10px;border:1px solid #c4b5fd;border-radius:7px;font-size:13px;width:100%;font-family:'DM Sans',sans-serif">
+          </div>
+          <div>
+            <label style="font-size:11.5px;font-weight:700;color:#5b21b6">Nº parcelas</label>
+            <input id="f-fin-parc-num" type="number" min="1" max="60" value="3" style="padding:7px 10px;border:1px solid #c4b5fd;border-radius:7px;font-size:13px;width:100%;font-family:'DM Sans',sans-serif">
+          </div>
+          <div>
+            <label style="font-size:11.5px;font-weight:700;color:#5b21b6">Intervalo (dias)</label>
+            <input id="f-fin-parc-dias" type="number" min="1" value="30" style="padding:7px 10px;border:1px solid #c4b5fd;border-radius:7px;font-size:13px;width:100%;font-family:'DM Sans',sans-serif">
+          </div>
+        </div>
+        <div style="font-size:11px;color:#5b21b6;margin-top:8px">
+          💡 Ex: <strong>R$ 6.000 total</strong> com entrada R$ 1.000 e 5x mensais → cria 1 entrada + 5 parcelas de R$ 1.000
+        </div>
+      </div>
+    </div>
   </div>
   <div class="modal-actions">
     <button class="btn btn-outline" onclick="closeModal('modal-fin')">Cancelar</button>
-    <button class="btn btn-primary" onclick="addFin()">Salvar</button>
+    <button class="btn btn-primary" id="f-fin-btn-salvar" onclick="addFin()">Salvar</button>
+    <button class="btn btn-primary" id="f-fin-btn-gerar" onclick="gerarParcelas()" style="background:#7c3aed;display:none">⚡ Gerar Parcelas</button>
+  </div>
+</div></div>
+
+<!-- Modal Conta Bancária -->
+<div class="modal-bg" id="modal-conta-bancaria"><div class="modal" style="max-width:500px">
+  <div class="modal-title">🏦 Nova Conta Bancária</div>
+  <input type="hidden" id="f-cb-id">
+  <div class="form-grid">
+    <div class="form-group full">
+      <label>Apelido da conta *</label>
+      <input id="f-cb-nome" placeholder="Ex: BB Pessoa Física, Nubank, Caixinha do Escritório">
+    </div>
+    <div class="form-group">
+      <label>Banco</label>
+      <select id="f-cb-banco"></select>
+    </div>
+    <div class="form-group">
+      <label>Tipo</label>
+      <select id="f-cb-tipo">
+        <option>Corrente</option>
+        <option>Poupança</option>
+        <option>Conta-salário</option>
+        <option>Conta digital</option>
+        <option>Dinheiro/Caixa</option>
+        <option>Investimento</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Agência</label>
+      <input id="f-cb-agencia" placeholder="0000">
+    </div>
+    <div class="form-group">
+      <label>Nº da conta</label>
+      <input id="f-cb-conta" placeholder="00000-0">
+    </div>
+    <div class="form-group full">
+      <label>Saldo inicial (R$) <span style="color:var(--muted);font-weight:400;font-size:11px">(quanto tinha quando começou a usar o app)</span></label>
+      <input id="f-cb-saldo" type="number" step="0.01" value="0">
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-outline" onclick="closeModal('modal-conta-bancaria')">Cancelar</button>
+    <button class="btn btn-primary" onclick="addConta()" style="background:var(--teal)">💾 Salvar Conta</button>
   </div>
 </div></div>
 
