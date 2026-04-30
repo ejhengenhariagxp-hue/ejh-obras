@@ -1,5 +1,5 @@
 // modules/propostas.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, markDeleted, escapeHtml } from '../utils.js?v=20260425t';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, markDeleted, escapeHtml } from '../utils.js?v=20260425u';
 
 window.projServicos = window.projServicos || [];
 window.projExtras = window.projExtras || [];
@@ -258,7 +258,7 @@ export function saveProposta(state, tipo){
       const area=+document.getElementById('f-pp-area').value||0;
       const desc=+document.getElementById('f-pp-desc').value||0;
       const itens=[
-        ...window.projServicos.filter(s=>s.incluso&&s.qtd>0),
+        ...window.projServicos.filter(s=>s.incluso&&s.qtd>0).map(s=>({...s})),
         ...(window.projExtras||[]).filter(s=>s.qtd>0&&s.preco>0).map(s=>({...s,nome:s.nome||'Serviço extra',id:'EXT'}))
       ];
       const subtotal=itens.reduce((a,s)=>a+s.qtd*s.preco,0);
@@ -297,18 +297,20 @@ export function saveProposta(state, tipo){
         parcela:parcObraEl?parcObraEl.value:'Por medição',
         bdi, desconto:desc, subtotal:sub,
         total:sub*(1+bdi/100)*(1-desc/100),
-        itens:[...window.obraItens], data:document.getElementById('f-po-data').value||new Date().toISOString().split('T')[0],
+        itens:window.obraItens.map(x=>({...x})), data:document.getElementById('f-po-data').value||new Date().toISOString().split('T')[0],
       };
       closeModal('modal-proposta-obra');
     }
   }catch(e){ showToast('⚠️ Erro: '+e.message); console.error(e); return false; }
   
   const editId = tipo === 'projeto' ? document.getElementById('f-pp-id')?.value : document.getElementById('f-po-id')?.value;
-  
+
   if (editId) {
     const idx = state.propostas.findIndex(x => x.id === editId);
     if (idx !== -1) {
-      state.propostas[idx] = { ...state.propostas[idx], ...proposta };
+      // Preserva o id original — sem isso, proposta.id (novo contador) sobrescreveria
+      // o id existente e novas propostas pegariam o mesmo número (IDs duplicados).
+      state.propostas[idx] = { ...state.propostas[idx], ...proposta, id: editId };
       showToast('✅ Proposta atualizada!');
     }
   } else {
