@@ -1,5 +1,5 @@
 // modules/propostas.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, markDeleted } from '../utils.js?v=20260425s';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, markDeleted, escapeHtml } from '../utils.js?v=20260425t';
 
 window.projServicos = window.projServicos || [];
 window.projExtras = window.projExtras || [];
@@ -389,7 +389,14 @@ export function editProposta(state, id) {
 }
 
 export function printProposta(state, id){
-  const p=state.propostas.find(x=>x.id===id); if(!p) return;
+  const p=state.propostas.find(x=>x.id===id);
+  if(!p){ showToast('⚠️ Proposta não encontrada'); return; }
+  // Garante estrutura mínima — propostas antigas/recém-salvas podem estar com campos vazios
+  const itens = Array.isArray(p.itens) ? p.itens : [];
+  const subtotal = +p.subtotal || 0;
+  const total = +p.total || 0;
+  const bdi = +p.bdi || 0;
+  const desconto = +p.desconto || 0;
   const hoje=new Date().toLocaleDateString('pt-BR');
   let itensHtml='';
   if(p.tipo==='projeto'){
@@ -399,19 +406,22 @@ export function printProposta(state, id){
         <th style="padding:9px 13px">Un.</th><th style="padding:9px 13px">Qtd</th>
         <th style="padding:9px 13px">V.Unit.</th><th style="padding:9px 13px">Total</th>
       </tr></thead>
-      <tbody>${(p.itens||[]).map((s,i)=>`<tr style="background:${i%2===0?'#f8faff':'#fff'};border-bottom:1px solid #e2e8f0">
-        <td style="padding:9px 13px"><b>${s.nome||s.item}</b><br><span style="font-size:11px;color:#64748b">${s.desc||''}</span></td>
-        <td style="padding:9px 13px;text-align:center">${s.un}</td>
-        <td style="padding:9px 13px;text-align:center">${s.qtd}</td>
-        <td style="padding:9px 13px;text-align:right">${fmt(s.preco||s.vunit||0)}</td>
-        <td style="padding:9px 13px;text-align:right;font-weight:700">${fmt(s.qtd*(s.preco||s.vunit||0))}</td>
-      </tr>`).join('')}</tbody>
+      <tbody>${itens.map((s,i)=>{
+        const preco=+(s.preco??s.vunit??0);
+        const qtd=+(s.qtd||0);
+        return `<tr style="background:${i%2===0?'#f8faff':'#fff'};border-bottom:1px solid #e2e8f0">
+        <td style="padding:9px 13px"><b>${escapeHtml(s.nome||s.item||'—')}</b><br><span style="font-size:11px;color:#64748b">${escapeHtml(s.desc||'')}</span></td>
+        <td style="padding:9px 13px;text-align:center">${escapeHtml(s.un||'')}</td>
+        <td style="padding:9px 13px;text-align:center">${qtd}</td>
+        <td style="padding:9px 13px;text-align:right">${fmt(preco)}</td>
+        <td style="padding:9px 13px;text-align:right;font-weight:700">${fmt(qtd*preco)}</td>
+      </tr>`}).join('')}</tbody>
       <tfoot><tr style="background:#0f2744;color:#fff;font-weight:700">
-        ${p.desconto>0?`<td colspan="4" style="padding:9px 13px;text-align:right">Subtotal</td><td style="padding:9px 13px;text-align:right">${fmt(p.subtotal)}</td></tr>
-        <tr style="background:#1a3c5e;color:#fff;font-weight:700"><td colspan="4" style="padding:9px 13px;text-align:right">Desconto (${p.desconto}%)</td><td style="padding:9px 13px;text-align:right">- ${fmt(p.subtotal*p.desconto/100)}</td></tr>
+        ${desconto>0?`<td colspan="4" style="padding:9px 13px;text-align:right">Subtotal</td><td style="padding:9px 13px;text-align:right">${fmt(subtotal)}</td></tr>
+        <tr style="background:#1a3c5e;color:#fff;font-weight:700"><td colspan="4" style="padding:9px 13px;text-align:right">Desconto (${desconto}%)</td><td style="padding:9px 13px;text-align:right">- ${fmt(subtotal*desconto/100)}</td></tr>
         <tr style="background:#0f2744;color:#fff;font-weight:800;font-size:14px">`:''}
         <td colspan="4" style="padding:9px 13px;text-align:right">TOTAL DA PROPOSTA</td>
-        <td style="padding:9px 13px;text-align:right">${fmt(p.total)}</td>
+        <td style="padding:9px 13px;text-align:right">${fmt(total)}</td>
       </tr></tfoot>
     </table>`;
   } else {
@@ -421,25 +431,33 @@ export function printProposta(state, id){
         <th style="padding:9px 13px">Un.</th><th style="padding:9px 13px">Qtd</th>
         <th style="padding:9px 13px">V.Unit.</th><th style="padding:9px 13px">Total</th>
       </tr></thead>
-      <tbody>${(p.itens||[]).map((x,i)=>`<tr style="background:${i%2===0?'#f8faff':'#fff'};border-bottom:1px solid #e2e8f0">
-        <td style="padding:9px 13px">${x.item}</td>
-        <td style="padding:9px 13px;text-align:center">${x.un}</td>
-        <td style="padding:9px 13px;text-align:center">${x.qtd}</td>
-        <td style="padding:9px 13px;text-align:right">${fmt(x.vunit)}</td>
-        <td style="padding:9px 13px;text-align:right;font-weight:700">${fmt(x.qtd*x.vunit)}</td>
-      </tr>`).join('')}</tbody>
+      <tbody>${itens.map((x,i)=>{
+        const vu=+(x.vunit||x.preco||0);
+        const qt=+(x.qtd||0);
+        return `<tr style="background:${i%2===0?'#f8faff':'#fff'};border-bottom:1px solid #e2e8f0">
+        <td style="padding:9px 13px">${escapeHtml(x.item||x.nome||'—')}</td>
+        <td style="padding:9px 13px;text-align:center">${escapeHtml(x.un||'')}</td>
+        <td style="padding:9px 13px;text-align:center">${qt}</td>
+        <td style="padding:9px 13px;text-align:right">${fmt(vu)}</td>
+        <td style="padding:9px 13px;text-align:right;font-weight:700">${fmt(qt*vu)}</td>
+      </tr>`}).join('')}</tbody>
       <tfoot>
-        <tr style="background:#f8faff;font-weight:700"><td colspan="4" style="padding:9px 13px;text-align:right">Subtotal (sem BDI)</td><td style="padding:9px 13px;text-align:right">${fmt(p.subtotal)}</td></tr>
-        <tr style="background:#f0f4fa;font-weight:700"><td colspan="4" style="padding:9px 13px;text-align:right">BDI (${p.bdi}%)</td><td style="padding:9px 13px;text-align:right">+ ${fmt(p.subtotal*p.bdi/100)}</td></tr>
-        ${p.desconto>0?`<tr style="background:#fff3cd;font-weight:700"><td colspan="4" style="padding:9px 13px;text-align:right">Desconto (${p.desconto}%)</td><td style="padding:9px 13px;text-align:right">- ${fmt(p.subtotal*(1+p.bdi/100)*p.desconto/100)}</td></tr>`:''}
-        <tr style="background:#0f2744;color:#fff;font-weight:800;font-size:14px"><td colspan="4" style="padding:9px 13px;text-align:right">TOTAL GERAL</td><td style="padding:9px 13px;text-align:right">${fmt(p.total)}</td></tr>
+        <tr style="background:#f8faff;font-weight:700"><td colspan="4" style="padding:9px 13px;text-align:right">Subtotal (sem BDI)</td><td style="padding:9px 13px;text-align:right">${fmt(subtotal)}</td></tr>
+        <tr style="background:#f0f4fa;font-weight:700"><td colspan="4" style="padding:9px 13px;text-align:right">BDI (${bdi}%)</td><td style="padding:9px 13px;text-align:right">+ ${fmt(subtotal*bdi/100)}</td></tr>
+        ${desconto>0?`<tr style="background:#fff3cd;font-weight:700"><td colspan="4" style="padding:9px 13px;text-align:right">Desconto (${desconto}%)</td><td style="padding:9px 13px;text-align:right">- ${fmt(subtotal*(1+bdi/100)*desconto/100)}</td></tr>`:''}
+        <tr style="background:#0f2744;color:#fff;font-weight:800;font-size:14px"><td colspan="4" style="padding:9px 13px;text-align:right">TOTAL GERAL</td><td style="padding:9px 13px;text-align:right">${fmt(total)}</td></tr>
       </tfoot>
     </table>`;
   }
 
   const win=window.open('','_blank');
+  if(!win){
+    showToast('⚠️ Pop-up bloqueado. Permita pop-ups deste site no navegador para gerar o PDF.', 6000);
+    return;
+  }
+  try {
   win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-    <title>Proposta ${p.id} — ${p.cliente}</title>
+    <title>Proposta ${p.id} — ${escapeHtml(p.cliente||'')}</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
       body{font-family:'DM Sans',sans-serif;padding:40px;max-width:820px;margin:0 auto;color:#1e293b}
@@ -468,33 +486,38 @@ export function printProposta(state, id){
     </div>
 
     <div class="info-box">
-      <div><div class="info-label">Cliente</div><div class="info-row" style="font-weight:600">${p.cliente}</div></div>
-      <div><div class="info-label">Empreendimento</div><div class="info-row">${p.empreend}</div></div>
+      <div><div class="info-label">Cliente</div><div class="info-row" style="font-weight:600">${escapeHtml(p.cliente||'—')}</div></div>
+      <div><div class="info-label">Empreendimento</div><div class="info-row">${escapeHtml(p.empreend||'—')}</div></div>
       ${p.area?`<div><div class="info-label">Área</div><div class="info-row">${p.area} m²</div></div>`:''}
-      ${p.prazo?`<div><div class="info-label">Prazo</div><div class="info-row">${p.prazo}</div></div>`:''}
-      ${p.parcela?`<div><div class="info-label">Pagamento</div><div class="info-row" style="font-weight:600">${p.parcela}</div></div>`:''}
+      ${p.prazo?`<div><div class="info-label">Prazo</div><div class="info-row">${escapeHtml(p.prazo)}</div></div>`:''}
+      ${p.parcela?`<div><div class="info-label">Pagamento</div><div class="info-row" style="font-weight:600">${escapeHtml(p.parcela)}</div></div>`:''}
       ${p.validade?`<div><div class="info-label">Validade</div><div class="info-row">${p.validade} dias</div></div>`:''}
     </div>
 
     <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#0f2744;margin-bottom:6px">
       ${p.tipo==='projeto'?'📐 Serviços de Elaboração de Projeto':'🏗 Orçamento de Obra'} — Escopo e Valores
     </div>
-    ${p.escopo||p.obs?`<div style="font-size:13px;color:#475569;margin-bottom:10px;font-style:italic">${p.escopo||p.obs}</div>`:''}
+    ${(p.escopo||p.obs)?`<div style="font-size:13px;color:#475569;margin-bottom:10px;font-style:italic">${escapeHtml(p.escopo||p.obs)}</div>`:''}
     ${itensHtml}
 
-    ${p.obs&&p.tipo==='projeto'?`<div style="margin-top:16px;padding:12px 16px;background:#f0f9ff;border-radius:8px;font-size:12.5px;color:#1e40af"><b>Observações:</b> ${p.obs}</div>`:''}
+    ${p.obs&&p.tipo==='projeto'?`<div style="margin-top:16px;padding:12px 16px;background:#f0f9ff;border-radius:8px;font-size:12.5px;color:#1e40af"><b>Observações:</b> ${escapeHtml(p.obs)}</div>`:''}
 
     ${p.validade?`<div class="validade-box">⏰ Esta proposta tem validade de <b>${p.validade} dias</b> a partir da data de emissão.</div>`:''}
 
     <div class="assinaturas">
       <div><div style="height:48px"></div><div class="ass-line">EJH Engenharia<br>Engenheiro Responsável</div></div>
-      <div><div style="height:48px"></div><div class="ass-line">${p.cliente}<br>Contratante</div></div>
+      <div><div style="height:48px"></div><div class="ass-line">${escapeHtml(p.cliente||'')}<br>Contratante</div></div>
     </div>
 
-    <div class="footer"><span>${state.relatorioRodape || 'EJH Engenharia'} — ${p.id}</span><span>Gerado em ${hoje}</span></div>
+    <div class="footer"><span>${escapeHtml(state.relatorioRodape || 'EJH Engenharia')} — ${p.id}</span><span>Gerado em ${hoje}</span></div>
     <script>window.onload=()=>window.print()<\/script>
     </body></html>`);
   win.document.close();
+  } catch(e) {
+    console.error('Erro ao gerar PDF da proposta:', e);
+    showToast('❌ Erro ao gerar PDF: ' + (e.message || 'desconhecido'), 5000);
+    try { win.close(); } catch(_){}
+  }
 }
 
 export function compartilharWhatsApp(state, id){

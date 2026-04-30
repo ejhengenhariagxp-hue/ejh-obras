@@ -2,15 +2,20 @@
 // modules/obras.js — CRUD de obras, validação e renderização
 // ══════════════════════════════════════════════════════════════════════
 
-import { fmt, fmtD, pad, safeInner, showToast, statusBadge, tipoLabel, openModal, closeModal, modalidadeIcon, verificarAvisosObra, escapeHtml, markDeleted } from '../utils.js?v=20260425s';
+import { fmt, fmtD, pad, safeInner, showToast, statusBadge, tipoLabel, openModal, closeModal, modalidadeIcon, verificarAvisosObra, escapeHtml, markDeleted } from '../utils.js?v=20260425t';
 
 const val = id => document.getElementById(id)?.value?.trim() || '';
 const num = id => +document.getElementById(id)?.value || 0;
 
 function lerFormObra() {
+  let tipo = val('f-obra-tipo') || 'obra';
+  if (tipo === '__custom__') {
+    const custom = val('f-obra-tipo-custom');
+    tipo = custom || 'personalizado';
+  }
   return {
     nome:          val('f-obra-nome'),
-    tipo:          val('f-obra-tipo') || 'obra',
+    tipo,
     cliente:       val('f-obra-cliente'),
     cliTel:        val('f-obra-cli-tel'),
     cliEmail:      val('f-obra-cli-email'),
@@ -51,7 +56,19 @@ export function openEditObra(state, id) {
   if (!o) { showToast('⚠️ Obra não encontrada'); return; }
   const set = (k, v) => { const el = document.getElementById(k); if (el) el.value = v ?? ''; };
   set('f-obra-id', o.id);
-  set('f-obra-tipo', o.tipo);
+  // Tipo: se for um dos padrões usa o select; senão entra em modo personalizado
+  const tiposPadrao = ['projeto','obra','acompanhamento','consultoria'];
+  const tipoSel = document.getElementById('f-obra-tipo');
+  if (tipoSel) {
+    if (tiposPadrao.includes(o.tipo)) {
+      tipoSel.value = o.tipo;
+      set('f-obra-tipo-custom', '');
+    } else {
+      tipoSel.value = '__custom__';
+      set('f-obra-tipo-custom', o.tipo || '');
+    }
+  }
+  if (typeof window.toggleObraTipoCustom === 'function') window.toggleObraTipoCustom();
   set('f-obra-modalidade', o.modalidade || 'privada');
   set('f-obra-nome', o.nome);
   set('f-obra-cliente', o.cliente);
@@ -94,8 +111,12 @@ export function salvarObra(state) {
 export function resetFormObra() {
   const ids = ['f-obra-id','f-obra-nome','f-obra-cliente','f-obra-cli-tel','f-obra-cli-email',
     'f-obra-cli-doc','f-obra-area','f-obra-end','f-obra-rt','f-obra-crea','f-obra-inicio',
-    'f-obra-fim','f-obra-contrato','f-obra-numcontrato','f-obra-diamed','f-obra-obscontrato'];
+    'f-obra-fim','f-obra-contrato','f-obra-numcontrato','f-obra-diamed','f-obra-obscontrato',
+    'f-obra-tipo-custom'];
   ids.forEach(k => { const el = document.getElementById(k); if (el) el.value = ''; });
+  const tipoSel = document.getElementById('f-obra-tipo');
+  if (tipoSel) tipoSel.value = 'obra';
+  if (typeof window.toggleObraTipoCustom === 'function') window.toggleObraTipoCustom();
   const t = document.getElementById('modal-obra-title');
   if (t) t.textContent = '🏗 Nova Atividade';
 }
