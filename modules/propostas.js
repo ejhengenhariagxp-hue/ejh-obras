@@ -1,10 +1,34 @@
 // modules/propostas.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, markDeleted, escapeHtml } from '../utils.js?v=20260425u';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, markDeleted, escapeHtml } from '../utils.js?v=20260430v';
 
 window.projServicos = window.projServicos || [];
 window.projExtras = window.projExtras || [];
 window.obraItens = window.obraItens || [];
 window.modoGlobalProjeto = window.modoGlobalProjeto || false;
+
+const PROP_STATUS = {
+  em_negociacao: { label: 'Em Negociação', icon: '🤝', bg: '#dbeafe', color: '#1d4ed8' },
+  em_revisao:    { label: 'Em Revisão',    icon: '📝', bg: '#fef3c7', color: '#92400e' },
+  fechado:       { label: 'Fechado',       icon: '✅', bg: '#d1fae5', color: '#065f46' },
+  nao_fechou:    { label: 'Não Fechou',    icon: '❌', bg: '#fee2e2', color: '#991b1b' },
+};
+
+// Fecha pickers de status ao clicar fora (inicializado uma vez)
+if (!window._propPickerListener) {
+  window._propPickerListener = true;
+  document.addEventListener('click', e => {
+    if (!e.target.closest('[data-status-toggle]') && !e.target.closest('[id^="status-picker-"]')) {
+      document.querySelectorAll('[id^="status-picker-"]').forEach(el => el.style.display = 'none');
+    }
+  });
+}
+window.toggleStatusPickerProp = function(id) {
+  const picker = document.getElementById('status-picker-' + id);
+  if (!picker) return;
+  const isOpen = picker.style.display !== 'none';
+  document.querySelectorAll('[id^="status-picker-"]').forEach(el => el.style.display = 'none');
+  if (!isOpen) picker.style.display = '';
+};
 
 const PRECO_PROJETOS = [
     {id:'ARQ', nome:'Projeto Arquitetônico', un:'m²', preco:35.00, desc:'Planta baixa, cortes, fachadas, perspectiva, memoriais e aprovação'},
@@ -308,12 +332,12 @@ export function saveProposta(state, tipo){
   if (editId) {
     const idx = state.propostas.findIndex(x => x.id === editId);
     if (idx !== -1) {
-      // Preserva o id original — sem isso, proposta.id (novo contador) sobrescreveria
-      // o id existente e novas propostas pegariam o mesmo número (IDs duplicados).
-      state.propostas[idx] = { ...state.propostas[idx], ...proposta, id: editId };
+      // Preserva id original e status (edit não deve resetar negociação para em_negociacao)
+      state.propostas[idx] = { ...state.propostas[idx], ...proposta, id: editId, status: state.propostas[idx].status || 'em_negociacao' };
       showToast('✅ Proposta atualizada!');
     }
   } else {
+    if (!proposta.status) proposta.status = 'em_negociacao';
     state.propostas.push(proposta);
     state.counters.prop++;
     showToast('✅ Proposta salva! Veja em Propostas.');
@@ -614,20 +638,27 @@ export function renderPropostas(state){
     const isTipo=tipos[p.tipo]||p.tipo;
     const cor={projeto:'#0d9488',obra:'#2563eb',completa:'#7c3aed'}[p.tipo]||'#2563eb';
     const temAssinatura=!!(p.assinatura&&p.assinatura.dataUrl);
+    const st = PROP_STATUS[p.status] || PROP_STATUS.em_negociacao;
+    const statusAtual = p.status || 'em_negociacao';
     const itensTop=(p.itens||[]).filter(s=>s.incluso!==false&&(s.nome||s.item)).slice(0,4)
       .map(s=>`<span style="background:#f1f5f9;padding:2px 8px;border-radius:12px;font-size:11px;color:#475569">${(s.nome||s.item||'').substring(0,30)}</span>`).join(' ');
-    return `<div style="background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;border-left:4px solid ${cor}">
+    const pickerHtml = Object.entries(PROP_STATUS).map(([k,v])=>
+      `<button onclick="atualizarStatusProposta('${p.id}','${k}')" style="display:block;width:100%;text-align:left;padding:8px 12px;border:none;background:${k===statusAtual?v.bg:'transparent'};color:${v.color};font-size:12.5px;font-weight:600;border-radius:8px;cursor:pointer;margin:2px 0">${v.icon} ${v.label}</button>`
+    ).join('');
+    return `<div style="background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:14px;overflow:visible;border-left:4px solid ${cor}">
       <div style="padding:14px 18px;border-bottom:1px solid var(--border)">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
           <div style="flex:1;min-width:200px">
             <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--navy)">${p.empreend||p.cliente||'Sem título'}</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:2px;display:flex;gap:10px;flex-wrap:wrap">
+            <div style="font-size:12px;color:var(--muted);margin-top:2px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
               <span>👤 ${p.cliente||'—'}</span>
               <span>📅 ${fmtD(p.data)}</span>
               ${p.area?`<span>📐 ${p.area} m²</span>`:''}
               ${p.parcela?`<span>💳 ${p.parcela}</span>`:''}
               ${p.prazo?`<span>⏱ ${p.prazo}</span>`:''}
               <span style="background:${cor}22;color:${cor};padding:1px 8px;border-radius:12px;font-size:11px;font-weight:700">${isTipo}</span>
+              <span style="background:${st.bg};color:${st.color};padding:1px 9px;border-radius:12px;font-size:11px;font-weight:700">${st.icon} ${st.label}</span>
+              ${p.obraId?`<span style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;padding:1px 8px;border-radius:12px;font-size:11px;font-weight:700">🏗 ${p.obraId}</span>`:''}
               ${temAssinatura?'<span style="color:var(--green);font-weight:600">✅ Assinada</span>':''}
             </div>
             ${itensTop?`<div style="margin-top:7px;display:flex;gap:5px;flex-wrap:wrap">${itensTop}</div>`:''}
@@ -638,7 +669,11 @@ export function renderPropostas(state){
           </div>
         </div>
       </div>
-      <div style="padding:10px 18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:#fafbff">
+      <div style="padding:10px 18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:#fafbff;position:relative">
+        <div style="position:relative;flex-shrink:0">
+          <button data-status-toggle="${p.id}" onclick="toggleStatusPickerProp('${p.id}')" class="btn btn-sm" style="background:${st.bg};color:${st.color};border:1.5px solid ${st.color}40;font-weight:700;white-space:nowrap">${st.icon} ${st.label} ▾</button>
+          <div id="status-picker-${p.id}" style="display:none;position:absolute;bottom:calc(100% + 4px);left:0;z-index:300;background:#fff;border:1.5px solid var(--border);border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.18);padding:6px;min-width:175px">${pickerHtml}</div>
+        </div>
         <button class="btn btn-primary btn-sm" onclick="printProposta('${p.id}')">🖨 Imprimir</button>
         <button class="btn btn-outline btn-sm" onclick="compartilharWhatsApp('${p.id}')" style="color:#25d366;border-color:#25d366">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="#25d366" style="vertical-align:middle;margin-right:3px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>WhatsApp
@@ -664,3 +699,52 @@ export function atualizarLinhaObra(i){
 }
 
 window.atualizarLinhaObra = atualizarLinhaObra;
+
+// ── Status & Auto-Criação de Obra ────────────────────────────────────
+export function atualizarStatusProposta(state, id, novoStatus) {
+  if (!PROP_STATUS[novoStatus]) return false;
+  const idx = state.propostas.findIndex(x => x.id === id);
+  if (idx < 0) return false;
+  const p = state.propostas[idx];
+  const jaFechado = p.status === 'fechado';
+  p.status = novoStatus;
+  document.querySelectorAll('[id^="status-picker-"]').forEach(el => el.style.display = 'none');
+  if (novoStatus === 'fechado' && !jaFechado && !p.obraId) {
+    if (confirm(`🎉 Proposta ${id} FECHADA!\nDeseja criar a obra/projeto automaticamente no sistema?`)) {
+      gerarObraDeProposta(state, id);
+    }
+  }
+  return true;
+}
+
+export function gerarObraDeProposta(state, propostaId) {
+  const p = state.propostas.find(x => x.id === propostaId);
+  if (!p) { showToast('⚠️ Proposta não encontrada'); return null; }
+  if (p.obraId) { showToast('⚠️ Esta proposta já gerou ' + p.obraId); return p.obraId; }
+  if (!Array.isArray(state.obras)) state.obras = [];
+  if (!state.counters) state.counters = {};
+  if (!state.counters.obra) state.counters.obra = 1;
+  const obraId = 'OBR-' + pad(state.counters.obra);
+  const tipoObra = p.tipo === 'projeto' ? 'projeto' : 'obra';
+  state.obras.push({
+    id: obraId,
+    nome: p.empreend || p.cliente || 'Nova Obra',
+    cliente: p.cliente || '',
+    cliTel: '', cliEmail: '', cliDoc: '',
+    area: +p.area || 0,
+    tipo: tipoObra,
+    contrato: +p.total || 0,
+    status: 'Em andamento',
+    propostaId: propostaId,
+    inicio: new Date().toISOString().split('T')[0],
+    fim: '', endereco: '', rt: '', crea: '',
+    modalidade: 'privada',
+    numcontrato: '', periodicidade: '', diamed: 0, obscontrato: '',
+    ultimaMedicao: '', proximaMedicao: '',
+  });
+  state.counters.obra++;
+  p.obraId = obraId;
+  const labelTipo = tipoObra === 'projeto' ? 'Projeto' : 'Obra';
+  showToast(`✅ ${labelTipo} ${obraId} criado(a) a partir de ${propostaId}!`, 4000);
+  return obraId;
+}
