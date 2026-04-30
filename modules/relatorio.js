@@ -1,5 +1,5 @@
 ﻿// modules/relatorio.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge } from '../utils.js?v=20260425u';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge } from '../utils.js?v=20260430v';
 
 
 export function renderReport(state){
