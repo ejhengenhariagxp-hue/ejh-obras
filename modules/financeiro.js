@@ -1,5 +1,5 @@
 // modules/financeiro.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260501a';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260501b';
 
 let _finLimit = 20;
 let _hideRT = false;
@@ -445,11 +445,18 @@ const CUSTOS_FIXOS_PADRAO = [
   { desc: 'Internet', icon: '🌐' },
   { desc: 'Energia (escritório)', icon: '⚡' },
   { desc: 'Água (escritório)', icon: '💧' },
-  { desc: 'Telefone', icon: '📞' },
+  { desc: 'Telefone / Celular', icon: '📞' },
   { desc: 'Combustível', icon: '⛽' },
   { desc: 'Material de escritório (papel, tinta, etc)', icon: '📑' },
-  { desc: 'Contador', icon: '💼' },
+  { desc: 'Contador / Honorários contábeis', icon: '💼' },
   { desc: 'Seguro', icon: '🛡' },
+  { desc: 'Anuidade CREA', icon: '🏛' },
+  { desc: 'ART avulsa (reserva mensal)', icon: '📋' },
+  { desc: 'Licença AutoCAD / Software', icon: '💻' },
+  { desc: 'Assinatura Adobe / PDF', icon: '📄' },
+  { desc: 'Hosting / GitHub / Servidor', icon: '☁️' },
+  { desc: 'Manutenção de equipamentos', icon: '🔧' },
+  { desc: 'Pró-labore', icon: '👤' },
 ];
 
 export function addCustoFixo(state) {
@@ -947,14 +954,12 @@ export function renderDashFinAvancado(state) {
   const yearNow = now.getFullYear();
   const yearLast = yearNow - 1;
   const monthNow = now.getMonth() + 1;
-  const hojeStr = now.toISOString().split('T')[0];
 
-  // Novos KPIs: A Receber, A Pagar, Média Mensal YTD
+  // KPIs: A Receber, A Pagar
   const aReceber = (state.fin || []).filter(f => f.tipo === 'Receita' && f.status !== 'pago').reduce((a,x) => a + (+x.valor||0), 0);
   const aPagar = (state.fin || []).filter(f => f.tipo === 'Despesa' && f.status !== 'pago').reduce((a,x) => a + (+x.valor||0), 0);
   const vencidoRec = (state.fin || []).filter(f => f.tipo === 'Receita' && f.status === 'pendente').reduce((a,x) => a + (+x.valor||0), 0);
   const vencidoDes = (state.fin || []).filter(f => f.tipo === 'Despesa' && f.status === 'pendente').reduce((a,x) => a + (+x.valor||0), 0);
-  // Renderiza KPIs adicionais
   const kpiExtra = document.getElementById('fin-kpis-extras');
   if (kpiExtra) {
     kpiExtra.innerHTML = `
@@ -963,35 +968,79 @@ export function renderDashFinAvancado(state) {
     `;
   }
 
-  const finR1 = state.fin.filter(f => {
-    const o = state.obras.find(x => x.id === f.obraId);
-    return o && (o.tipo === 'R1' || o.tipo === 'projeto');
-  });
-  const finR2 = state.fin.filter(f => {
-    const o = state.obras.find(x => x.id === f.obraId);
-    return o && (o.tipo === 'R2' || o.tipo === 'obra' || !o.tipo);
-  });
+  // Helper: soma receitas de um ano+mês específico
+  const recYM = (year, month = null) => (state.fin || []).filter(f => {
+    if (f.tipo !== 'Receita') return false;
+    if (f.data?.substring(0,4) !== String(year)) return false;
+    if (month !== null && f.data?.substring(5,7) !== String(month).padStart(2,'0')) return false;
+    return true;
+  }).reduce((a,x) => a + (+x.valor||0), 0);
 
-  const sum = (arr, year, tipo) => arr.filter(f => f.data.startsWith(year) && (!tipo || f.tipo === tipo)).reduce((a,x) => a + x.valor, 0);
+  // R1/R2 de obras
+  const finR1 = (state.fin||[]).filter(f => { const o=state.obras.find(x=>x.id===f.obraId); return o&&(o.tipo==='R1'||o.tipo==='projeto'); });
+  const finR2 = (state.fin||[]).filter(f => { const o=state.obras.find(x=>x.id===f.obraId); return o&&(o.tipo==='R2'||o.tipo==='obra'||!o.tipo); });
+  const r1Rec = finR1.filter(f=>f.data?.startsWith(String(yearNow))&&f.tipo==='Receita').reduce((a,x)=>a+x.valor,0);
+  const r2Rec = finR2.filter(f=>f.data?.startsWith(String(yearNow))&&f.tipo==='Receita').reduce((a,x)=>a+x.valor,0);
 
-  const r1Rec = sum(finR1, String(yearNow), 'Receita');
-  const r2Rec = sum(finR2, String(yearNow), 'Receita');
-  
-  const totalRecYTD = state.fin.filter(f => f.data.startsWith(String(yearNow)) && f.tipo === 'Receita').reduce((a,x) => a+x.valor, 0);
-  const avgMensal = totalRecYTD / monthNow;
-
-  const lastYearSamePeriod = state.fin.filter(f => {
-    const y = parseInt(f.data.substring(0,4));
-    const m = parseInt(f.data.substring(5,7));
-    return y === yearLast && m <= monthNow && f.tipo === 'Receita';
-  }).reduce((a,x) => a+x.valor, 0);
-
-  const diffPct = lastYearSamePeriod > 0 ? ((totalRecYTD / lastYearSamePeriod) - 1) * 100 : 0;
+  const totalRecYTD = recYM(yearNow);
+  const avgMensal = monthNow > 0 ? totalRecYTD / monthNow : 0;
+  const lastYearSamePeriod = Array.from({length:monthNow},(_,i)=>i+1).reduce((a,m)=>a+recYM(yearLast,m),0);
+  const diffPct = lastYearSamePeriod > 0 ? ((totalRecYTD/lastYearSamePeriod)-1)*100 : 0;
   const diffColor = diffPct >= 0 ? 'var(--green)' : 'var(--red)';
   const diffIcon = diffPct >= 0 ? '↗' : '↘';
 
+  // Saldo geral histórico
+  const totalRecAll = (state.fin||[]).filter(f=>f.tipo==='Receita').reduce((a,x)=>a+(+x.valor||0),0);
+  const totalDesAll = (state.fin||[]).filter(f=>f.tipo==='Despesa').reduce((a,x)=>a+(+x.valor||0),0);
+  const saldoLiq = totalRecAll - totalDesAll;
+
+  // Dados mensais: 2025 e 2026
+  const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const pctCmp = (cur, prev) => {
+    if (prev === 0) return cur > 0 ? '<span style="color:var(--green);font-weight:700">Novo</span>' : '<span style="color:var(--muted)">—</span>';
+    const p = ((cur/prev)-1)*100;
+    const c = p >= 0 ? 'var(--green)' : 'var(--red)';
+    return `<span style="color:${c};font-weight:700">${p>=0?'↗':'↘'} ${Math.abs(p).toFixed(0)}%</span>`;
+  };
+
+  const monthlyRows = MESES.map((mName, idx) => {
+    const m = idx + 1;
+    const v25 = recYM(2025, m);
+    const v26 = recYM(2026, m);
+    const isCurMonth = yearNow === 2026 && m === monthNow;
+    const isFuturo = yearNow < 2026 ? false : m > monthNow;
+    return `<tr style="${isCurMonth?'background:#eff6ff':''}">
+      <td style="font-weight:700;color:var(--navy)">${mName}${isCurMonth?' ⭐':''}</td>
+      <td style="color:#1d4ed8;font-weight:600">${v25>0?fmt(v25):'—'}</td>
+      <td style="color:#7c3aed;font-weight:${isFuturo?'400':'700'}">${v26>0?fmt(v26):(isFuturo?'<span style="color:var(--muted)">...</span>':'—')}</td>
+      <td style="font-size:12px">${isFuturo?'':pctCmp(v26,v25)}</td>
+    </tr>`;
+  }).join('');
+
+  const tot25 = MESES.reduce((_,__,i)=>_+recYM(2025,i+1),0);
+  const tot26 = MESES.reduce((_,__,i)=>_+recYM(2026,i+1),0);
+
+  // Histórico anual (2016–yearNow)
+  const anoInicio = 2016;
+  const anosHist = [];
+  for (let y = anoInicio; y <= yearNow; y++) anosHist.push(y);
+  const anualRows = anosHist.map((y, i) => {
+    const rec = recYM(y);
+    const prev = i > 0 ? recYM(anosHist[i-1]) : 0;
+    const yoyPct = prev > 0 ? ((rec/prev)-1)*100 : null;
+    const cor = yoyPct === null ? '' : yoyPct >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+    const icon = yoyPct !== null ? (yoyPct >= 0 ? '↗' : '↘') : '';
+    const atual = y === yearNow;
+    return `<tr style="${atual?'background:#eff6ff;font-weight:700':''}">
+      <td style="font-weight:${atual?800:600};color:var(--navy)">${y}${atual?' ⭐':''}</td>
+      <td style="color:var(--green);font-weight:600">${rec>0?fmt(rec):'—'}</td>
+      <td style="${cor}">${yoyPct!==null?`${icon} ${Math.abs(yoyPct).toFixed(1)}%`:'—'}</td>
+    </tr>`;
+  }).reverse().join('');
+
   container.innerHTML = `
-    <div class="kpi-grid" style="margin-top:20px; margin-bottom: 30px;">
+    <!-- KPIs de performance -->
+    <div class="kpi-grid" style="margin-top:20px;margin-bottom:20px">
       <div class="kpi purple">
         <div class="kpi-label">Faturamento R1 (Projeto)</div>
         <div class="kpi-value">${fmt(r1Rec)}</div>
@@ -1007,10 +1056,83 @@ export function renderDashFinAvancado(state) {
         <div class="kpi-value">${fmt(avgMensal)}</div>
         <div class="kpi-sub">Baseado em ${monthNow} mês(es)</div>
       </div>
-      <div class="kpi ${diffPct >= 0 ? 'green' : 'red'}">
-        <div class="kpi-label">Performance YoY (%)</div>
+      <div class="kpi ${diffPct>=0?'green':'red'}">
+        <div class="kpi-label">Performance YoY</div>
         <div class="kpi-value" style="color:${diffColor}">${diffIcon} ${diffPct.toFixed(1)}%</div>
         <div class="kpi-sub">vs mesmo período de ${yearLast}</div>
+      </div>
+    </div>
+
+    <!-- Saldo Geral Histórico -->
+    <div class="section" style="border-left:4px solid #0f766e;margin-bottom:18px">
+      <div class="section-hdr">
+        <div class="section-title">💰 Saldo Geral — Histórico EJH (2016–${yearNow})</div>
+      </div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="kpi green">
+          <div class="kpi-label">Total Recebido</div>
+          <div class="kpi-value">${fmt(totalRecAll)}</div>
+          <div class="kpi-sub">2016 até hoje</div>
+        </div>
+        <div class="kpi red">
+          <div class="kpi-label">Total Despesas</div>
+          <div class="kpi-value">${fmt(totalDesAll)}</div>
+          <div class="kpi-sub">Todas as despesas lançadas</div>
+        </div>
+        <div class="kpi ${saldoLiq>=0?'teal':'red'}">
+          <div class="kpi-label">Saldo Líquido</div>
+          <div class="kpi-value" style="color:${saldoLiq>=0?'#0f766e':'var(--red)'}">${fmt(saldoLiq)}</div>
+          <div class="kpi-sub">Receitas − Despesas</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Análise Comparativa Mensal: 2025 vs 2026 -->
+    <div class="section" style="border-left:4px solid #2563eb;margin-bottom:18px">
+      <div class="section-hdr" style="flex-wrap:wrap;gap:8px">
+        <div class="section-title">📊 Comparativo Mensal — 2025 vs 2026</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span style="padding:3px 10px;background:#eff6ff;color:#1d4ed8;border-radius:8px;font-size:12px;font-weight:700">2025: ${fmt(tot25)}</span>
+          <span style="padding:3px 10px;background:#ede9fe;color:#7c3aed;border-radius:8px;font-size:12px;font-weight:700">2026: ${fmt(tot26)}</span>
+          <span style="padding:3px 10px;background:${tot26>=tot25?'#f0fdf4':'#fef2f2'};color:${tot26>=tot25?'var(--green)':'var(--red)'};border-radius:8px;font-size:12px;font-weight:700">${pctCmp(tot26,tot25)} no ano</span>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Mês</th>
+              <th style="color:#1d4ed8">2025</th>
+              <th style="color:#7c3aed">2026</th>
+              <th>26 vs 25</th>
+            </tr>
+          </thead>
+          <tbody>${monthlyRows}</tbody>
+          <tfoot>
+            <tr style="background:#f8faff;font-weight:800">
+              <td>TOTAL</td>
+              <td style="color:#1d4ed8">${fmt(tot25)}</td>
+              <td style="color:#7c3aed">${fmt(tot26)}</td>
+              <td style="font-size:12px">${pctCmp(tot26,tot25)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Histórico Anual EJH (2016–${yearNow}) -->
+    <div class="section" style="border-left:4px solid #0891b2;margin-bottom:18px">
+      <div class="section-hdr">
+        <div class="section-title">📈 Histórico Anual EJH (${anoInicio}–${yearNow})</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Ano</th><th>Faturamento</th><th>Crescimento YoY</th></tr></thead>
+          <tbody>${anualRows}</tbody>
+        </table>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px;padding:0 2px">
+        * 2016–2024: totais anuais consolidados. 2025: totais mensais. 2026: lançamentos detalhados.
       </div>
     </div>
   `;
