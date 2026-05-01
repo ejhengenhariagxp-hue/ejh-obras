@@ -69,6 +69,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .kpi-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
 .kpi-value{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--navy);margin-top:4px;line-height:1}
 .kpi-sub{font-size:11px;color:var(--muted);margin-top:4px}
+/* Modo privacidade: blura valores monetários no Dashboard */
+body.privacy-mode #page-dashboard #kpi-orc,
+body.privacy-mode #page-dashboard #kpi-real,
+body.privacy-mode #page-dashboard #kpi-saldo,
+body.privacy-mode #page-dashboard .privacy-hide{
+  filter:blur(8px);user-select:none;pointer-events:none;transition:filter .2s
+}
+body.privacy-mode #btn-privacy-mode{background:#ede9fe!important}
 /* TABLE */
 .table-wrap{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
 table{width:100%;border-collapse:collapse}
