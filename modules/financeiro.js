@@ -1,5 +1,5 @@
 // modules/financeiro.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260430v';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260501a';
 
 let _finLimit = 20;
 let _hideRT = false;
@@ -828,6 +828,10 @@ export function renderFinanceiro(state){
   // Auto-atualiza status (a_vencer/pendente) conforme as datas
   atualizarStatusVencimentos(state);
 
+  // Botão "Importar Histórico" só aparece se ainda não foi importado
+  const btnImp = document.getElementById('btn-importar-historico-ejh');
+  if (btnImp) btnImp.style.display = temFaturamentoHistoricoEJH(state) ? 'none' : '';
+
   const rec=state.fin.filter(x=>x.tipo==='Receita').reduce((a,x)=>a+x.valor,0);
   const des=state.fin.filter(x=>x.tipo==='Despesa').reduce((a,x)=>a+x.valor,0);
   const sal=rec-des;
@@ -1040,5 +1044,114 @@ function popularFiltrosFin(state) {
       (state.contas || []).map(c => `<option value="${c.id}">${c.nome}</option>`).join("");
     if (atual) selB.value = atual;
   }
+}
+
+// ── Importar Faturamento Histórico EJH (2016-2026) ────────────────────
+const FATURAMENTO_HISTORICO_EJH = (() => {
+  const CAT = '📊 Faturamento Histórico';
+  const mk = (data, valor, desc, obs='') => ({ data, valor, desc, obs, cat: CAT });
+  const anuais = [
+    [2016, 13135.40], [2017, 37015.67], [2018, 28809.00], [2019, 43391.66],
+    [2020, 27657.76], [2021, 51973.00], [2022, 44981.60], [2023, 65865.00],
+    [2024, 130494.00],
+  ].map(([ano, val]) => mk(`${ano}-12-31`, val, `Faturamento anual ${ano}`, `Total consolidado de ${ano}`));
+  const meses2025 = [
+    ['JAN','2025-01-31',7150],['FEV','2025-02-28',18500],['MAR','2025-03-31',7643],
+    ['ABR','2025-04-30',20075],['MAI','2025-05-31',3050],['JUN','2025-06-30',13150],
+    ['JUL','2025-07-31',15085],['AGO','2025-08-31',9140],['SET','2025-09-30',9690],
+    ['OUT','2025-10-31',14750],['NOV','2025-11-30',15700],['DEZ','2025-12-31',20589],
+  ].map(([m, data, val]) => mk(data, val, `Faturamento ${m}/2025`, 'Consolidado mensal'));
+  const det2026 = [
+    mk('2026-01-05', 2250.00, 'Acompanhamento de Obra',                                                              'Cliente: BANDEIRANTES (Bauru-SP) | PIX-NUBANK'),
+    mk('2026-01-08', 2500.00, 'Projeto Arquitetônico e Estrutural (Entrada)',                                        'Cliente: OLIVINO (Guaxupé-MG) | Em espécie'),
+    mk('2026-01-13', 1500.00, 'Projetos (Estrutural, Elétrico, Hidro e PCI) 1/3',                                    'Cliente: LICIA/BRUNO (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-01-15',  800.00, 'Laudo Técnico 2/5',                                                                   'Cliente: JULIANA (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-01-20', 2250.00, 'Acompanhamento de Obra',                                                              'Cliente: BANDEIRANTES (Bauru-SP) | PIX-NUBANK'),
+    mk('2026-01-22', 1000.00, 'Acompanhamento de Obra 2/4 — recálculo parcelas 4/4',                                 'Cliente: CAIO (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-01-23', 1415.00, 'Projetos (Estrutural, Elétrico e Hidro) — Parcela 2',                                 'Cliente: LUIZ CARLOS (Guaxupé-MG) | Cheque Sicredi'),
+    mk('2026-02-02',  700.00, 'Acompanhamento de Obra (Caixa) — fev/mar 1 e 2 de 11',                                'Cliente: MARLIZE (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-02-05', 2250.00, 'Acompanhamento de Obra',                                                              'Cliente: BANDEIRANTES (Bauru-SP) | PIX-NUBANK'),
+    mk('2026-02-08', 1500.00, 'Projeto Arquitetônico e Estrutural (Entrada)',                                        'Cliente: RODRIGO/DAVI/VINICIUS (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-02-10', 1250.00, 'Projeto Arq, Estrutural, Elétrico e Hidro 1/4',                                       'Cliente: JFI ADMINISTRADORA BENS (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-02-12', 1477.00, 'Projetos (Estrutural, Elétrico e Hidro) — Parcela 2',                                 'Cliente: LUIZ CARLOS (Guaxupé-MG) | Cheque Sicredi'),
+    mk('2026-02-12',  500.00, 'Projeto Arquitetônico e Estrutural (Complemento da Entrada)',                         'Cliente: RODRIGO/DAVI/VINICIUS (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-02-18',  800.00, 'Laudo Técnico 3/5',                                                                   'Cliente: JULIANA (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-02-19',  750.00, 'Projetos (Estrutural, Elétrico, Hidro e PCI) — 50% parcela 2/3',                      'Cliente: LICIA/BRUNO (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-02-20', 2500.00, 'Projeto Arquitetônico e Estrutural (Restante)',                                       'Cliente: OLIVINO (Guaxupé-MG) | Depósito Sicredi'),
+    mk('2026-02-20', 2250.00, 'Acompanhamento de Obra',                                                              'Cliente: BANDEIRANTES (Bauru-SP) | PIX-NUBANK'),
+    mk('2026-03-03', 1000.00, 'Projeto Arquitetônico e Estrutural — Entrada 50%',                                    'Cliente: DAVI (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-03-05', 1500.00, 'Projetos (Estrutural, Elétrico, Hidro e PCI) Parcela 3/3',                            'Cliente: LICIA/BRUNO (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-03-09', 1162.50, 'Projetos (Estrutural, Elétrico, Hidro e PCI) Parcela 1/4',                            'Cliente: WILLIAM (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-03-10', 2250.00, 'Acompanhamento de Obra',                                                              'Cliente: BANDEIRANTES (Bauru-SP) | PIX-NUBANK'),
+    mk('2026-03-11', 1250.00, 'Projeto Arq, Estrutural, Elétrico e Hidro 2/4',                                       'Cliente: JFI ADMINISTRADORA BENS (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-03-14', 1000.00, 'Projeto Arquitetônico e Estrutural — Entrada 50%',                                    'Cliente: DAVI (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-03-16',  800.00, 'Laudo Técnico 4/5',                                                                   'Cliente: JULIANA (Guaxupé-MG) | Em espécie'),
+    mk('2026-03-20', 2250.00, 'Acompanhamento de Obra',                                                              'Cliente: BANDEIRANTES (Bauru-SP) | PIX-NUBANK'),
+    mk('2026-03-27', 2000.00, 'Projeto Arquitetônico e Estrutural (parcial — restante R$500,00)',                    'Cliente: RODRIGO/DAVI/VINICIUS (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-03-30',  600.00, 'Solicitação de Habite-se e ISS',                                                      'Cliente: GUAXUCABOS | Em espécie'),
+    mk('2026-04-06', 2250.00, 'Acompanhamento de Obra',                                                              'Cliente: BANDEIRANTES (Bauru-SP) | PIX-NUBANK'),
+    mk('2026-04-07',  750.00, 'Projetos (Estrutural, Elétrico, Hidro e PCI) — 50% parcela 2/3',                      'Cliente: LICIA/BRUNO (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-04-10', 1000.00, 'Projetos (Arq, Estrutural, Hidro e Elétrico) 1/5',                                    'Cliente: DANILO (Guaxupé-MG) | Cheque Sicredi'),
+    mk('2026-04-13', 1162.50, 'Projetos (Estrutural, Elétrico, Hidro e PCI) Parcela 2/4',                            'Cliente: WILLIAM (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-04-20',  800.00, 'Laudo Técnico 5/5',                                                                   'Cliente: JULIANA (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-04-22',  400.00, 'Acompanhamento de Documentação de Divisão de Condomínio',                             'Cliente: PAULO CESAR (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-04-23',  500.00, 'Projeto Arquitetônico e Estrutural — pagamento final',                                'Cliente: RODRIGO/DAVI/VINICIUS (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-04-23', 3000.00, 'RT de Obra',                                                                          'Cliente: GUSTAVO/STELLA (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-04-24',  600.00, 'Estudo de Espaço Gourmet e Garagem (sítio)',                                          'Cliente: PEDRO ROBERTO (Jacuí-MG) | PIX-NUBANK'),
+    mk('2026-04-27', 1250.00, 'Projeto Arq, Estrutural, Elétrico e Hidro 3/4',                                       'Cliente: JFI ADMINISTRADORA BENS (Guaxupé-MG) | PIX-NUBANK'),
+    mk('2026-04-27', 2250.00, 'Acompanhamento de Obra',                                                              'Cliente: BANDEIRANTES (Bauru-SP) | PIX-NUBANK'),
+  ];
+  return [...anuais, ...meses2025, ...det2026];
+})();
+
+export function temFaturamentoHistoricoEJH(state) {
+  return (state.fin || []).some(f => f.cat === '📊 Faturamento Histórico');
+}
+
+export function importarFaturamentoHistoricoEJH(state) {
+  if (!Array.isArray(state.fin)) state.fin = [];
+  if (!state.counters) state.counters = {};
+  if (!state.counters.fin) state.counters.fin = 1;
+
+  if (temFaturamentoHistoricoEJH(state)) {
+    const existentes = state.fin.filter(f => f.cat === '📊 Faturamento Histórico').length;
+    if (!confirm(`⚠️ Já existem ${existentes} lançamentos com categoria "Faturamento Histórico".\n\nImportar novamente VAI DUPLICAR. Continuar mesmo assim?`)) {
+      return false;
+    }
+  }
+
+  const total = FATURAMENTO_HISTORICO_EJH.reduce((a, x) => a + x.valor, 0);
+  const totalFmt = total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const msg =
+    `IMPORTAR FATURAMENTO HISTÓRICO EJH\n\n` +
+    `• 9 lançamentos anuais (2016–2024)\n` +
+    `• 12 lançamentos mensais (2025) — R$ 154.522,00\n` +
+    `• 38 lançamentos detalhados (jan–abr/2026) — R$ 53.467,00\n\n` +
+    `TOTAL: ${FATURAMENTO_HISTORICO_EJH.length} lançamentos | R$ ${totalFmt}\n\n` +
+    `Estado atual: ${state.fin.length} lançamentos.\n\n` +
+    `Confirma a importação?`;
+  if (!confirm(msg)) return false;
+
+  // Backup defensivo no localStorage
+  try {
+    const backupKey = 'ejh_fin_backup_' + new Date().toISOString().replace(/[:.]/g, '-');
+    localStorage.setItem(backupKey, JSON.stringify(state.fin));
+    console.log('💾 Backup salvo:', backupKey);
+  } catch(e) { console.warn('Backup falhou:', e); }
+
+  // Insere todos de uma vez. Apenas UMA chamada a renderAtiva no wrapper de app.js
+  // dispara UM saveStateLocal + UM saveToCloud (com debounce). Evita o
+  // "Write stream exhausted" do Firestore.
+  FATURAMENTO_HISTORICO_EJH.forEach(e => {
+    state.fin.push({
+      id: 'FIN-' + pad(state.counters.fin++),
+      tipo: 'Receita', obraId: '', data: e.data,
+      desc: e.desc, cat: e.cat, status: 'pago',
+      valor: e.valor, obs: e.obs, contaId: '',
+    });
+  });
+
+  showToast(`✅ ${FATURAMENTO_HISTORICO_EJH.length} lançamentos históricos importados! Total: R$ ${totalFmt}`, 6000);
+  return true;
 }
 
