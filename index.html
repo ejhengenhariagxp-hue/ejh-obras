@@ -19,7 +19,7 @@
 
 
 <!-- build:20260424_1930 -->
-<link rel="stylesheet" href="./styles.css?v=20260501a">
+<link rel="stylesheet" href="./styles.css?v=20260501c">
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -98,6 +98,7 @@
   <div class="page-hdr">
     <div><div class="page-title">Dashboard</div><div class="page-sub" id="dash-date"></div></div>
     <div class="hdr-actions">
+      <button id="btn-privacy-mode" class="btn btn-outline" onclick="togglePrivacyMode()" title="Ocultar/mostrar valores em R$ (útil para apresentar a tela)" style="color:#7c3aed;border-color:#7c3aed">👁 Ocultar valores</button>
       <button class="btn btn-outline" onclick="nav('captura',null)" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;border:none">👷 Chamar IAsô</button>
       <button class="btn btn-primary" onclick="resetFormObra();openModal('modal-obra')">＋ Novo Projeto / Obra</button>
     </div>

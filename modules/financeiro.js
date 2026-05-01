@@ -1,5 +1,5 @@
 // modules/financeiro.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260501b';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260501c';
 
 let _finLimit = 20;
 let _hideRT = false;
@@ -839,16 +839,23 @@ export function renderFinanceiro(state){
   const btnImp = document.getElementById('btn-importar-historico-ejh');
   if (btnImp) btnImp.style.display = temFaturamentoHistoricoEJH(state) ? 'none' : '';
 
-  const rec=state.fin.filter(x=>x.tipo==='Receita').reduce((a,x)=>a+x.valor,0);
-  const des=state.fin.filter(x=>x.tipo==='Despesa').reduce((a,x)=>a+x.valor,0);
-  const sal=rec-des;
-  safeText('fin-kpi-rec', fmt(rec));
-  safeText('fin-kpi-des', fmt(des));
+  // KPIs do topo: somente do ano corrente (todos os históricos vão para "Saldo Geral")
+  const anoAtual = String(new Date().getFullYear());
+  const recAno = state.fin.filter(x=>x.tipo==='Receita' && x.data?.startsWith(anoAtual)).reduce((a,x)=>a+x.valor,0);
+  const desAno = state.fin.filter(x=>x.tipo==='Despesa' && x.data?.startsWith(anoAtual)).reduce((a,x)=>a+x.valor,0);
+  const salAno = recAno - desAno;
+  safeText('fin-kpi-rec', fmt(recAno));
+  safeText('fin-kpi-des', fmt(desAno));
   const salEl=document.getElementById('fin-kpi-sal');
   if(salEl){
-    salEl.textContent=fmt(sal);
-    salEl.className='kpi-value '+(sal>=0?'saldo-positivo':'saldo-negativo');
+    salEl.textContent=fmt(salAno);
+    salEl.className='kpi-value '+(salAno>=0?'saldo-positivo':'saldo-negativo');
   }
+  // Atualiza labels para indicar o ano
+  document.querySelectorAll('#page-financeiro .kpi-grid:first-of-type .kpi-label').forEach((el, i) => {
+    const labels = ['Receitas '+anoAtual, 'Despesas '+anoAtual, 'Saldo '+anoAtual];
+    if (labels[i]) el.textContent = labels[i];
+  });
 
   // Novo Dashboard Avançado (KPIs adicionais inclusos)
   renderDashFinAvancado(state);
@@ -1038,6 +1045,11 @@ export function renderDashFinAvancado(state) {
     </tr>`;
   }).reverse().join('');
 
+  // Estado de colapso (persistido em localStorage)
+  const isCol = id => localStorage.getItem('ejh_sec_' + id) === '1';
+  const dispCol = id => isCol(id) ? 'display:none' : '';
+  const iconCol = id => isCol(id) ? '▶' : '▼';
+
   container.innerHTML = `
     <!-- KPIs de performance -->
     <div class="kpi-grid" style="margin-top:20px;margin-bottom:20px">
@@ -1065,77 +1077,97 @@ export function renderDashFinAvancado(state) {
 
     <!-- Saldo Geral Histórico -->
     <div class="section" style="border-left:4px solid #0f766e;margin-bottom:18px">
-      <div class="section-hdr">
+      <div class="section-hdr" style="cursor:pointer" onclick="toggleFinSection('saldo-geral')">
         <div class="section-title">💰 Saldo Geral — Histórico EJH (2016–${yearNow})</div>
+        <button class="btn btn-outline btn-xs" style="font-size:11px;padding:3px 9px" id="tog-saldo-geral" type="button">${iconCol('saldo-geral')}</button>
       </div>
-      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
-        <div class="kpi green">
-          <div class="kpi-label">Total Recebido</div>
-          <div class="kpi-value">${fmt(totalRecAll)}</div>
-          <div class="kpi-sub">2016 até hoje</div>
-        </div>
-        <div class="kpi red">
-          <div class="kpi-label">Total Despesas</div>
-          <div class="kpi-value">${fmt(totalDesAll)}</div>
-          <div class="kpi-sub">Todas as despesas lançadas</div>
-        </div>
-        <div class="kpi ${saldoLiq>=0?'teal':'red'}">
-          <div class="kpi-label">Saldo Líquido</div>
-          <div class="kpi-value" style="color:${saldoLiq>=0?'#0f766e':'var(--red)'}">${fmt(saldoLiq)}</div>
-          <div class="kpi-sub">Receitas − Despesas</div>
+      <div id="sec-saldo-geral" style="${dispCol('saldo-geral')}">
+        <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="kpi green">
+            <div class="kpi-label">Total Recebido</div>
+            <div class="kpi-value">${fmt(totalRecAll)}</div>
+            <div class="kpi-sub">2016 até hoje</div>
+          </div>
+          <div class="kpi red">
+            <div class="kpi-label">Total Despesas</div>
+            <div class="kpi-value">${fmt(totalDesAll)}</div>
+            <div class="kpi-sub">Todas as despesas lançadas</div>
+          </div>
+          <div class="kpi ${saldoLiq>=0?'teal':'red'}">
+            <div class="kpi-label">Saldo Líquido</div>
+            <div class="kpi-value" style="color:${saldoLiq>=0?'#0f766e':'var(--red)'}">${fmt(saldoLiq)}</div>
+            <div class="kpi-sub">Receitas − Despesas</div>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Análise Comparativa Mensal: 2025 vs 2026 -->
     <div class="section" style="border-left:4px solid #2563eb;margin-bottom:18px">
-      <div class="section-hdr" style="flex-wrap:wrap;gap:8px">
+      <div class="section-hdr" style="flex-wrap:wrap;gap:8px;cursor:pointer" onclick="toggleFinSection('comp-mensal')">
         <div class="section-title">📊 Comparativo Mensal — 2025 vs 2026</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <span style="padding:3px 10px;background:#eff6ff;color:#1d4ed8;border-radius:8px;font-size:12px;font-weight:700">2025: ${fmt(tot25)}</span>
           <span style="padding:3px 10px;background:#ede9fe;color:#7c3aed;border-radius:8px;font-size:12px;font-weight:700">2026: ${fmt(tot26)}</span>
           <span style="padding:3px 10px;background:${tot26>=tot25?'#f0fdf4':'#fef2f2'};color:${tot26>=tot25?'var(--green)':'var(--red)'};border-radius:8px;font-size:12px;font-weight:700">${pctCmp(tot26,tot25)} no ano</span>
+          <button class="btn btn-outline btn-xs" style="font-size:11px;padding:3px 9px" id="tog-comp-mensal" type="button" onclick="event.stopPropagation();toggleFinSection('comp-mensal')">${iconCol('comp-mensal')}</button>
         </div>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Mês</th>
-              <th style="color:#1d4ed8">2025</th>
-              <th style="color:#7c3aed">2026</th>
-              <th>26 vs 25</th>
-            </tr>
-          </thead>
-          <tbody>${monthlyRows}</tbody>
-          <tfoot>
-            <tr style="background:#f8faff;font-weight:800">
-              <td>TOTAL</td>
-              <td style="color:#1d4ed8">${fmt(tot25)}</td>
-              <td style="color:#7c3aed">${fmt(tot26)}</td>
-              <td style="font-size:12px">${pctCmp(tot26,tot25)}</td>
-            </tr>
-          </tfoot>
-        </table>
+      <div id="sec-comp-mensal" style="${dispCol('comp-mensal')}">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Mês</th>
+                <th style="color:#1d4ed8">2025</th>
+                <th style="color:#7c3aed">2026</th>
+                <th>26 vs 25</th>
+              </tr>
+            </thead>
+            <tbody>${monthlyRows}</tbody>
+            <tfoot>
+              <tr style="background:#f8faff;font-weight:800">
+                <td>TOTAL</td>
+                <td style="color:#1d4ed8">${fmt(tot25)}</td>
+                <td style="color:#7c3aed">${fmt(tot26)}</td>
+                <td style="font-size:12px">${pctCmp(tot26,tot25)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       </div>
     </div>
 
     <!-- Histórico Anual EJH (2016–${yearNow}) -->
     <div class="section" style="border-left:4px solid #0891b2;margin-bottom:18px">
-      <div class="section-hdr">
+      <div class="section-hdr" style="cursor:pointer" onclick="toggleFinSection('hist-anual')">
         <div class="section-title">📈 Histórico Anual EJH (${anoInicio}–${yearNow})</div>
+        <button class="btn btn-outline btn-xs" style="font-size:11px;padding:3px 9px" id="tog-hist-anual" type="button">${iconCol('hist-anual')}</button>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Ano</th><th>Faturamento</th><th>Crescimento YoY</th></tr></thead>
-          <tbody>${anualRows}</tbody>
-        </table>
-      </div>
-      <div style="font-size:11px;color:var(--muted);margin-top:6px;padding:0 2px">
-        * 2016–2024: totais anuais consolidados. 2025: totais mensais. 2026: lançamentos detalhados.
+      <div id="sec-hist-anual" style="${dispCol('hist-anual')}">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Ano</th><th>Faturamento</th><th>Crescimento YoY</th></tr></thead>
+            <tbody>${anualRows}</tbody>
+          </table>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;padding:0 2px">
+          * 2016–2024: totais anuais consolidados. 2025: totais mensais. 2026: lançamentos detalhados.
+        </div>
       </div>
     </div>
   `;
+}
+
+// Alterna a exibição de uma seção do dashboard financeiro e persiste em localStorage
+export function toggleFinSection(id) {
+  const body = document.getElementById('sec-' + id);
+  const tog = document.getElementById('tog-' + id);
+  if (!body) return;
+  const willCollapse = body.style.display !== 'none';
+  body.style.display = willCollapse ? 'none' : '';
+  if (tog) tog.textContent = willCollapse ? '▶' : '▼';
+  try { localStorage.setItem('ejh_sec_' + id, willCollapse ? '1' : '0'); } catch(e) {}
 }
 
 

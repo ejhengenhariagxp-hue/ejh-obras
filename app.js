@@ -4,14 +4,14 @@
 import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
          openModal, closeModal, statusBadge, tipoLabel,
          popularSelectsObras, modalidadeIcon, verificarAvisosObra,
-         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260501b';
+         toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260501c';
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
          fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA,
-         getIaKey, setIaKey, hasIaKey } from './services.js?v=20260501b';
-import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260501b';
-import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260501b';
-import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260501b';
-import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario, abrirDiarioObra, voltarDiarioObras } from './modules/diario.js?v=20260501b';
+         getIaKey, setIaKey, hasIaKey } from './services.js?v=20260501c';
+import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260501c';
+import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260501c';
+import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260501c';
+import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario, abrirDiarioObra, voltarDiarioObras } from './modules/diario.js?v=20260501c';
 import { addFin, delFin, openEditFin, openModalFin, renderFinanceiro, toggleHideRT, marcarFinPago,
          addCustoFixo, delCustoFixo, toggleCustoFixoAtivo, openEditCustoFixo, abrirModalCustoFixo,
          preencherCustoFixoPadrao, gerarLancamentosCustosFixos,
@@ -19,28 +19,28 @@ import { addFin, delFin, openEditFin, openModalFin, renderFinanceiro, toggleHide
          addConta, delConta, openEditConta, abrirModalConta,
          gerarParcelas, toggleParcFin, aplicarFiltrosFin, limparFiltrosFin,
          atualizarStatusVencimentos,
-         importarFaturamentoHistoricoEJH } from './modules/financeiro.js?v=20260501b';
-import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260501b';
-import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260501b';
+         importarFaturamentoHistoricoEJH, toggleFinSection } from './modules/financeiro.js?v=20260501c';
+import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260501c';
+import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260501c';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
          saveProposta, delProposta, editProposta, printProposta, compartilharWhatsApp,
          colherAssinaturaProposta, importFromOrcamento, addObraItem,
          addProjServico, addProjExtra, toggleModoGlobal, renderPropostas,
-         atualizarStatusProposta, gerarObraDeProposta } from './modules/propostas.js?v=20260501b';
-import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260501b';
-import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260501b';
-import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260501b';
-import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js?v=20260501b';
+         atualizarStatusProposta, gerarObraDeProposta } from './modules/propostas.js?v=20260501c';
+import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260501c';
+import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260501c';
+import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260501c';
+import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js?v=20260501c';
 import { novaComposicao, addInsumoComp, renderInsumosComp, calcTotalComp,
          salvarComposicao, delComposicao, renderComposicoes, filtrarComposicoes,
          popularSelectComposicoes, preencherDadosComposicao, calcTotalComposicaoSel,
          inserirComposicaoNoOrcamento, editarComposicao,
          abrirCopiaSinapi, _setCopiaSrc, _filtrarCopiaSinapi, _copiarDeSinapi,
-         setInsumoField, removeInsumoAt } from './modules/composicoes.js?v=20260501b';
-import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js?v=20260501b';
+         setInsumoField, removeInsumoAt } from './modules/composicoes.js?v=20260501c';
+import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js?v=20260501c';
 import { importExcel, importCSV, importPDF, importManual, applyMapping,
          _selectSheet, _updateImportItem, _removeImportItem, addImportRow,
-         cancelImport, confirmImport } from './modules/importar.js?v=20260501b';
+         cancelImport, confirmImport } from './modules/importar.js?v=20260501c';
 
 // ── Estado global ────────────────────────────────────────────────────
 const DEFAULT_STATE = {
@@ -885,6 +885,17 @@ G.aplicarFiltrosFin = () => { aplicarFiltrosFin(); renderAtiva(); };
 G.limparFiltrosFin = () => { limparFiltrosFin(); renderAtiva(); };
 G.toggleHideRT = cb => { toggleHideRT(state, cb); renderAtiva(); };
 G.importarFaturamentoHistoricoEJH = () => { if(importarFaturamentoHistoricoEJH(state)) renderAtiva(); };
+G.toggleFinSection = id => toggleFinSection(id);
+G.togglePrivacyMode = () => {
+  const on = !document.body.classList.contains('privacy-mode');
+  document.body.classList.toggle('privacy-mode', on);
+  try { localStorage.setItem('ejh_privacy', on ? '1' : '0'); } catch(e) {}
+  const btn = document.getElementById('btn-privacy-mode');
+  if (btn) {
+    btn.textContent = on ? '🙈 Mostrar valores' : '👁 Ocultar valores';
+    btn.style.background = on ? '#ede9fe' : '';
+  }
+};
 G.openModalMedicao = () => openModalMedicao(state);
 G.openEditMedicao = id => openEditMedicao(state, id);
 G.delMedicao = id => { if(delMedicao(state,id)) renderAtiva(); };
@@ -1495,6 +1506,14 @@ setInterval(() => {
 }, 60000);
 
 window.addEventListener('load', () => {
+  // Restaura modo privacidade (oculta valores em R$ no Dashboard)
+  try {
+    if (localStorage.getItem('ejh_privacy') === '1') {
+      document.body.classList.add('privacy-mode');
+      const btn = document.getElementById('btn-privacy-mode');
+      if (btn) btn.textContent = '🙈 Mostrar valores';
+    }
+  } catch(e) {}
   initFields();
   renderAtiva();
   // Lucide icons: substitui <i data-lucide="..."> por SVG inline
