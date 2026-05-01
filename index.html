@@ -19,14 +19,14 @@
 
 
 <!-- build:20260424_1930 -->
-<link rel="stylesheet" href="./styles.css?v=20260430v">
+<link rel="stylesheet" href="./styles.css?v=20260501a">
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260430v"></script>
+<script type="module" src="./app.js?v=20260501a"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Lucide icons (modern SVG icon library) -->
@@ -275,7 +275,7 @@
 <div id="page-financeiro" class="page">
   <div class="page-hdr">
     <div><div class="page-title">Controle Financeiro</div><div class="page-sub">Receitas, despesas e fluxo por atividade</div></div>
-    <div class="hdr-actions"><button class="btn btn-outline" onclick="window.print()" style="color:#16a34a;border-color:#16a34a">🖨 PDF</button><button class="btn btn-green" onclick="openModalFin('Receita')">＋ Receita</button><button class="btn btn-outline" style="color:var(--red);border-color:var(--red)" onclick="openModalFin('Despesa')">＋ Despesa</button></div>
+    <div class="hdr-actions"><button id="btn-importar-historico-ejh" class="btn btn-outline" onclick="importarFaturamentoHistoricoEJH()" style="color:#7c3aed;border-color:#7c3aed;display:none" title="Importar faturamento de 2016 até abr/2026">📊 Importar Histórico</button><button class="btn btn-outline" onclick="window.print()" style="color:#16a34a;border-color:#16a34a">🖨 PDF</button><button class="btn btn-green" onclick="openModalFin('Receita')">＋ Receita</button><button class="btn btn-outline" style="color:var(--red);border-color:var(--red)" onclick="openModalFin('Despesa')">＋ Despesa</button></div>
   </div>
   <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
     <div class="kpi green"><div class="kpi-label">Receitas</div><div class="kpi-value" id="fin-kpi-rec">R$0</div></div>

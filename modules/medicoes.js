@@ -1,5 +1,5 @@
 // modules/medicoes.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName, popularSelectsObras, markDeleted } from '../utils.js?v=20260430v';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName, popularSelectsObras, markDeleted } from '../utils.js?v=20260501a';
 
 export function addMedicao(state){
   const obraId=document.getElementById('f-med-obra')?.value;
