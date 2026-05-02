@@ -1,5 +1,5 @@
 // modules/financeiro.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260501f';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260501g';
 
 let _finLimit = 20;
 let _hideRT = false;
@@ -831,6 +831,32 @@ export function marcarFinPago(state, id) {
   return true;
 }
 
+// Calcula receita de um período respeitando overrides em state.faturamentoMensal
+// month=null retorna o ano inteiro (soma overrides + meses sem override calculados)
+function _recYMOv(state, year, month = null) {
+  if (!state.faturamentoMensal) state.faturamentoMensal = {};
+  const fromFin = (y, m) => (state.fin || []).filter(f => {
+    if (f.tipo !== 'Receita') return false;
+    if (f.data?.substring(0,4) !== String(y)) return false;
+    if (m !== null && f.data?.substring(5,7) !== String(m).padStart(2,'0')) return false;
+    return true;
+  }).reduce((a,x) => a + (+x.valor||0), 0);
+
+  if (month !== null) {
+    const k = `${year}-${String(month).padStart(2,'0')}`;
+    const ov = state.faturamentoMensal?.[k];
+    if (ov !== undefined && ov !== null) return +ov;
+    return fromFin(year, month);
+  }
+  let total = 0;
+  for (let m = 1; m <= 12; m++) {
+    const k = `${year}-${String(m).padStart(2,'0')}`;
+    const ov = state.faturamentoMensal?.[k];
+    total += (ov !== undefined && ov !== null) ? +ov : fromFin(year, m);
+  }
+  return total;
+}
+
 export function renderFinanceiro(state){
   // Auto-atualiza status (a_vencer/pendente) conforme as datas
   atualizarStatusVencimentos(state);
@@ -839,9 +865,9 @@ export function renderFinanceiro(state){
   const btnImp = document.getElementById('btn-importar-historico-ejh');
   if (btnImp) btnImp.style.display = temFaturamentoHistoricoEJH(state) ? 'none' : '';
 
-  // KPIs do topo: somente do ano corrente (todos os históricos vão para "Saldo Geral")
+  // KPIs do topo: ano corrente, respeitando overrides do comparativo (consistência)
   const anoAtual = String(new Date().getFullYear());
-  const recAno = state.fin.filter(x=>x.tipo==='Receita' && x.data?.startsWith(anoAtual)).reduce((a,x)=>a+x.valor,0);
+  const recAno = _recYMOv(state, anoAtual);
   const desAno = state.fin.filter(x=>x.tipo==='Despesa' && x.data?.startsWith(anoAtual)).reduce((a,x)=>a+x.valor,0);
   const salAno = recAno - desAno;
   safeText('fin-kpi-rec', fmt(recAno));
@@ -853,7 +879,7 @@ export function renderFinanceiro(state){
   }
   // Atualiza labels para indicar o ano
   document.querySelectorAll('#page-financeiro .kpi-grid:first-of-type .kpi-label').forEach((el, i) => {
-    const labels = ['Receitas '+anoAtual, 'Despesas '+anoAtual, 'Saldo '+anoAtual];
+    const labels = ['Receitas brutas '+anoAtual, 'Despesas '+anoAtual, 'Saldo '+anoAtual];
     if (labels[i]) el.textContent = labels[i];
   });
 
@@ -1089,14 +1115,85 @@ export function renderDashFinAvancado(state) {
     </tr>`;
   }).reverse().join('');
 
+  // ── Resumo do Mês: recebidos, próximos 2 meses, média últimos 5, vs ano anterior ──
+  const MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const mesAtualKey = `${yearNow}-${String(monthNow).padStart(2,'0')}`;
+  const mesNomeAtual = MESES_FULL[monthNow-1];
+
+  // 1. Recebidos do mês corrente (status = 'pago')
+  const recebidosMes = (state.fin || []).filter(f =>
+    f.tipo === 'Receita' && f.data?.startsWith(mesAtualKey) && f.status === 'pago'
+  ).reduce((a,x) => a + (+x.valor||0), 0);
+  const qtdRecebidosMes = (state.fin || []).filter(f =>
+    f.tipo === 'Receita' && f.data?.startsWith(mesAtualKey) && f.status === 'pago'
+  ).length;
+
+  // 2. Próximos 2 meses (a receber, status != 'pago')
+  const proxStart = new Date(yearNow, monthNow, 1);  // primeiro dia do PRÓXIMO mês
+  const proxEnd = new Date(yearNow, monthNow + 2, 1); // primeiro dia daqui a 2 meses
+  const fmtDataIso = d => d.toISOString().split('T')[0];
+  const proxStartStr = fmtDataIso(proxStart);
+  const proxEndStr = fmtDataIso(proxEnd);
+  const aReceberProx = (state.fin || []).filter(f =>
+    f.tipo === 'Receita' && f.status !== 'pago' &&
+    f.data >= proxStartStr && f.data < proxEndStr
+  );
+  const aReceberProxTotal = aReceberProx.reduce((a,x) => a + (+x.valor||0), 0);
+
+  // 3. Média dos últimos 5 lançamentos de receita (pagos)
+  const ultimas5 = (state.fin || [])
+    .filter(f => f.tipo === 'Receita' && f.status === 'pago')
+    .sort((a,b) => (b.data || '').localeCompare(a.data || ''))
+    .slice(0, 5);
+  const media5 = ultimas5.length ? ultimas5.reduce((a,x) => a + (+x.valor||0), 0) / ultimas5.length : 0;
+
+  // 4. Comparativo deste mês vs mesmo mês ano anterior (respeita overrides)
+  const recMesAtual = recYM(yearNow, monthNow);
+  const recMesAnterior = recYM(yearLast, monthNow);
+  const diffMesPct = recMesAnterior > 0 ? ((recMesAtual / recMesAnterior) - 1) * 100 : null;
+  const diffMesColor = diffMesPct === null ? 'var(--muted)' : (diffMesPct >= 0 ? 'var(--green)' : 'var(--red)');
+  const diffMesIcon = diffMesPct === null ? '—' : (diffMesPct >= 0 ? '↗' : '↘');
+
   // Estado de colapso (persistido em localStorage)
   const isCol = id => localStorage.getItem('ejh_sec_' + id) === '1';
   const dispCol = id => isCol(id) ? 'display:none' : '';
   const iconCol = id => isCol(id) ? '▶' : '▼';
 
   container.innerHTML = `
+    <!-- Resumo do Mês -->
+    <div class="section" style="border-left:4px solid #7c3aed;margin-top:20px;margin-bottom:18px">
+      <div class="section-hdr" style="cursor:pointer" onclick="toggleFinSection('resumo-mes')">
+        <div class="section-title">📋 Resumo do Mês — ${mesNomeAtual}/${yearNow}</div>
+        <button class="btn btn-outline btn-xs" style="font-size:11px;padding:3px 9px" id="tog-resumo-mes" type="button">${iconCol('resumo-mes')}</button>
+      </div>
+      <div id="sec-resumo-mes" style="${dispCol('resumo-mes')}">
+        <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+          <div class="kpi green">
+            <div class="kpi-label">💰 Recebidos do mês</div>
+            <div class="kpi-value">${fmt(recebidosMes)}</div>
+            <div class="kpi-sub">${qtdRecebidosMes} lançamento${qtdRecebidosMes!==1?'s':''} pago${qtdRecebidosMes!==1?'s':''} em ${mesNomeAtual.toLowerCase()}</div>
+          </div>
+          <div class="kpi blue">
+            <div class="kpi-label">📅 Próximos 2 meses</div>
+            <div class="kpi-value">${fmt(aReceberProxTotal)}</div>
+            <div class="kpi-sub">${aReceberProx.length} lançamento${aReceberProx.length!==1?'s':''} a receber</div>
+          </div>
+          <div class="kpi teal">
+            <div class="kpi-label">📊 Média (últimos 5)</div>
+            <div class="kpi-value">${fmt(media5)}</div>
+            <div class="kpi-sub">${ultimas5.length>0?'baseado nas '+ultimas5.length+' últimas receitas pagas':'sem receitas pagas ainda'}</div>
+          </div>
+          <div class="kpi ${diffMesPct === null ? 'amber' : (diffMesPct >= 0 ? 'green' : 'red')}">
+            <div class="kpi-label">📈 ${mesNomeAtual} ${yearNow} vs ${yearLast}</div>
+            <div class="kpi-value" style="color:${diffMesColor}">${diffMesPct === null ? '—' : diffMesIcon + ' ' + Math.abs(diffMesPct).toFixed(1) + '%'}</div>
+            <div class="kpi-sub">${fmt(recMesAtual)} vs ${fmt(recMesAnterior)} (${yearLast})</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- KPIs de performance -->
-    <div class="kpi-grid" style="margin-top:20px;margin-bottom:20px">
+    <div class="kpi-grid" style="margin-bottom:20px">
       <div class="kpi purple">
         <div class="kpi-label">Faturamento R1 (Projeto)</div>
         <div class="kpi-value">${fmt(r1Rec)}</div>
