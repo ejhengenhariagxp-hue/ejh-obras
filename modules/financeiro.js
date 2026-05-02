@@ -1,5 +1,5 @@
 // modules/financeiro.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260501d';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260501e';
 
 let _finLimit = 20;
 let _hideRT = false;
@@ -975,13 +975,42 @@ export function renderDashFinAvancado(state) {
     `;
   }
 
-  // Helper: soma receitas de um ano+mês específico
-  const recYM = (year, month = null) => (state.fin || []).filter(f => {
+  // Garante que o mapa de overrides existe
+  if (!state.faturamentoMensal) state.faturamentoMensal = {};
+
+  // Calcula receitas a partir dos lançamentos (sem override)
+  const recYMCalc = (year, month = null) => (state.fin || []).filter(f => {
     if (f.tipo !== 'Receita') return false;
     if (f.data?.substring(0,4) !== String(year)) return false;
     if (month !== null && f.data?.substring(5,7) !== String(month).padStart(2,'0')) return false;
     return true;
   }).reduce((a,x) => a + (+x.valor||0), 0);
+
+  // Helper público: respeita o override do usuário se existir
+  // - Para mês específico: retorna override se houver, senão calcula
+  // - Para ano inteiro: soma overrides + meses sem override calculados
+  const recYM = (year, month = null) => {
+    if (month !== null) {
+      const k = `${year}-${String(month).padStart(2,'0')}`;
+      const ov = state.faturamentoMensal?.[k];
+      if (ov !== undefined && ov !== null) return +ov;
+      return recYMCalc(year, month);
+    }
+    let total = 0;
+    for (let m = 1; m <= 12; m++) {
+      const k = `${year}-${String(m).padStart(2,'0')}`;
+      const ov = state.faturamentoMensal?.[k];
+      if (ov !== undefined && ov !== null) total += +ov;
+      else total += recYMCalc(year, m);
+    }
+    return total;
+  };
+
+  // Verifica se uma célula tem override (para mostrar marcador ✏️)
+  const hasOverride = (year, month) => {
+    const k = `${year}-${String(month).padStart(2,'0')}`;
+    return state.faturamentoMensal?.[k] !== undefined && state.faturamentoMensal?.[k] !== null;
+  };
 
   // R1/R2 de obras
   const finR1 = (state.fin||[]).filter(f => { const o=state.obras.find(x=>x.id===f.obraId); return o&&(o.tipo==='R1'||o.tipo==='projeto'); });
@@ -1010,6 +1039,21 @@ export function renderDashFinAvancado(state) {
     return `<span style="color:${c};font-weight:700">${p>=0?'↗':'↘'} ${Math.abs(p).toFixed(0)}%</span>`;
   };
 
+  // Renderiza uma célula editável de faturamento mensal
+  const cellMes = (year, month, color) => {
+    const v = recYM(year, month);
+    const ov = hasOverride(year, month);
+    const isFuturo = year > yearNow || (year === yearNow && month > monthNow);
+    const valStr = v > 0 ? fmt(v) : (isFuturo ? '<span style="color:var(--muted)">...</span>' : '—');
+    const marker = ov ? '<span title="Valor editado manualmente" style="color:var(--amber);font-size:10px;margin-right:3px">✏️</span>' : '';
+    return `<td style="color:${color};font-weight:${isFuturo&&!ov?'400':'700'}">
+      <span style="display:inline-flex;align-items:center;gap:4px">
+        <span>${marker}${valStr}</span>
+        <button type="button" onclick="editarFaturamentoMes(${year},${month})" title="Editar faturamento de ${MESES[month-1]}/${year}" style="border:none;background:transparent;cursor:pointer;font-size:11px;opacity:.55;padding:0 2px">✏️</button>
+      </span>
+    </td>`;
+  };
+
   const monthlyRows = MESES.map((mName, idx) => {
     const m = idx + 1;
     const v25 = recYM(2025, m);
@@ -1018,8 +1062,8 @@ export function renderDashFinAvancado(state) {
     const isFuturo = yearNow < 2026 ? false : m > monthNow;
     return `<tr style="${isCurMonth?'background:#eff6ff':''}">
       <td style="font-weight:700;color:var(--navy)">${mName}${isCurMonth?' ⭐':''}</td>
-      <td style="color:#1d4ed8;font-weight:600">${v25>0?fmt(v25):'—'}</td>
-      <td style="color:#7c3aed;font-weight:${isFuturo?'400':'700'}">${v26>0?fmt(v26):(isFuturo?'<span style="color:var(--muted)">...</span>':'—')}</td>
+      ${cellMes(2025, m, '#1d4ed8')}
+      ${cellMes(2026, m, '#7c3aed')}
       <td style="font-size:12px">${isFuturo?'':pctCmp(v26,v25)}</td>
     </tr>`;
   }).join('');
@@ -1168,6 +1212,55 @@ export function toggleFinSection(id) {
   body.style.display = willCollapse ? 'none' : '';
   if (tog) tog.textContent = willCollapse ? '▶' : '▼';
   try { localStorage.setItem('ejh_sec_' + id, willCollapse ? '1' : '0'); } catch(e) {}
+}
+
+// ── Edição de faturamento mensal (override) ──────────────────────────
+// state.faturamentoMensal['YYYY-MM'] = valor; sobrescreve a soma calculada
+const _MESES_NOMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+export function editarFaturamentoMes(state, year, month) {
+  if (!state.faturamentoMensal) state.faturamentoMensal = {};
+  const k = `${year}-${String(month).padStart(2,'0')}`;
+  // Calcula valor a partir dos lançamentos para mostrar como referência
+  const calc = (state.fin || []).filter(f =>
+    f.tipo === 'Receita' && f.data?.startsWith(k)
+  ).reduce((a,x) => a + (+x.valor||0), 0);
+  const ovExistente = state.faturamentoMensal[k];
+  const valorAtual = ovExistente !== undefined && ovExistente !== null ? +ovExistente : calc;
+
+  document.getElementById('f-fatm-key').value = k;
+  document.getElementById('f-fatm-label').textContent = `${_MESES_NOMES[month-1]} / ${year}`;
+  document.getElementById('f-fatm-calc').textContent = fmt(calc);
+  document.getElementById('f-fatm-valor').value = valorAtual ? valorAtual.toFixed(2) : '';
+  // Mostra/esconde botão "Voltar para calculado"
+  const btnReset = document.getElementById('f-fatm-btn-reset');
+  if (btnReset) btnReset.style.display = (ovExistente !== undefined && ovExistente !== null) ? '' : 'none';
+  openModal('modal-fatm');
+}
+
+export function salvarFaturamentoMes(state) {
+  const k = document.getElementById('f-fatm-key')?.value;
+  const valor = +document.getElementById('f-fatm-valor')?.value;
+  if (!k) return false;
+  if (isNaN(valor) || valor < 0) {
+    showToast('⚠️ Informe um valor válido (≥ 0)');
+    return false;
+  }
+  if (!state.faturamentoMensal) state.faturamentoMensal = {};
+  state.faturamentoMensal[k] = valor;
+  closeModal('modal-fatm');
+  showToast(`✅ Faturamento de ${k} ajustado para ${fmt(valor)}`);
+  return true;
+}
+
+export function resetarFaturamentoMes(state) {
+  const k = document.getElementById('f-fatm-key')?.value;
+  if (!k) return false;
+  if (!confirm(`Voltar a usar o valor calculado dos lançamentos para ${k}?`)) return false;
+  if (state.faturamentoMensal) delete state.faturamentoMensal[k];
+  closeModal('modal-fatm');
+  showToast(`🔄 ${k}: valor calculado restaurado`);
+  return true;
 }
 
 
