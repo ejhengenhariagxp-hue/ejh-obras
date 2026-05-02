@@ -3,6 +3,7 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, 
 
 let _finLimit = 20;
 let _hideRT = false;
+let _resumoMesSel = ''; // '' = mês corrente
 
 export function toggleHideRT(state, cb) {
   _hideRT = !!(cb && cb.checked);
@@ -1117,42 +1118,64 @@ export function renderDashFinAvancado(state) {
 
   // ── Resumo do Mês: recebidos, próximos 2 meses, média últimos 5, vs ano anterior ──
   const MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  const mesAtualKey = `${yearNow}-${String(monthNow).padStart(2,'0')}`;
-  const mesNomeAtual = MESES_FULL[monthNow-1];
 
-  // 1. Recebidos do mês corrente (status = 'pago')
+  // Determina mês selecionado (ou mês corrente como padrão)
+  const defaultMesKey = `${yearNow}-${String(monthNow).padStart(2,'0')}`;
+  let selMesKey = _resumoMesSel || defaultMesKey;
+  const [selYearStr, selMonStr] = selMesKey.split('-');
+  const selYear = parseInt(selYearStr);
+  const selMon  = parseInt(selMonStr);
+  selMesKey = `${selYear}-${String(selMon).padStart(2,'0')}`;
+  const mesNomeSel = MESES_FULL[selMon - 1];
+
+  // 1. Recebidos do mês selecionado (status = 'pago')
   const recebidosMes = (state.fin || []).filter(f =>
-    f.tipo === 'Receita' && f.data?.startsWith(mesAtualKey) && f.status === 'pago'
+    f.tipo === 'Receita' && f.data?.startsWith(selMesKey) && f.status === 'pago'
   ).reduce((a,x) => a + (+x.valor||0), 0);
   const qtdRecebidosMes = (state.fin || []).filter(f =>
-    f.tipo === 'Receita' && f.data?.startsWith(mesAtualKey) && f.status === 'pago'
+    f.tipo === 'Receita' && f.data?.startsWith(selMesKey) && f.status === 'pago'
   ).length;
 
-  // 2. Próximos 2 meses (a receber, status != 'pago')
-  const proxStart = new Date(yearNow, monthNow, 1);  // primeiro dia do PRÓXIMO mês
-  const proxEnd = new Date(yearNow, monthNow + 2, 1); // primeiro dia daqui a 2 meses
+  // 2. Próximos 2 meses após o mês selecionado (a receber, status != 'pago')
+  const proxStart = new Date(selYear, selMon, 1);
+  const proxEnd   = new Date(selYear, selMon + 2, 1);
   const fmtDataIso = d => d.toISOString().split('T')[0];
   const proxStartStr = fmtDataIso(proxStart);
-  const proxEndStr = fmtDataIso(proxEnd);
+  const proxEndStr   = fmtDataIso(proxEnd);
   const aReceberProx = (state.fin || []).filter(f =>
     f.tipo === 'Receita' && f.status !== 'pago' &&
     f.data >= proxStartStr && f.data < proxEndStr
   );
   const aReceberProxTotal = aReceberProx.reduce((a,x) => a + (+x.valor||0), 0);
 
-  // 3. Média dos últimos 5 lançamentos de receita (pagos)
+  // 3. Média dos últimos 5 lançamentos de receita pagos até o mês selecionado
+  const selMesLastDay = `${selYear}-${String(selMon).padStart(2,'0')}-31`;
   const ultimas5 = (state.fin || [])
-    .filter(f => f.tipo === 'Receita' && f.status === 'pago')
+    .filter(f => f.tipo === 'Receita' && f.status === 'pago' && (f.data || '') <= selMesLastDay)
     .sort((a,b) => (b.data || '').localeCompare(a.data || ''))
     .slice(0, 5);
   const media5 = ultimas5.length ? ultimas5.reduce((a,x) => a + (+x.valor||0), 0) / ultimas5.length : 0;
 
-  // 4. Comparativo deste mês vs mesmo mês ano anterior (respeita overrides)
-  const recMesAtual = recYM(yearNow, monthNow);
-  const recMesAnterior = recYM(yearLast, monthNow);
-  const diffMesPct = recMesAnterior > 0 ? ((recMesAtual / recMesAnterior) - 1) * 100 : null;
+  // 4. Comparativo mês selecionado vs mesmo mês no ano anterior (respeita overrides)
+  const recMesAtual    = recYM(selYear, selMon);
+  const recMesAnterior = recYM(selYear - 1, selMon);
+  const diffMesPct  = recMesAnterior > 0 ? ((recMesAtual / recMesAnterior) - 1) * 100 : null;
   const diffMesColor = diffMesPct === null ? 'var(--muted)' : (diffMesPct >= 0 ? 'var(--green)' : 'var(--red)');
-  const diffMesIcon = diffMesPct === null ? '—' : (diffMesPct >= 0 ? '↗' : '↘');
+  const diffMesIcon  = diffMesPct === null ? '—' : (diffMesPct >= 0 ? '↗' : '↘');
+
+  // Gera options do select de filtro de mês (3 meses à frente até 23 meses atrás)
+  const optsResumoMes = (() => {
+    const opts = [];
+    for (let delta = 3; delta >= -23; delta--) {
+      const d = new Date(yearNow, monthNow - 1 + delta, 1);
+      const y = d.getFullYear();
+      const mm = d.getMonth() + 1;
+      const k = `${y}-${String(mm).padStart(2,'0')}`;
+      const lbl = MESES_FULL[mm-1] + ' / ' + y;
+      opts.push(`<option value="${k}"${k === selMesKey ? ' selected' : ''}>${lbl}</option>`);
+    }
+    return opts.join('');
+  })();
 
   // Estado de colapso (persistido em localStorage)
   const isCol = id => localStorage.getItem('ejh_sec_' + id) === '1';
@@ -1162,16 +1185,20 @@ export function renderDashFinAvancado(state) {
   container.innerHTML = `
     <!-- Resumo do Mês -->
     <div class="section" style="border-left:4px solid #7c3aed;margin-top:20px;margin-bottom:18px">
-      <div class="section-hdr" style="cursor:pointer" onclick="toggleFinSection('resumo-mes')">
-        <div class="section-title">📋 Resumo do Mês — ${mesNomeAtual}/${yearNow}</div>
-        <button class="btn btn-outline btn-xs" style="font-size:11px;padding:3px 9px" id="tog-resumo-mes" type="button">${iconCol('resumo-mes')}</button>
+      <div class="section-hdr" style="flex-wrap:wrap;gap:8px">
+        <div class="section-title" style="cursor:pointer" onclick="toggleFinSection('resumo-mes')">📋 Resumo do Mês</div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-left:auto">
+          <select onchange="setResumoMes(this.value)" style="font-size:12px;padding:3px 8px;border-radius:6px;border:1px solid #d1d5db;background:#fff;cursor:pointer" title="Filtrar por mês">${optsResumoMes}</select>
+          <button class="btn btn-outline btn-xs" style="font-size:11px;padding:3px 9px;white-space:nowrap" title="Copiar lançamentos pendentes do mês atual para o próximo mês" onclick="rolarPendentesProximoMes()">🔄 Rolar pendentes</button>
+          <button class="btn btn-outline btn-xs" style="font-size:11px;padding:3px 9px" id="tog-resumo-mes" type="button" onclick="toggleFinSection('resumo-mes')">${iconCol('resumo-mes')}</button>
+        </div>
       </div>
       <div id="sec-resumo-mes" style="${dispCol('resumo-mes')}">
         <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
           <div class="kpi green">
             <div class="kpi-label">💰 Recebidos do mês</div>
             <div class="kpi-value">${fmt(recebidosMes)}</div>
-            <div class="kpi-sub">${qtdRecebidosMes} lançamento${qtdRecebidosMes!==1?'s':''} pago${qtdRecebidosMes!==1?'s':''} em ${mesNomeAtual.toLowerCase()}</div>
+            <div class="kpi-sub">${qtdRecebidosMes} lançamento${qtdRecebidosMes!==1?'s':''} pago${qtdRecebidosMes!==1?'s':''} em ${mesNomeSel.toLowerCase()}</div>
           </div>
           <div class="kpi blue">
             <div class="kpi-label">📅 Próximos 2 meses</div>
@@ -1184,35 +1211,11 @@ export function renderDashFinAvancado(state) {
             <div class="kpi-sub">${ultimas5.length>0?'baseado nas '+ultimas5.length+' últimas receitas pagas':'sem receitas pagas ainda'}</div>
           </div>
           <div class="kpi ${diffMesPct === null ? 'amber' : (diffMesPct >= 0 ? 'green' : 'red')}">
-            <div class="kpi-label">📈 ${mesNomeAtual} ${yearNow} vs ${yearLast}</div>
+            <div class="kpi-label">📈 ${mesNomeSel} ${selYear} vs ${selYear-1}</div>
             <div class="kpi-value" style="color:${diffMesColor}">${diffMesPct === null ? '—' : diffMesIcon + ' ' + Math.abs(diffMesPct).toFixed(1) + '%'}</div>
-            <div class="kpi-sub">${fmt(recMesAtual)} vs ${fmt(recMesAnterior)} (${yearLast})</div>
+            <div class="kpi-sub">${fmt(recMesAtual)} vs ${fmt(recMesAnterior)} (${selYear-1})</div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- KPIs de performance -->
-    <div class="kpi-grid" style="margin-bottom:20px">
-      <div class="kpi purple">
-        <div class="kpi-label">Faturamento R1 (Projeto)</div>
-        <div class="kpi-value">${fmt(r1Rec)}</div>
-        <div class="kpi-sub">Total no ano ${yearNow}</div>
-      </div>
-      <div class="kpi blue">
-        <div class="kpi-label">Faturamento R2 (Obra)</div>
-        <div class="kpi-value">${fmt(r2Rec)}</div>
-        <div class="kpi-sub">Total no ano ${yearNow}</div>
-      </div>
-      <div class="kpi teal">
-        <div class="kpi-label">Média Mensal (${yearNow})</div>
-        <div class="kpi-value">${fmt(avgMensal)}</div>
-        <div class="kpi-sub">Baseado em ${monthNow} mês(es)</div>
-      </div>
-      <div class="kpi ${diffPct>=0?'green':'red'}">
-        <div class="kpi-label">Performance YoY</div>
-        <div class="kpi-value" style="color:${diffColor}">${diffIcon} ${diffPct.toFixed(1)}%</div>
-        <div class="kpi-sub">vs mesmo período de ${yearLast}</div>
       </div>
     </div>
 
@@ -1309,6 +1312,53 @@ export function toggleFinSection(id) {
   body.style.display = willCollapse ? 'none' : '';
   if (tog) tog.textContent = willCollapse ? '▶' : '▼';
   try { localStorage.setItem('ejh_sec_' + id, willCollapse ? '1' : '0'); } catch(e) {}
+}
+
+// Define o mês selecionado no Resumo do Mês ('' = mês corrente)
+export function setResumoMes(val) {
+  _resumoMesSel = val || '';
+  return true;
+}
+
+// Copia lançamentos pendentes do mês corrente para o próximo mês
+export function rolarPendentesProximoMes(state) {
+  if (!state || !Array.isArray(state.fin)) return false;
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth() + 1;
+  const mesKey = `${y}-${String(m).padStart(2,'0')}`;
+
+  const pendentes = state.fin.filter(f =>
+    (f.status === 'pendente' || f.status === 'a_vencer') && f.data?.startsWith(mesKey)
+  );
+
+  if (pendentes.length === 0) {
+    showToast('ℹ️ Nenhum lançamento pendente/a vencer no mês atual.');
+    return false;
+  }
+
+  const ny = m === 12 ? y + 1 : y;
+  const nm = m === 12 ? 1 : m + 1;
+  const nextMesLabel = `${ny}-${String(nm).padStart(2,'0')}`;
+  if (!confirm(`Copiar ${pendentes.length} lançamento(s) pendente(s) de ${mesKey} para ${nextMesLabel}?`)) return false;
+
+  const daysInNext = new Date(ny, nm, 0).getDate();
+  pendentes.forEach(f => {
+    const origDay = parseInt(f.data?.substring(8, 10) || '1');
+    const safeDay = Math.min(origDay, daysInNext);
+    const newData = `${ny}-${String(nm).padStart(2,'0')}-${String(safeDay).padStart(2,'0')}`;
+    state.fin.push({
+      ...f,
+      id: 'FIN-' + pad(state.counters.fin),
+      data: newData,
+      status: newData >= now.toISOString().split('T')[0] ? 'a_vencer' : 'pendente',
+      obs: (f.obs ? f.obs + ' | ' : '') + `Rolado de ${mesKey}`,
+    });
+    state.counters.fin++;
+  });
+
+  showToast(`✅ ${pendentes.length} lançamento(s) copiado(s) para ${nextMesLabel}`);
+  return true;
 }
 
 // ── Edição de faturamento mensal (override) ──────────────────────────

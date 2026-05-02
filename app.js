@@ -20,7 +20,8 @@ import { addFin, delFin, openEditFin, openModalFin, renderFinanceiro, toggleHide
          gerarParcelas, toggleParcFin, aplicarFiltrosFin, limparFiltrosFin,
          atualizarStatusVencimentos,
          importarFaturamentoHistoricoEJH, toggleFinSection,
-         editarFaturamentoMes, salvarFaturamentoMes, resetarFaturamentoMes } from './modules/financeiro.js?v=20260501g';
+         editarFaturamentoMes, salvarFaturamentoMes, resetarFaturamentoMes,
+         setResumoMes, rolarPendentesProximoMes } from './modules/financeiro.js?v=20260502a';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260501g';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260501g';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
@@ -899,6 +900,14 @@ G.salvarFaturamentoMes = () => {
 };
 G.resetarFaturamentoMes = () => {
   if(resetarFaturamentoMes(state)) {
+    saveStateLocal();
+    if (window._fbUser) clearTimeout(_fbSaveTimer), (_fbSaveTimer = setTimeout(saveToCloud, 400));
+    renderAtiva();
+  }
+};
+G.setResumoMes = val => { setResumoMes(val); renderAtiva(); };
+G.rolarPendentesProximoMes = () => {
+  if (rolarPendentesProximoMes(state)) {
     saveStateLocal();
     if (window._fbUser) clearTimeout(_fbSaveTimer), (_fbSaveTimer = setTimeout(saveToCloud, 400));
     renderAtiva();
