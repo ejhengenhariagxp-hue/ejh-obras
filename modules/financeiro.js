@@ -3,6 +3,7 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, 
 
 let _finLimit = 20;
 let _hideRT = false;
+let _resumoMesSel = ''; // '' = mês corrente
 
 export function toggleHideRT(state, cb) {
   _hideRT = !!(cb && cb.checked);
@@ -111,6 +112,16 @@ export function openEditFin(state, id) {
 }
 
 export function delFin(state, id){
+  const f = (state.fin || []).find(x => x.id === id);
+  // Se é uma transferência, remove as duas pontas vinculadas
+  if (f?.transferGroupId) {
+    const linked = (state.fin || []).filter(x => x.transferGroupId === f.transferGroupId);
+    if (!confirm(`Este lançamento faz parte de uma transferência (${linked.length} lançamentos vinculados). Excluir todos?`)) return false;
+    linked.forEach(x => markDeleted(state, 'fin', x.id));
+    state.fin = state.fin.filter(x => x.transferGroupId !== f.transferGroupId);
+    _finLimit = 20;
+    return true;
+  }
   if(confirm('Excluir este lançamento?')){
     state.fin=state.fin.filter(x=>x.id!==id);
     markDeleted(state, 'fin', id);
@@ -349,11 +360,35 @@ export function gerarParcelas(state) {
   const valorEntrada = +document.getElementById('f-fin-parc-entrada')?.value || 0;
   const intervaloDias = +document.getElementById('f-fin-parc-dias')?.value || 30;
 
-  if (!desc) { showToast('⚠️ Informe a descrição'); return false; }
-  if (valor <= 0) { showToast('⚠️ Valor total deve ser > 0'); return false; }
+  if (!desc) {
+    const el = document.getElementById('f-fin-desc');
+    if (el) { el.style.border = '1.5px solid var(--red)'; el.focus(); }
+    showToast('⚠️ Informe a descrição');
+    return false;
+  }
+  if (valor <= 0) {
+    const el = document.getElementById('f-fin-valor');
+    if (el) { el.style.border = '1.5px solid var(--red)'; el.focus(); }
+    showToast('⚠️ Valor total deve ser > 0');
+    return false;
+  }
   if (!data) { showToast('⚠️ Informe a data inicial'); return false; }
-  if (numParcelas < 1 || numParcelas > 60) { showToast('⚠️ Parcelas: 1 a 60'); return false; }
-  if (valorEntrada < 0 || valorEntrada > valor) { showToast('⚠️ Entrada inválida'); return false; }
+  if (numParcelas < 1 || numParcelas > 60) {
+    const el = document.getElementById('f-fin-parc-num');
+    if (el) { el.style.border = '1.5px solid var(--red)'; el.focus(); }
+    showToast('⚠️ Parcelas: 1 a 60');
+    return false;
+  }
+  if (valorEntrada < 0 || valorEntrada > valor) {
+    const el = document.getElementById('f-fin-parc-entrada');
+    if (el) { el.style.border = '1.5px solid var(--red)'; el.focus(); }
+    showToast('⚠️ Entrada inválida (deve ser ≥ 0 e ≤ valor total)');
+    return false;
+  }
+  // Limpa bordas vermelhas se passou na validação
+  ['f-fin-desc','f-fin-valor','f-fin-parc-num','f-fin-parc-entrada'].forEach(k => {
+    const el = document.getElementById(k); if (el) el.style.border = '';
+  });
 
   const parcelaGroupId = 'PG-' + Date.now().toString(36);
   const restante = valor - valorEntrada;
@@ -399,6 +434,121 @@ export function gerarParcelas(state) {
 
   closeModal('modal-fin');
   showToast(`✅ ${totalGerados} parcelas geradas!`);
+  return true;
+}
+
+// ── TRANSFERÊNCIA ENTRE CONTAS ──────────────────────────────────────
+// Cria 2 lançamentos vinculados por transferGroupId:
+//  - Despesa na conta de origem
+//  - Receita na conta de destino
+// Usado para pró-labore, aporte de sócio, pagamento de dívida pessoal, etc.
+export function abrirModalTransf(state) {
+  const ativas = (state.contas || []).filter(c => c.ativo !== false);
+  if (ativas.length < 2) {
+    showToast('⚠️ Você precisa ter pelo menos 2 contas cadastradas para transferir.');
+    return;
+  }
+  popularContasSelect(state, 'f-tr-origem');
+  popularContasSelect(state, 'f-tr-destino');
+  // Pré-seleciona a primeira conta na origem e a segunda no destino
+  const selO = document.getElementById('f-tr-origem');
+  const selD = document.getElementById('f-tr-destino');
+  if (selO && ativas[0]) selO.value = ativas[0].id;
+  if (selD && ativas[1]) selD.value = ativas[1].id;
+  // Limpa campos e define data de hoje
+  ['f-tr-valor','f-tr-desc','f-tr-obs'].forEach(k => {
+    const el = document.getElementById(k); if (el) el.value = '';
+  });
+  const dataEl = document.getElementById('f-tr-data');
+  if (dataEl) dataEl.value = new Date().toISOString().split('T')[0];
+  const catEl = document.getElementById('f-tr-cat');
+  if (catEl) catEl.value = 'Pró-labore';
+  // Sugere descrição padrão
+  const now = new Date();
+  const MES_ABR = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const descEl = document.getElementById('f-tr-desc');
+  if (descEl) descEl.placeholder = `Ex: Pró-labore ${MES_ABR[now.getMonth()]}/${now.getFullYear()}`;
+  openModal('modal-transf');
+}
+
+export function addTransferencia(state) {
+  const origemId  = document.getElementById('f-tr-origem')?.value || '';
+  const destinoId = document.getElementById('f-tr-destino')?.value || '';
+  const data      = document.getElementById('f-tr-data')?.value;
+  const valor     = +document.getElementById('f-tr-valor')?.value || 0;
+  const cat       = document.getElementById('f-tr-cat')?.value || 'Transferência';
+  const desc      = document.getElementById('f-tr-desc')?.value?.trim();
+  const obs       = document.getElementById('f-tr-obs')?.value || '';
+
+  if (!origemId)  { showToast('⚠️ Selecione a conta de origem');  return false; }
+  if (!destinoId) { showToast('⚠️ Selecione a conta de destino'); return false; }
+  if (origemId === destinoId) { showToast('⚠️ A origem e o destino devem ser contas diferentes'); return false; }
+  if (!data)  { showToast('⚠️ Informe a data'); return false; }
+  if (valor <= 0) {
+    const el = document.getElementById('f-tr-valor');
+    if (el) { el.style.border = '1.5px solid var(--red)'; el.focus(); }
+    showToast('⚠️ Valor deve ser > 0');
+    return false;
+  }
+  const descFinal = desc || cat;
+
+  if (!state.counters.fin) state.counters.fin = 1;
+  const transferGroupId = 'TR-' + Date.now().toString(36);
+  const cOri = (state.contas || []).find(c => c.id === origemId);
+  const cDst = (state.contas || []).find(c => c.id === destinoId);
+  const labelOri = cOri?.nome || 'Origem';
+  const labelDst = cDst?.nome || 'Destino';
+
+  // Despesa na origem
+  state.fin.push({
+    id: 'FIN-' + pad(state.counters.fin),
+    tipo: 'Despesa',
+    obraId: '',
+    data,
+    contaId: origemId,
+    desc: `↔ ${descFinal} (→ ${labelDst})`,
+    cat,
+    status: 'pago',
+    valor,
+    obs,
+    transferGroupId,
+  });
+  state.counters.fin++;
+
+  // Receita no destino
+  state.fin.push({
+    id: 'FIN-' + pad(state.counters.fin),
+    tipo: 'Receita',
+    obraId: '',
+    data,
+    contaId: destinoId,
+    desc: `↔ ${descFinal} (← ${labelOri})`,
+    cat,
+    status: 'pago',
+    valor,
+    obs,
+    transferGroupId,
+  });
+  state.counters.fin++;
+
+  // Limpa borda vermelha caso tenha sido marcada
+  const elV = document.getElementById('f-tr-valor');
+  if (elV) elV.style.border = '';
+
+  closeModal('modal-transf');
+  showToast(`✅ Transferência de ${fmt(valor)}: ${labelOri} → ${labelDst}`);
+  return true;
+}
+
+// Apaga as duas pontas de uma transferência (mantém atomicidade)
+export function delTransferencia(state, transferGroupId) {
+  if (!transferGroupId) return false;
+  const linked = (state.fin || []).filter(f => f.transferGroupId === transferGroupId);
+  if (!linked.length) return false;
+  if (!confirm(`Excluir esta transferência? Os ${linked.length} lançamentos vinculados serão removidos.`)) return false;
+  linked.forEach(f => markDeleted(state, 'fin', f.id));
+  state.fin = state.fin.filter(f => f.transferGroupId !== transferGroupId);
+  showToast(`🗑 Transferência removida (${linked.length} lançamentos)`);
   return true;
 }
 
@@ -1117,42 +1267,64 @@ export function renderDashFinAvancado(state) {
 
   // ── Resumo do Mês: recebidos, próximos 2 meses, média últimos 5, vs ano anterior ──
   const MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  const mesAtualKey = `${yearNow}-${String(monthNow).padStart(2,'0')}`;
-  const mesNomeAtual = MESES_FULL[monthNow-1];
 
-  // 1. Recebidos do mês corrente (status = 'pago')
+  // Determina mês selecionado (ou mês corrente como padrão)
+  const defaultMesKey = `${yearNow}-${String(monthNow).padStart(2,'0')}`;
+  let selMesKey = _resumoMesSel || defaultMesKey;
+  const [selYearStr, selMonStr] = selMesKey.split('-');
+  const selYear = parseInt(selYearStr);
+  const selMon  = parseInt(selMonStr);
+  selMesKey = `${selYear}-${String(selMon).padStart(2,'0')}`;
+  const mesNomeSel = MESES_FULL[selMon - 1];
+
+  // 1. Recebidos do mês selecionado (status = 'pago')
   const recebidosMes = (state.fin || []).filter(f =>
-    f.tipo === 'Receita' && f.data?.startsWith(mesAtualKey) && f.status === 'pago'
+    f.tipo === 'Receita' && f.data?.startsWith(selMesKey) && f.status === 'pago'
   ).reduce((a,x) => a + (+x.valor||0), 0);
   const qtdRecebidosMes = (state.fin || []).filter(f =>
-    f.tipo === 'Receita' && f.data?.startsWith(mesAtualKey) && f.status === 'pago'
+    f.tipo === 'Receita' && f.data?.startsWith(selMesKey) && f.status === 'pago'
   ).length;
 
-  // 2. Próximos 2 meses (a receber, status != 'pago')
-  const proxStart = new Date(yearNow, monthNow, 1);  // primeiro dia do PRÓXIMO mês
-  const proxEnd = new Date(yearNow, monthNow + 2, 1); // primeiro dia daqui a 2 meses
+  // 2. Próximos 2 meses após o mês selecionado (a receber, status != 'pago')
+  const proxStart = new Date(selYear, selMon, 1);
+  const proxEnd   = new Date(selYear, selMon + 2, 1);
   const fmtDataIso = d => d.toISOString().split('T')[0];
   const proxStartStr = fmtDataIso(proxStart);
-  const proxEndStr = fmtDataIso(proxEnd);
+  const proxEndStr   = fmtDataIso(proxEnd);
   const aReceberProx = (state.fin || []).filter(f =>
     f.tipo === 'Receita' && f.status !== 'pago' &&
     f.data >= proxStartStr && f.data < proxEndStr
   );
   const aReceberProxTotal = aReceberProx.reduce((a,x) => a + (+x.valor||0), 0);
 
-  // 3. Média dos últimos 5 lançamentos de receita (pagos)
+  // 3. Média dos últimos 5 lançamentos de receita pagos até o mês selecionado
+  const selMesLastDay = `${selYear}-${String(selMon).padStart(2,'0')}-31`;
   const ultimas5 = (state.fin || [])
-    .filter(f => f.tipo === 'Receita' && f.status === 'pago')
+    .filter(f => f.tipo === 'Receita' && f.status === 'pago' && (f.data || '') <= selMesLastDay)
     .sort((a,b) => (b.data || '').localeCompare(a.data || ''))
     .slice(0, 5);
   const media5 = ultimas5.length ? ultimas5.reduce((a,x) => a + (+x.valor||0), 0) / ultimas5.length : 0;
 
-  // 4. Comparativo deste mês vs mesmo mês ano anterior (respeita overrides)
-  const recMesAtual = recYM(yearNow, monthNow);
-  const recMesAnterior = recYM(yearLast, monthNow);
-  const diffMesPct = recMesAnterior > 0 ? ((recMesAtual / recMesAnterior) - 1) * 100 : null;
+  // 4. Comparativo mês selecionado vs mesmo mês no ano anterior (respeita overrides)
+  const recMesAtual    = recYM(selYear, selMon);
+  const recMesAnterior = recYM(selYear - 1, selMon);
+  const diffMesPct  = recMesAnterior > 0 ? ((recMesAtual / recMesAnterior) - 1) * 100 : null;
   const diffMesColor = diffMesPct === null ? 'var(--muted)' : (diffMesPct >= 0 ? 'var(--green)' : 'var(--red)');
-  const diffMesIcon = diffMesPct === null ? '—' : (diffMesPct >= 0 ? '↗' : '↘');
+  const diffMesIcon  = diffMesPct === null ? '—' : (diffMesPct >= 0 ? '↗' : '↘');
+
+  // Gera options do select de filtro de mês (3 meses à frente até 23 meses atrás)
+  const optsResumoMes = (() => {
+    const opts = [];
+    for (let delta = 3; delta >= -23; delta--) {
+      const d = new Date(yearNow, monthNow - 1 + delta, 1);
+      const y = d.getFullYear();
+      const mm = d.getMonth() + 1;
+      const k = `${y}-${String(mm).padStart(2,'0')}`;
+      const lbl = MESES_FULL[mm-1] + ' / ' + y;
+      opts.push(`<option value="${k}"${k === selMesKey ? ' selected' : ''}>${lbl}</option>`);
+    }
+    return opts.join('');
+  })();
 
   // Estado de colapso (persistido em localStorage)
   const isCol = id => localStorage.getItem('ejh_sec_' + id) === '1';
@@ -1162,16 +1334,20 @@ export function renderDashFinAvancado(state) {
   container.innerHTML = `
     <!-- Resumo do Mês -->
     <div class="section" style="border-left:4px solid #7c3aed;margin-top:20px;margin-bottom:18px">
-      <div class="section-hdr" style="cursor:pointer" onclick="toggleFinSection('resumo-mes')">
-        <div class="section-title">📋 Resumo do Mês — ${mesNomeAtual}/${yearNow}</div>
-        <button class="btn btn-outline btn-xs" style="font-size:11px;padding:3px 9px" id="tog-resumo-mes" type="button">${iconCol('resumo-mes')}</button>
+      <div class="section-hdr" style="flex-wrap:wrap;gap:8px">
+        <div class="section-title" style="cursor:pointer" onclick="toggleFinSection('resumo-mes')">📋 Resumo do Mês</div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-left:auto">
+          <select onchange="setResumoMes(this.value)" style="font-size:12px;padding:3px 8px;border-radius:6px;border:1px solid #d1d5db;background:#fff;cursor:pointer" title="Filtrar por mês">${optsResumoMes}</select>
+          <button class="btn btn-outline btn-xs" style="font-size:11px;padding:3px 9px;white-space:nowrap" title="Copiar lançamentos pendentes do mês atual para o próximo mês" onclick="rolarPendentesProximoMes()">🔄 Rolar pendentes</button>
+          <button class="btn btn-outline btn-xs" style="font-size:11px;padding:3px 9px" id="tog-resumo-mes" type="button" onclick="toggleFinSection('resumo-mes')">${iconCol('resumo-mes')}</button>
+        </div>
       </div>
       <div id="sec-resumo-mes" style="${dispCol('resumo-mes')}">
         <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
           <div class="kpi green">
             <div class="kpi-label">💰 Recebidos do mês</div>
             <div class="kpi-value">${fmt(recebidosMes)}</div>
-            <div class="kpi-sub">${qtdRecebidosMes} lançamento${qtdRecebidosMes!==1?'s':''} pago${qtdRecebidosMes!==1?'s':''} em ${mesNomeAtual.toLowerCase()}</div>
+            <div class="kpi-sub">${qtdRecebidosMes} lançamento${qtdRecebidosMes!==1?'s':''} pago${qtdRecebidosMes!==1?'s':''} em ${mesNomeSel.toLowerCase()}</div>
           </div>
           <div class="kpi blue">
             <div class="kpi-label">📅 Próximos 2 meses</div>
@@ -1184,35 +1360,11 @@ export function renderDashFinAvancado(state) {
             <div class="kpi-sub">${ultimas5.length>0?'baseado nas '+ultimas5.length+' últimas receitas pagas':'sem receitas pagas ainda'}</div>
           </div>
           <div class="kpi ${diffMesPct === null ? 'amber' : (diffMesPct >= 0 ? 'green' : 'red')}">
-            <div class="kpi-label">📈 ${mesNomeAtual} ${yearNow} vs ${yearLast}</div>
+            <div class="kpi-label">📈 ${mesNomeSel} ${selYear} vs ${selYear-1}</div>
             <div class="kpi-value" style="color:${diffMesColor}">${diffMesPct === null ? '—' : diffMesIcon + ' ' + Math.abs(diffMesPct).toFixed(1) + '%'}</div>
-            <div class="kpi-sub">${fmt(recMesAtual)} vs ${fmt(recMesAnterior)} (${yearLast})</div>
+            <div class="kpi-sub">${fmt(recMesAtual)} vs ${fmt(recMesAnterior)} (${selYear-1})</div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- KPIs de performance -->
-    <div class="kpi-grid" style="margin-bottom:20px">
-      <div class="kpi purple">
-        <div class="kpi-label">Faturamento R1 (Projeto)</div>
-        <div class="kpi-value">${fmt(r1Rec)}</div>
-        <div class="kpi-sub">Total no ano ${yearNow}</div>
-      </div>
-      <div class="kpi blue">
-        <div class="kpi-label">Faturamento R2 (Obra)</div>
-        <div class="kpi-value">${fmt(r2Rec)}</div>
-        <div class="kpi-sub">Total no ano ${yearNow}</div>
-      </div>
-      <div class="kpi teal">
-        <div class="kpi-label">Média Mensal (${yearNow})</div>
-        <div class="kpi-value">${fmt(avgMensal)}</div>
-        <div class="kpi-sub">Baseado em ${monthNow} mês(es)</div>
-      </div>
-      <div class="kpi ${diffPct>=0?'green':'red'}">
-        <div class="kpi-label">Performance YoY</div>
-        <div class="kpi-value" style="color:${diffColor}">${diffIcon} ${diffPct.toFixed(1)}%</div>
-        <div class="kpi-sub">vs mesmo período de ${yearLast}</div>
       </div>
     </div>
 
@@ -1309,6 +1461,53 @@ export function toggleFinSection(id) {
   body.style.display = willCollapse ? 'none' : '';
   if (tog) tog.textContent = willCollapse ? '▶' : '▼';
   try { localStorage.setItem('ejh_sec_' + id, willCollapse ? '1' : '0'); } catch(e) {}
+}
+
+// Define o mês selecionado no Resumo do Mês ('' = mês corrente)
+export function setResumoMes(val) {
+  _resumoMesSel = val || '';
+  return true;
+}
+
+// Copia lançamentos pendentes do mês corrente para o próximo mês
+export function rolarPendentesProximoMes(state) {
+  if (!state || !Array.isArray(state.fin)) return false;
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth() + 1;
+  const mesKey = `${y}-${String(m).padStart(2,'0')}`;
+
+  const pendentes = state.fin.filter(f =>
+    (f.status === 'pendente' || f.status === 'a_vencer') && f.data?.startsWith(mesKey)
+  );
+
+  if (pendentes.length === 0) {
+    showToast('ℹ️ Nenhum lançamento pendente/a vencer no mês atual.');
+    return false;
+  }
+
+  const ny = m === 12 ? y + 1 : y;
+  const nm = m === 12 ? 1 : m + 1;
+  const nextMesLabel = `${ny}-${String(nm).padStart(2,'0')}`;
+  if (!confirm(`Copiar ${pendentes.length} lançamento(s) pendente(s) de ${mesKey} para ${nextMesLabel}?`)) return false;
+
+  const daysInNext = new Date(ny, nm, 0).getDate();
+  pendentes.forEach(f => {
+    const origDay = parseInt(f.data?.substring(8, 10) || '1');
+    const safeDay = Math.min(origDay, daysInNext);
+    const newData = `${ny}-${String(nm).padStart(2,'0')}-${String(safeDay).padStart(2,'0')}`;
+    state.fin.push({
+      ...f,
+      id: 'FIN-' + pad(state.counters.fin),
+      data: newData,
+      status: newData >= now.toISOString().split('T')[0] ? 'a_vencer' : 'pendente',
+      obs: (f.obs ? f.obs + ' | ' : '') + `Rolado de ${mesKey}`,
+    });
+    state.counters.fin++;
+  });
+
+  showToast(`✅ ${pendentes.length} lançamento(s) copiado(s) para ${nextMesLabel}`);
+  return true;
 }
 
 // ── Edição de faturamento mensal (override) ──────────────────────────
