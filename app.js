@@ -21,7 +21,7 @@ import { addFin, delFin, openEditFin, openModalFin, renderFinanceiro, toggleHide
          atualizarStatusVencimentos,
          importarFaturamentoHistoricoEJH, toggleFinSection,
          editarFaturamentoMes, salvarFaturamentoMes, resetarFaturamentoMes,
-         setResumoMes, rolarPendentesProximoMes } from './modules/financeiro.js?v=20260502a';
+         setResumoMes, rolarPendentesProximoMes } from './modules/financeiro.js?v=20260502b';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260501g';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260501g';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,

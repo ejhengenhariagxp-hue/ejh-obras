@@ -350,11 +350,35 @@ export function gerarParcelas(state) {
   const valorEntrada = +document.getElementById('f-fin-parc-entrada')?.value || 0;
   const intervaloDias = +document.getElementById('f-fin-parc-dias')?.value || 30;
 
-  if (!desc) { showToast('⚠️ Informe a descrição'); return false; }
-  if (valor <= 0) { showToast('⚠️ Valor total deve ser > 0'); return false; }
+  if (!desc) {
+    const el = document.getElementById('f-fin-desc');
+    if (el) { el.style.border = '1.5px solid var(--red)'; el.focus(); }
+    showToast('⚠️ Informe a descrição');
+    return false;
+  }
+  if (valor <= 0) {
+    const el = document.getElementById('f-fin-valor');
+    if (el) { el.style.border = '1.5px solid var(--red)'; el.focus(); }
+    showToast('⚠️ Valor total deve ser > 0');
+    return false;
+  }
   if (!data) { showToast('⚠️ Informe a data inicial'); return false; }
-  if (numParcelas < 1 || numParcelas > 60) { showToast('⚠️ Parcelas: 1 a 60'); return false; }
-  if (valorEntrada < 0 || valorEntrada > valor) { showToast('⚠️ Entrada inválida'); return false; }
+  if (numParcelas < 1 || numParcelas > 60) {
+    const el = document.getElementById('f-fin-parc-num');
+    if (el) { el.style.border = '1.5px solid var(--red)'; el.focus(); }
+    showToast('⚠️ Parcelas: 1 a 60');
+    return false;
+  }
+  if (valorEntrada < 0 || valorEntrada > valor) {
+    const el = document.getElementById('f-fin-parc-entrada');
+    if (el) { el.style.border = '1.5px solid var(--red)'; el.focus(); }
+    showToast('⚠️ Entrada inválida (deve ser ≥ 0 e ≤ valor total)');
+    return false;
+  }
+  // Limpa bordas vermelhas se passou na validação
+  ['f-fin-desc','f-fin-valor','f-fin-parc-num','f-fin-parc-entrada'].forEach(k => {
+    const el = document.getElementById(k); if (el) el.style.border = '';
+  });
 
   const parcelaGroupId = 'PG-' + Date.now().toString(36);
   const restante = valor - valorEntrada;
