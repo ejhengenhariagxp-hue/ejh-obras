@@ -22,7 +22,7 @@ import { addFin, delFin, openEditFin, openModalFin, renderFinanceiro, toggleHide
          importarFaturamentoHistoricoEJH, toggleFinSection,
          editarFaturamentoMes, salvarFaturamentoMes, resetarFaturamentoMes,
          setResumoMes, rolarPendentesProximoMes,
-         abrirModalTransf, addTransferencia, delTransferencia } from './modules/financeiro.js?v=20260504b';
+         abrirModalTransf, addTransferencia, delTransferencia } from './modules/financeiro.js?v=20260504c';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260501g';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260501g';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
@@ -242,8 +242,8 @@ function renderAlertaUrgente() {
     const ult = state.diario.filter(d => d.obraId === o.id).sort((a,b)=>b.data.localeCompare(a.data))[0];
     return !ult || ult.data < seteDiasAtras;
   }).length;
-  const saldo = state.fin.filter(f => f.tipo === 'Receita').reduce((a,x)=>a+(+x.valor||0),0)
-              - state.fin.filter(f => f.tipo === 'Despesa').reduce((a,x)=>a+(+x.valor||0),0);
+  const saldo = state.fin.filter(f => f.tipo === 'Receita' && !f.transferGroupId).reduce((a,x)=>a+(+x.valor||0),0)
+              - state.fin.filter(f => f.tipo === 'Despesa' && !f.transferGroupId).reduce((a,x)=>a+(+x.valor||0),0);
 
   let alerta = null;
 
@@ -299,8 +299,8 @@ function renderDashboard() {
   </div>`);
   const totOrc  = state.orc.reduce((a,x)=>a+x.qtd*x.vunit, 0);
   const totReal = state.orc.reduce((a,x)=>a+x.real, 0);
-  const rec = state.fin.filter(x=>x.tipo==='Receita').reduce((a,x)=>a+x.valor, 0);
-  const des = state.fin.filter(x=>x.tipo==='Despesa').reduce((a,x)=>a+x.valor, 0);
+  const rec = state.fin.filter(x=>x.tipo==='Receita' && !x.transferGroupId).reduce((a,x)=>a+x.valor, 0);
+  const des = state.fin.filter(x=>x.tipo==='Despesa' && !x.transferGroupId).reduce((a,x)=>a+x.valor, 0);
   safeText('kpi-total', state.obras.length);
   safeText('kpi-orc',   fmt(totOrc));
   safeText('kpi-real',  fmt(totReal));
@@ -700,8 +700,8 @@ G.setBnActive = setBnActive;
 G.abrirInfoRapida = () => {
   const ativas = state.obras.filter(o => o.status === 'Em andamento').length;
   const atrasadas = state.cron.filter(c => c.fim && c.fim < new Date().toISOString().split('T')[0] && (c.conc || 0) < 100).length;
-  const receitasTotal = state.fin.filter(f => f.tipo === 'Receita').reduce((a,x) => a + (+x.val || 0), 0);
-  const despesasTotal = state.fin.filter(f => f.tipo === 'Despesa').reduce((a,x) => a + (+x.val || 0), 0);
+  const receitasTotal = state.fin.filter(f => f.tipo === 'Receita' && !f.transferGroupId).reduce((a,x) => a + (+x.val || 0), 0);
+  const despesasTotal = state.fin.filter(f => f.tipo === 'Despesa' && !f.transferGroupId).reduce((a,x) => a + (+x.val || 0), 0);
   const saldo = receitasTotal - despesasTotal;
 
   document.getElementById('info-obras-ativas').textContent = ativas;
