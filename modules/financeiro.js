@@ -569,9 +569,10 @@ export function delTransferencia(state, transferGroupId) {
 }
 
 // ── FILTROS DA TELA FINANCEIRO ──────────────────────────────────────
-let _finFiltros = { obraId:'', cat:'', contaId:'', status:'', q:'' };
+let _finFiltros = { tipo:'', obraId:'', cat:'', contaId:'', status:'', q:'' };
 export function aplicarFiltrosFin() {
   _finFiltros = {
+    tipo: document.getElementById('fil-fin-tipo')?.value || '',
     obraId: document.getElementById('fil-fin-obra')?.value || '',
     cat: document.getElementById('fil-fin-cat')?.value || '',
     contaId: document.getElementById('fil-fin-conta')?.value || '',
@@ -581,14 +582,15 @@ export function aplicarFiltrosFin() {
   return true;
 }
 export function limparFiltrosFin() {
-  _finFiltros = { obraId:'', cat:'', contaId:'', status:'', q:'' };
-  ['fil-fin-obra','fil-fin-cat','fil-fin-conta','fil-fin-status','fil-fin-q'].forEach(k => {
+  _finFiltros = { tipo:'', obraId:'', cat:'', contaId:'', status:'', q:'' };
+  ['fil-fin-tipo','fil-fin-obra','fil-fin-cat','fil-fin-conta','fil-fin-status','fil-fin-q'].forEach(k => {
     const el = document.getElementById(k); if (el) el.value = '';
   });
   return true;
 }
 function aplicarFiltrosLista(lista) {
   return lista.filter(f => {
+    if (_finFiltros.tipo && f.tipo !== _finFiltros.tipo) return false;
     if (_finFiltros.obraId && f.obraId !== _finFiltros.obraId) return false;
     if (_finFiltros.cat && f.cat !== _finFiltros.cat) return false;
     if (_finFiltros.contaId && f.contaId !== _finFiltros.contaId) return false;
