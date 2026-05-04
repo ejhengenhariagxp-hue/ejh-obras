@@ -2,6 +2,12 @@
 import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260501g';
 
 let _finLimit = 20;
+// Filtra transferências internas: elas movem dinheiro entre contas, mas
+// não devem contar como faturamento, despesa real ou saldo líquido.
+// (Continuam contando no saldo de cada conta bancária — o dinheiro
+// realmente entrou/saiu fisicamente da conta.)
+const _semTransf = f => !f.transferGroupId;
+
 let _hideRT = false;
 let _resumoMesSel = ''; // '' = mês corrente
 
@@ -1005,6 +1011,7 @@ function _recYMOv(state, year, month = null) {
   if (!state.faturamentoMensal) state.faturamentoMensal = {};
   const fromFin = (y, m) => (state.fin || []).filter(f => {
     if (f.tipo !== 'Receita') return false;
+    if (f.transferGroupId) return false;
     if (f.data?.substring(0,4) !== String(y)) return false;
     if (m !== null && f.data?.substring(5,7) !== String(m).padStart(2,'0')) return false;
     return true;
@@ -1036,7 +1043,7 @@ export function renderFinanceiro(state){
   // KPIs do topo: ano corrente, respeitando overrides do comparativo (consistência)
   const anoAtual = String(new Date().getFullYear());
   const recAno = _recYMOv(state, anoAtual);
-  const desAno = state.fin.filter(x=>x.tipo==='Despesa' && x.data?.startsWith(anoAtual)).reduce((a,x)=>a+x.valor,0);
+  const desAno = state.fin.filter(x=>x.tipo==='Despesa' && x.data?.startsWith(anoAtual) && _semTransf(x)).reduce((a,x)=>a+x.valor,0);
   const salAno = recAno - desAno;
   safeText('fin-kpi-rec', fmt(recAno));
   safeText('fin-kpi-des', fmt(desAno));
@@ -1064,8 +1071,8 @@ export function renderFinanceiro(state){
   renderAgendamentos(state);
 
   const renderObraRow = o => {
-    const r=state.fin.filter(x=>x.obraId===o.id&&x.tipo==='Receita').reduce((a,x)=>a+x.valor,0);
-    const d=state.fin.filter(x=>x.obraId===o.id&&x.tipo==='Despesa').reduce((a,x)=>a+x.valor,0);
+    const r=state.fin.filter(x=>x.obraId===o.id&&x.tipo==='Receita'&&_semTransf(x)).reduce((a,x)=>a+x.valor,0);
+    const d=state.fin.filter(x=>x.obraId===o.id&&x.tipo==='Despesa'&&_semTransf(x)).reduce((a,x)=>a+x.valor,0);
     const s=r-d;
     return `<tr>
       <td style="font-weight:600">${o.nome}</td>
@@ -1157,10 +1164,10 @@ export function renderDashFinAvancado(state) {
   const monthNow = now.getMonth() + 1;
 
   // KPIs: A Receber, A Pagar
-  const aReceber = (state.fin || []).filter(f => f.tipo === 'Receita' && f.status !== 'pago').reduce((a,x) => a + (+x.valor||0), 0);
-  const aPagar = (state.fin || []).filter(f => f.tipo === 'Despesa' && f.status !== 'pago').reduce((a,x) => a + (+x.valor||0), 0);
-  const vencidoRec = (state.fin || []).filter(f => f.tipo === 'Receita' && f.status === 'pendente').reduce((a,x) => a + (+x.valor||0), 0);
-  const vencidoDes = (state.fin || []).filter(f => f.tipo === 'Despesa' && f.status === 'pendente').reduce((a,x) => a + (+x.valor||0), 0);
+  const aReceber = (state.fin || []).filter(f => f.tipo === 'Receita' && f.status !== 'pago' && _semTransf(f)).reduce((a,x) => a + (+x.valor||0), 0);
+  const aPagar = (state.fin || []).filter(f => f.tipo === 'Despesa' && f.status !== 'pago' && _semTransf(f)).reduce((a,x) => a + (+x.valor||0), 0);
+  const vencidoRec = (state.fin || []).filter(f => f.tipo === 'Receita' && f.status === 'pendente' && _semTransf(f)).reduce((a,x) => a + (+x.valor||0), 0);
+  const vencidoDes = (state.fin || []).filter(f => f.tipo === 'Despesa' && f.status === 'pendente' && _semTransf(f)).reduce((a,x) => a + (+x.valor||0), 0);
   const kpiExtra = document.getElementById('fin-kpis-extras');
   if (kpiExtra) {
     kpiExtra.innerHTML = `
@@ -1172,9 +1179,10 @@ export function renderDashFinAvancado(state) {
   // Garante que o mapa de overrides existe
   if (!state.faturamentoMensal) state.faturamentoMensal = {};
 
-  // Calcula receitas a partir dos lançamentos (sem override)
+  // Calcula receitas a partir dos lançamentos (sem override, sem transferências)
   const recYMCalc = (year, month = null) => (state.fin || []).filter(f => {
     if (f.tipo !== 'Receita') return false;
+    if (f.transferGroupId) return false;
     if (f.data?.substring(0,4) !== String(year)) return false;
     if (month !== null && f.data?.substring(5,7) !== String(month).padStart(2,'0')) return false;
     return true;
@@ -1209,8 +1217,8 @@ export function renderDashFinAvancado(state) {
   // R1/R2 de obras
   const finR1 = (state.fin||[]).filter(f => { const o=state.obras.find(x=>x.id===f.obraId); return o&&(o.tipo==='R1'||o.tipo==='projeto'); });
   const finR2 = (state.fin||[]).filter(f => { const o=state.obras.find(x=>x.id===f.obraId); return o&&(o.tipo==='R2'||o.tipo==='obra'||!o.tipo); });
-  const r1Rec = finR1.filter(f=>f.data?.startsWith(String(yearNow))&&f.tipo==='Receita').reduce((a,x)=>a+x.valor,0);
-  const r2Rec = finR2.filter(f=>f.data?.startsWith(String(yearNow))&&f.tipo==='Receita').reduce((a,x)=>a+x.valor,0);
+  const r1Rec = finR1.filter(f=>f.data?.startsWith(String(yearNow))&&f.tipo==='Receita'&&_semTransf(f)).reduce((a,x)=>a+x.valor,0);
+  const r2Rec = finR2.filter(f=>f.data?.startsWith(String(yearNow))&&f.tipo==='Receita'&&_semTransf(f)).reduce((a,x)=>a+x.valor,0);
 
   const totalRecYTD = recYM(yearNow);
   const avgMensal = monthNow > 0 ? totalRecYTD / monthNow : 0;
@@ -1220,8 +1228,8 @@ export function renderDashFinAvancado(state) {
   const diffIcon = diffPct >= 0 ? '↗' : '↘';
 
   // Saldo geral histórico
-  const totalRecAll = (state.fin||[]).filter(f=>f.tipo==='Receita').reduce((a,x)=>a+(+x.valor||0),0);
-  const totalDesAll = (state.fin||[]).filter(f=>f.tipo==='Despesa').reduce((a,x)=>a+(+x.valor||0),0);
+  const totalRecAll = (state.fin||[]).filter(f=>f.tipo==='Receita'&&_semTransf(f)).reduce((a,x)=>a+(+x.valor||0),0);
+  const totalDesAll = (state.fin||[]).filter(f=>f.tipo==='Despesa'&&_semTransf(f)).reduce((a,x)=>a+(+x.valor||0),0);
   const saldoLiq = totalRecAll - totalDesAll;
 
   // Dados mensais: 2025 e 2026
@@ -1297,10 +1305,10 @@ export function renderDashFinAvancado(state) {
 
   // 1. Recebidos do mês selecionado (status = 'pago')
   const recebidosMes = (state.fin || []).filter(f =>
-    f.tipo === 'Receita' && f.data?.startsWith(selMesKey) && f.status === 'pago'
+    f.tipo === 'Receita' && f.data?.startsWith(selMesKey) && f.status === 'pago' && _semTransf(f)
   ).reduce((a,x) => a + (+x.valor||0), 0);
   const qtdRecebidosMes = (state.fin || []).filter(f =>
-    f.tipo === 'Receita' && f.data?.startsWith(selMesKey) && f.status === 'pago'
+    f.tipo === 'Receita' && f.data?.startsWith(selMesKey) && f.status === 'pago' && _semTransf(f)
   ).length;
 
   // 2. Próximos 2 meses após o mês selecionado (a receber, status != 'pago')
@@ -1310,7 +1318,7 @@ export function renderDashFinAvancado(state) {
   const proxStartStr = fmtDataIso(proxStart);
   const proxEndStr   = fmtDataIso(proxEnd);
   const aReceberProx = (state.fin || []).filter(f =>
-    f.tipo === 'Receita' && f.status !== 'pago' &&
+    f.tipo === 'Receita' && f.status !== 'pago' && _semTransf(f) &&
     f.data >= proxStartStr && f.data < proxEndStr
   );
   const aReceberProxTotal = aReceberProx.reduce((a,x) => a + (+x.valor||0), 0);
@@ -1318,7 +1326,7 @@ export function renderDashFinAvancado(state) {
   // 3. Média dos últimos 5 lançamentos de receita pagos até o mês selecionado
   const selMesLastDay = `${selYear}-${String(selMon).padStart(2,'0')}-31`;
   const ultimas5 = (state.fin || [])
-    .filter(f => f.tipo === 'Receita' && f.status === 'pago' && (f.data || '') <= selMesLastDay)
+    .filter(f => f.tipo === 'Receita' && f.status === 'pago' && _semTransf(f) && (f.data || '') <= selMesLastDay)
     .sort((a,b) => (b.data || '').localeCompare(a.data || ''))
     .slice(0, 5);
   const media5 = ultimas5.length ? ultimas5.reduce((a,x) => a + (+x.valor||0), 0) / ultimas5.length : 0;
@@ -1537,7 +1545,7 @@ export function editarFaturamentoMes(state, year, month) {
   const k = `${year}-${String(month).padStart(2,'0')}`;
   // Calcula valor a partir dos lançamentos para mostrar como referência
   const calc = (state.fin || []).filter(f =>
-    f.tipo === 'Receita' && f.data?.startsWith(k)
+    f.tipo === 'Receita' && f.data?.startsWith(k) && _semTransf(f)
   ).reduce((a,x) => a + (+x.valor||0), 0);
   const ovExistente = state.faturamentoMensal[k];
   const valorAtual = ovExistente !== undefined && ovExistente !== null ? +ovExistente : calc;
