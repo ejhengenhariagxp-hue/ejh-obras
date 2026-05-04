@@ -309,6 +309,11 @@
     </div>
     <!-- Filtros -->
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px;padding:10px;background:#f8faff;border-radius:9px">
+      <select id="fil-fin-tipo" onchange="aplicarFiltrosFin()" style="padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px">
+        <option value="">Receitas e Despesas</option>
+        <option value="Receita">💚 Só Receitas</option>
+        <option value="Despesa">🔴 Só Despesas</option>
+      </select>
       <select id="fil-fin-obra" onchange="aplicarFiltrosFin()" style="padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px"></select>
       <select id="fil-fin-cat" onchange="aplicarFiltrosFin()" style="padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px"></select>
       <select id="fil-fin-conta" onchange="aplicarFiltrosFin()" style="padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px"></select>
