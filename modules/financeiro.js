@@ -108,6 +108,17 @@ export function openEditFin(state, id) {
   }
   if (typeof window.toggleCatPersonalizada === 'function') window.toggleCatPersonalizada();
   if(document.getElementById('fin-modal-title')) document.getElementById('fin-modal-title').textContent = '✏️ Editar Lançamento';
+
+  // Desabilita parcelamento ao editar (não faz sentido parcelar lançamento existente)
+  const cbParc = document.getElementById('f-fin-parc-on');
+  const wrapParc = document.getElementById('f-fin-parc-wrap');
+  const btnSalvar = document.getElementById('f-fin-btn-salvar');
+  const btnGerar  = document.getElementById('f-fin-btn-gerar');
+  if (cbParc) { cbParc.checked = false; cbParc.disabled = true; }
+  if (wrapParc) wrapParc.style.display = 'none';
+  if (btnSalvar) btnSalvar.style.display = '';
+  if (btnGerar) btnGerar.style.display = 'none';
+
   openModal('modal-fin');
 }
 
@@ -138,12 +149,17 @@ export function openModalFin(state, tipo){
   ['f-fin-id','f-fin-desc','f-fin-valor','f-fin-obs','f-fin-cat-custom','f-fin-parc-num','f-fin-parc-entrada'].forEach(k => {
     const el = document.getElementById(k); if (el) el.value = '';
   });
-  // Reset do bloco de parcelamento
+  // Reset do bloco de parcelamento (e reabilita ao criar novo lançamento)
   const cbParc = document.getElementById('f-fin-parc-on');
-  if (cbParc) cbParc.checked = false;
+  if (cbParc) { cbParc.checked = false; cbParc.disabled = false; }
   const wrapParc = document.getElementById('f-fin-parc-wrap');
   if (wrapParc) wrapParc.style.display = 'none';
   if (document.getElementById('f-fin-parc-dias')) document.getElementById('f-fin-parc-dias').value = '30';
+  // Garante que botão Salvar está visível e Gerar Parcelas escondido
+  const btnSalvarNF = document.getElementById('f-fin-btn-salvar');
+  const btnGerarNF  = document.getElementById('f-fin-btn-gerar');
+  if (btnSalvarNF) btnSalvarNF.style.display = '';
+  if (btnGerarNF) btnGerarNF.style.display = 'none';
 
   if(document.getElementById('f-fin-tipo')) document.getElementById('f-fin-tipo').value=tipo;
   // Popula categorias filtradas pelo tipo
