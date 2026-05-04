@@ -112,6 +112,16 @@ export function openEditFin(state, id) {
 }
 
 export function delFin(state, id){
+  const f = (state.fin || []).find(x => x.id === id);
+  // Se é uma transferência, remove as duas pontas vinculadas
+  if (f?.transferGroupId) {
+    const linked = (state.fin || []).filter(x => x.transferGroupId === f.transferGroupId);
+    if (!confirm(`Este lançamento faz parte de uma transferência (${linked.length} lançamentos vinculados). Excluir todos?`)) return false;
+    linked.forEach(x => markDeleted(state, 'fin', x.id));
+    state.fin = state.fin.filter(x => x.transferGroupId !== f.transferGroupId);
+    _finLimit = 20;
+    return true;
+  }
   if(confirm('Excluir este lançamento?')){
     state.fin=state.fin.filter(x=>x.id!==id);
     markDeleted(state, 'fin', id);
@@ -424,6 +434,121 @@ export function gerarParcelas(state) {
 
   closeModal('modal-fin');
   showToast(`✅ ${totalGerados} parcelas geradas!`);
+  return true;
+}
+
+// ── TRANSFERÊNCIA ENTRE CONTAS ──────────────────────────────────────
+// Cria 2 lançamentos vinculados por transferGroupId:
+//  - Despesa na conta de origem
+//  - Receita na conta de destino
+// Usado para pró-labore, aporte de sócio, pagamento de dívida pessoal, etc.
+export function abrirModalTransf(state) {
+  const ativas = (state.contas || []).filter(c => c.ativo !== false);
+  if (ativas.length < 2) {
+    showToast('⚠️ Você precisa ter pelo menos 2 contas cadastradas para transferir.');
+    return;
+  }
+  popularContasSelect(state, 'f-tr-origem');
+  popularContasSelect(state, 'f-tr-destino');
+  // Pré-seleciona a primeira conta na origem e a segunda no destino
+  const selO = document.getElementById('f-tr-origem');
+  const selD = document.getElementById('f-tr-destino');
+  if (selO && ativas[0]) selO.value = ativas[0].id;
+  if (selD && ativas[1]) selD.value = ativas[1].id;
+  // Limpa campos e define data de hoje
+  ['f-tr-valor','f-tr-desc','f-tr-obs'].forEach(k => {
+    const el = document.getElementById(k); if (el) el.value = '';
+  });
+  const dataEl = document.getElementById('f-tr-data');
+  if (dataEl) dataEl.value = new Date().toISOString().split('T')[0];
+  const catEl = document.getElementById('f-tr-cat');
+  if (catEl) catEl.value = 'Pró-labore';
+  // Sugere descrição padrão
+  const now = new Date();
+  const MES_ABR = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const descEl = document.getElementById('f-tr-desc');
+  if (descEl) descEl.placeholder = `Ex: Pró-labore ${MES_ABR[now.getMonth()]}/${now.getFullYear()}`;
+  openModal('modal-transf');
+}
+
+export function addTransferencia(state) {
+  const origemId  = document.getElementById('f-tr-origem')?.value || '';
+  const destinoId = document.getElementById('f-tr-destino')?.value || '';
+  const data      = document.getElementById('f-tr-data')?.value;
+  const valor     = +document.getElementById('f-tr-valor')?.value || 0;
+  const cat       = document.getElementById('f-tr-cat')?.value || 'Transferência';
+  const desc      = document.getElementById('f-tr-desc')?.value?.trim();
+  const obs       = document.getElementById('f-tr-obs')?.value || '';
+
+  if (!origemId)  { showToast('⚠️ Selecione a conta de origem');  return false; }
+  if (!destinoId) { showToast('⚠️ Selecione a conta de destino'); return false; }
+  if (origemId === destinoId) { showToast('⚠️ A origem e o destino devem ser contas diferentes'); return false; }
+  if (!data)  { showToast('⚠️ Informe a data'); return false; }
+  if (valor <= 0) {
+    const el = document.getElementById('f-tr-valor');
+    if (el) { el.style.border = '1.5px solid var(--red)'; el.focus(); }
+    showToast('⚠️ Valor deve ser > 0');
+    return false;
+  }
+  const descFinal = desc || cat;
+
+  if (!state.counters.fin) state.counters.fin = 1;
+  const transferGroupId = 'TR-' + Date.now().toString(36);
+  const cOri = (state.contas || []).find(c => c.id === origemId);
+  const cDst = (state.contas || []).find(c => c.id === destinoId);
+  const labelOri = cOri?.nome || 'Origem';
+  const labelDst = cDst?.nome || 'Destino';
+
+  // Despesa na origem
+  state.fin.push({
+    id: 'FIN-' + pad(state.counters.fin),
+    tipo: 'Despesa',
+    obraId: '',
+    data,
+    contaId: origemId,
+    desc: `↔ ${descFinal} (→ ${labelDst})`,
+    cat,
+    status: 'pago',
+    valor,
+    obs,
+    transferGroupId,
+  });
+  state.counters.fin++;
+
+  // Receita no destino
+  state.fin.push({
+    id: 'FIN-' + pad(state.counters.fin),
+    tipo: 'Receita',
+    obraId: '',
+    data,
+    contaId: destinoId,
+    desc: `↔ ${descFinal} (← ${labelOri})`,
+    cat,
+    status: 'pago',
+    valor,
+    obs,
+    transferGroupId,
+  });
+  state.counters.fin++;
+
+  // Limpa borda vermelha caso tenha sido marcada
+  const elV = document.getElementById('f-tr-valor');
+  if (elV) elV.style.border = '';
+
+  closeModal('modal-transf');
+  showToast(`✅ Transferência de ${fmt(valor)}: ${labelOri} → ${labelDst}`);
+  return true;
+}
+
+// Apaga as duas pontas de uma transferência (mantém atomicidade)
+export function delTransferencia(state, transferGroupId) {
+  if (!transferGroupId) return false;
+  const linked = (state.fin || []).filter(f => f.transferGroupId === transferGroupId);
+  if (!linked.length) return false;
+  if (!confirm(`Excluir esta transferência? Os ${linked.length} lançamentos vinculados serão removidos.`)) return false;
+  linked.forEach(f => markDeleted(state, 'fin', f.id));
+  state.fin = state.fin.filter(f => f.transferGroupId !== transferGroupId);
+  showToast(`🗑 Transferência removida (${linked.length} lançamentos)`);
   return true;
 }
 

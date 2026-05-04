@@ -21,7 +21,8 @@ import { addFin, delFin, openEditFin, openModalFin, renderFinanceiro, toggleHide
          atualizarStatusVencimentos,
          importarFaturamentoHistoricoEJH, toggleFinSection,
          editarFaturamentoMes, salvarFaturamentoMes, resetarFaturamentoMes,
-         setResumoMes, rolarPendentesProximoMes } from './modules/financeiro.js?v=20260502b';
+         setResumoMes, rolarPendentesProximoMes,
+         abrirModalTransf, addTransferencia, delTransferencia } from './modules/financeiro.js?v=20260503a';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260501g';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260501g';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
@@ -908,6 +909,21 @@ G.resetarFaturamentoMes = () => {
 G.setResumoMes = val => { setResumoMes(val); renderAtiva(); };
 G.rolarPendentesProximoMes = () => {
   if (rolarPendentesProximoMes(state)) {
+    saveStateLocal();
+    if (window._fbUser) clearTimeout(_fbSaveTimer), (_fbSaveTimer = setTimeout(saveToCloud, 400));
+    renderAtiva();
+  }
+};
+G.abrirModalTransf = () => abrirModalTransf(state);
+G.addTransferencia = () => {
+  if (addTransferencia(state)) {
+    saveStateLocal();
+    if (window._fbUser) clearTimeout(_fbSaveTimer), (_fbSaveTimer = setTimeout(saveToCloud, 400));
+    renderAtiva();
+  }
+};
+G.delTransferencia = grpId => {
+  if (delTransferencia(state, grpId)) {
     saveStateLocal();
     if (window._fbUser) clearTimeout(_fbSaveTimer), (_fbSaveTimer = setTimeout(saveToCloud, 400));
     renderAtiva();

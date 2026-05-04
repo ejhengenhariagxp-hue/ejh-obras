@@ -276,7 +276,7 @@
 <div id="page-financeiro" class="page">
   <div class="page-hdr">
     <div><div class="page-title">Controle Financeiro</div><div class="page-sub">Receitas, despesas e fluxo por atividade</div></div>
-    <div class="hdr-actions"><button id="btn-importar-historico-ejh" class="btn btn-outline" onclick="importarFaturamentoHistoricoEJH()" style="color:#7c3aed;border-color:#7c3aed;display:none" title="Importar faturamento de 2016 até abr/2026">📊 Importar Histórico</button><button class="btn btn-outline" onclick="window.print()" style="color:#16a34a;border-color:#16a34a">🖨 PDF</button><button class="btn btn-green" onclick="openModalFin('Receita')">＋ Receita</button><button class="btn btn-outline" style="color:var(--red);border-color:var(--red)" onclick="openModalFin('Despesa')">＋ Despesa</button></div>
+    <div class="hdr-actions"><button id="btn-importar-historico-ejh" class="btn btn-outline" onclick="importarFaturamentoHistoricoEJH()" style="color:#7c3aed;border-color:#7c3aed;display:none" title="Importar faturamento de 2016 até abr/2026">📊 Importar Histórico</button><button class="btn btn-outline" onclick="window.print()" style="color:#16a34a;border-color:#16a34a">🖨 PDF</button><button class="btn btn-green" onclick="openModalFin('Receita')">＋ Receita</button><button class="btn btn-outline" style="color:var(--red);border-color:var(--red)" onclick="openModalFin('Despesa')">＋ Despesa</button><button class="btn btn-outline" style="color:#0891b2;border-color:#0891b2" onclick="abrirModalTransf()" title="Transferência entre contas (pró-labore, pagamento dívida, aporte)">↔ Transferência</button></div>
   </div>
   <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
     <div class="kpi green"><div class="kpi-label">Receitas</div><div class="kpi-value" id="fin-kpi-rec">R$0</div></div>
@@ -985,7 +985,44 @@
   </div>
 </div></div>
 
-<!-- Modal Conta Bancária -->
+<!-- Modal Transferência entre Contas -->
+<div class="modal-bg" id="modal-transf"><div class="modal" style="max-width:520px">
+  <div class="modal-title">↔ Transferência entre Contas</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
+    Cria 2 lançamentos vinculados (Despesa na origem + Receita no destino) para registrar pró-labore, aporte de sócio, pagamento de dívida pessoal etc.
+  </div>
+  <div class="form-grid">
+    <div class="form-group full">
+      <label>🏦 Conta de Origem (de onde sai)</label>
+      <select id="f-tr-origem"></select>
+    </div>
+    <div class="form-group full">
+      <label>🏦 Conta de Destino (para onde vai)</label>
+      <select id="f-tr-destino"></select>
+    </div>
+    <div class="form-group"><label>Data</label><input id="f-tr-data" type="date"></div>
+    <div class="form-group"><label>Valor (R$)</label><input id="f-tr-valor" type="number" step="0.01" placeholder="0,00"></div>
+    <div class="form-group full">
+      <label>Categoria</label>
+      <select id="f-tr-cat">
+        <option value="Pró-labore">💼 Pró-labore</option>
+        <option value="Transferência">↔ Transferência</option>
+        <option value="Aporte de sócio">💰 Aporte de sócio</option>
+        <option value="Pagamento de dívida">💳 Pagamento de dívida</option>
+        <option value="Reserva/Quitação">🎯 Reserva/Quitação</option>
+      </select>
+    </div>
+    <div class="form-group full">
+      <label>Descrição</label>
+      <input id="f-tr-desc" placeholder="Ex: Pró-labore Maio/2026">
+    </div>
+    <div class="form-group full"><label>Observações</label><input id="f-tr-obs" placeholder="(opcional)"></div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-outline" onclick="closeModal('modal-transf')">Cancelar</button>
+    <button class="btn btn-primary" onclick="addTransferencia()" style="background:#0891b2">↔ Confirmar Transferência</button>
+  </div>
+</div></div>
 <div class="modal-bg" id="modal-conta-bancaria"><div class="modal" style="max-width:500px">
   <div class="modal-title">🏦 Nova Conta Bancária</div>
   <input type="hidden" id="f-cb-id">
