@@ -6,10 +6,16 @@ let _finLimit = 20;
 // não devem contar como faturamento, despesa real ou saldo líquido.
 // (Continuam contando no saldo de cada conta bancária — o dinheiro
 // realmente entrou/saiu fisicamente da conta.)
-const _semTransf = f => !f.transferGroupId;
+// Filtra movimentações que contam como financeiro da EMPRESA:
+// - Sem transferências internas (movem $ entre contas, não são receita/despesa real)
+// - Sem lançamentos pessoais (pró-labore/gastos pessoais ficam em "Controle Particular")
+const _semTransf = f => !f.transferGroupId && !f.pessoal;
+// Filtra apenas lançamentos pessoais (para a seção Controle Particular)
+const _ehPessoal = f => f.pessoal === true;
 
 let _hideRT = false;
 let _resumoMesSel = ''; // '' = mês corrente
+let _modalFinPessoal = false; // marca se o modal-fin foi aberto em modo "pessoal"
 
 export function toggleHideRT(state, cb) {
   _hideRT = !!(cb && cb.checked);
@@ -71,16 +77,22 @@ export function addFin(state){
     contaId: document.getElementById('f-fin-conta')?.value || '',
   };
 
+  if (_modalFinPessoal) dados.pessoal = true;
+
   if (editId) {
     const idx = state.fin.findIndex(x => x.id === editId);
     if (idx < 0) { showToast('⚠️ Lançamento não encontrado'); return false; }
+    // Preserva flag pessoal já existente ao editar (caso o modal não esteja em modo pessoal)
+    const pessoalAnterior = state.fin[idx].pessoal;
     state.fin[idx] = { ...state.fin[idx], ...dados };
+    if (!_modalFinPessoal && pessoalAnterior) state.fin[idx].pessoal = true;
     showToast('✅ Lançamento atualizado!');
   } else {
     state.fin.push({ id: 'FIN-'+pad(state.counters.fin), ...dados });
     state.counters.fin++;
-    showToast('✅ Lançamento registrado!');
+    showToast(_modalFinPessoal ? '✅ Lançamento pessoal registrado!' : '✅ Lançamento registrado!');
   }
+  _modalFinPessoal = false;
   closeModal('modal-fin');
   return true;
 }
@@ -173,7 +185,16 @@ export function openModalFin(state, tipo){
   if(document.getElementById('f-fin-status')) document.getElementById('f-fin-status').value='pago';
   if(document.getElementById('fin-modal-title')) document.getElementById('fin-modal-title').textContent=(tipo==='Receita'?'💚 Nova Receita':'🔴 Nova Despesa');
   if(document.getElementById('f-fin-data')) document.getElementById('f-fin-data').value = new Date().toISOString().split('T')[0];
+  _modalFinPessoal = false;
   openModal('modal-fin');
+}
+
+// Abre o modal-fin marcado como "pessoal" (pró-labore / gasto pessoal)
+export function openModalFinPessoal(state, tipo){
+  openModalFin(state, tipo);
+  _modalFinPessoal = true;
+  const titulo = tipo === 'Receita' ? '💼 Pró-labore / Receita Pessoal' : '🏠 Gasto Pessoal';
+  if(document.getElementById('fin-modal-title')) document.getElementById('fin-modal-title').textContent = titulo;
 }
 
 // Toggle do bloco de parcelamento
@@ -1119,7 +1140,9 @@ export function renderFinanceiro(state){
     return;
   }
   const rtIds = new Set(state.obras.filter(o => o.tipo === 'acompanhamento').map(o => o.id));
-  const baseFin0 = _hideRT ? state.fin.filter(f => !rtIds.has(f.obraId)) : state.fin;
+  // Lança pessoais ficam isolados em "Controle Particular" — não aparecem na lista geral
+  const finSemPessoais = (state.fin || []).filter(f => !f.pessoal);
+  const baseFin0 = _hideRT ? finSemPessoais.filter(f => !rtIds.has(f.obraId)) : finSemPessoais;
   // Aplica filtros do usuário
   const baseFin = aplicarFiltrosLista(baseFin0);
   // Popula opções dos filtros (selects)
@@ -1184,10 +1207,11 @@ export function renderDashFinAvancado(state) {
   // Garante que o mapa de overrides existe
   if (!state.faturamentoMensal) state.faturamentoMensal = {};
 
-  // Calcula receitas a partir dos lançamentos (sem override, sem transferências)
+  // Calcula receitas a partir dos lançamentos (sem override, sem transferências, sem pessoais)
   const recYMCalc = (year, month = null) => (state.fin || []).filter(f => {
     if (f.tipo !== 'Receita') return false;
     if (f.transferGroupId) return false;
+    if (f.pessoal) return false;
     if (f.data?.substring(0,4) !== String(year)) return false;
     if (month !== null && f.data?.substring(5,7) !== String(month).padStart(2,'0')) return false;
     return true;
@@ -1350,6 +1374,22 @@ export function renderDashFinAvancado(state) {
   ).sort((a,b) => (a.data || '').localeCompare(b.data || ''));
   const totalVencidos = vencidosReceita.reduce((a,x) => a + (+x.valor||0), 0);
 
+  // 6. Controle Particular — KPIs e lista de lançamentos pessoais
+  const finPessoal = (state.fin || []).filter(_ehPessoal);
+  const prolaboreMes = finPessoal
+    .filter(f => f.tipo === 'Receita' && f.data?.startsWith(selMesKey) && f.status === 'pago')
+    .reduce((a,x) => a + (+x.valor||0), 0);
+  const gastosMes = finPessoal
+    .filter(f => f.tipo === 'Despesa' && f.data?.startsWith(selMesKey) && f.status === 'pago')
+    .reduce((a,x) => a + (+x.valor||0), 0);
+  const dividasAbertas = finPessoal
+    .filter(f => f.tipo === 'Despesa' && f.status !== 'pago' && (f.cat || '').toLowerCase().includes('dívid'))
+    .reduce((a,x) => a + (+x.valor||0), 0);
+  const totalPessoalRec = finPessoal.filter(f => f.tipo === 'Receita' && f.status === 'pago').reduce((a,x) => a + (+x.valor||0), 0);
+  const totalPessoalDes = finPessoal.filter(f => f.tipo === 'Despesa' && f.status === 'pago').reduce((a,x) => a + (+x.valor||0), 0);
+  const saldoPessoal = totalPessoalRec - totalPessoalDes;
+  const finPessoalSorted = [...finPessoal].sort((a,b) => (b.data || '').localeCompare(a.data || ''));
+
   // Gera options do select de filtro de mês (3 meses à frente até 23 meses atrás)
   const optsResumoMes = (() => {
     const opts = [];
@@ -1368,6 +1408,13 @@ export function renderDashFinAvancado(state) {
   const isCol = id => localStorage.getItem('ejh_sec_' + id) === '1';
   const dispCol = id => isCol(id) ? 'display:none' : '';
   const iconCol = id => isCol(id) ? '▶' : '▼';
+  // Variantes para seções colapsadas por padrão (ex: Controle Particular)
+  const isColDefault = id => {
+    const v = localStorage.getItem('ejh_sec_' + id);
+    return v === null || v === '1';
+  };
+  const dispColDefault = id => isColDefault(id) ? 'display:none' : '';
+  const iconColDefault = id => isColDefault(id) ? '▶' : '▼';
 
   // Seção de alerta de vencidos (só mostra se houver)
   const secVencidos = vencidosReceita.length > 0 ? `
@@ -1518,6 +1565,80 @@ export function renderDashFinAvancado(state) {
         <div style="font-size:11px;color:var(--muted);margin-top:6px;padding:0 2px">
           * 2016–2024: totais anuais consolidados. 2025: totais mensais. 2026: lançamentos detalhados.
         </div>
+      </div>
+    </div>
+
+    <!-- Controle Particular (oculto por padrão) -->
+    <div class="section" style="border-left:4px solid #64748b;margin-bottom:18px">
+      <div class="section-hdr" style="flex-wrap:wrap;gap:8px">
+        <div class="section-title" style="cursor:pointer;color:#475569" onclick="toggleFinSection('ctrl-pessoal')">🔒 Controle Particular</div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-left:auto">
+          <button class="btn btn-outline btn-xs" style="font-size:11px;padding:3px 9px;color:#0891b2;border-color:#0891b2" onclick="openModalFinPessoal('Receita')" title="Registrar pró-labore ou outra entrada pessoal">＋ Pró-labore</button>
+          <button class="btn btn-outline btn-xs" style="font-size:11px;padding:3px 9px;color:#dc2626;border-color:#dc2626" onclick="openModalFinPessoal('Despesa')" title="Registrar gasto pessoal ou pagamento de dívida">＋ Gasto Pessoal</button>
+          <button class="btn btn-outline btn-xs" style="font-size:11px;padding:3px 9px" id="tog-ctrl-pessoal" type="button" onclick="toggleFinSection('ctrl-pessoal')">${iconColDefault('ctrl-pessoal')}</button>
+        </div>
+      </div>
+      <div id="sec-ctrl-pessoal" style="${dispColDefault('ctrl-pessoal')}">
+        <div style="background:#f8fafc;padding:8px 10px;border-radius:6px;font-size:11px;color:var(--muted);margin-bottom:10px">
+          ℹ️ Lançamentos desta seção <strong>não somam</strong> nos totais da empresa. Use para controlar suas finanças particulares: pró-labore, gastos pessoais, dívidas e metas.
+        </div>
+        <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+          <div class="kpi green">
+            <div class="kpi-label">💼 Pró-labore (${mesNomeSel.toLowerCase()})</div>
+            <div class="kpi-value">${fmt(prolaboreMes)}</div>
+            <div class="kpi-sub">Entradas pessoais do mês</div>
+          </div>
+          <div class="kpi red">
+            <div class="kpi-label">🏠 Gastos do Mês</div>
+            <div class="kpi-value">${fmt(gastosMes)}</div>
+            <div class="kpi-sub">Despesas pessoais pagas</div>
+          </div>
+          <div class="kpi ${saldoPessoal >= 0 ? 'teal' : 'amber'}">
+            <div class="kpi-label">💰 Saldo Pessoal</div>
+            <div class="kpi-value">${fmt(saldoPessoal)}</div>
+            <div class="kpi-sub">Acumulado: ${fmt(totalPessoalRec)} − ${fmt(totalPessoalDes)}</div>
+          </div>
+          <div class="kpi amber">
+            <div class="kpi-label">💳 Dívidas em Aberto</div>
+            <div class="kpi-value">${fmt(dividasAbertas)}</div>
+            <div class="kpi-sub">Categorize com "Dívida" no nome</div>
+          </div>
+        </div>
+        ${finPessoalSorted.length === 0 ? `
+          <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">
+            Nenhum lançamento pessoal ainda. Use os botões acima para começar.
+          </div>
+        ` : `
+          <div class="table-wrap" style="margin-top:14px">
+            <table style="font-size:13px">
+              <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Categoria</th><th>Status</th><th style="text-align:right">Valor</th><th></th></tr></thead>
+              <tbody>
+                ${finPessoalSorted.slice(0, 30).map(f => {
+                  const sBg = f.status==='pago' ? '#f0fdf4' : f.status==='pendente' ? '#fef2f2' : '#eff6ff';
+                  const sFg = f.status==='pago' ? 'var(--green)' : f.status==='pendente' ? 'var(--red)' : 'var(--blue)';
+                  const sLabel = f.status==='pago' ? '✅ Pago' : f.status==='pendente' ? '⚠️ Pendente' : '📅 A vencer';
+                  const tipoIcon = f.tipo === 'Receita' ? '💚' : '🔴';
+                  const valorCor = f.tipo === 'Receita' ? 'var(--green)' : 'var(--red)';
+                  return `
+                  <tr>
+                    <td style="white-space:nowrap;font-size:12px">${fmtD(f.data)}</td>
+                    <td>${tipoIcon} ${f.tipo}</td>
+                    <td>${f.desc || '—'}</td>
+                    <td style="font-size:12px;color:var(--muted)">${f.cat || '—'}</td>
+                    <td><span style="background:${sBg};color:${sFg};padding:2px 8px;border-radius:10px;font-size:11px">${sLabel}</span></td>
+                    <td style="text-align:right;font-weight:700;color:${valorCor};white-space:nowrap">${fmt(f.valor)}</td>
+                    <td style="white-space:nowrap">
+                      <button class="btn btn-outline btn-xs" onclick="openEditFin('${f.id}')" style="font-size:11px;padding:2px 6px" title="Editar">✎</button>
+                      <button class="btn btn-outline btn-xs" onclick="delFin('${f.id}')" style="color:var(--red);border-color:var(--red);font-size:11px;padding:2px 6px" title="Excluir">✕</button>
+                    </td>
+                  </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+            ${finPessoalSorted.length > 30 ? `<div style="text-align:center;padding:8px;color:var(--muted);font-size:11px">Mostrando os 30 mais recentes de ${finPessoalSorted.length} lançamentos.</div>` : ''}
+          </div>
+        `}
       </div>
     </div>
   `;

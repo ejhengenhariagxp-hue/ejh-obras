@@ -12,7 +12,7 @@ import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, sa
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260501g';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260501g';
 import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario, abrirDiarioObra, voltarDiarioObras } from './modules/diario.js?v=20260501g';
-import { addFin, delFin, openEditFin, openModalFin, renderFinanceiro, toggleHideRT, marcarFinPago,
+import { addFin, delFin, openEditFin, openModalFin, openModalFinPessoal, renderFinanceiro, toggleHideRT, marcarFinPago,
          addCustoFixo, delCustoFixo, toggleCustoFixoAtivo, openEditCustoFixo, abrirModalCustoFixo,
          preencherCustoFixoPadrao, gerarLancamentosCustosFixos,
          abrirDespesasPadraoObra, salvarDespesasPadraoObra,
@@ -23,7 +23,7 @@ import { addFin, delFin, openEditFin, openModalFin, renderFinanceiro, toggleHide
          editarFaturamentoMes, salvarFaturamentoMes, resetarFaturamentoMes,
          setResumoMes, rolarPendentesProximoMes, moverParaProximoMes,
          abrirModalTransf, addTransferencia, delTransferencia,
-         importarAbril2026Planilha, importarMesPlanilha } from './modules/financeiro.js?v=20260505a';
+         importarAbril2026Planilha, importarMesPlanilha } from './modules/financeiro.js?v=20260505b';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260501g';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260501g';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
@@ -868,6 +868,7 @@ G.gerarDiarioComFoto = () => gerarDiarioComFoto(state);
 G.abrirDiarioObra = id => { abrirDiarioObra(id); renderAtiva(); };
 G.voltarDiarioObras = () => { voltarDiarioObras(); renderAtiva(); };
 G.openModalFin = tipo => openModalFin(state, tipo);
+G.openModalFinPessoal = tipo => openModalFinPessoal(state, tipo);
 G.addFin = () => { if(addFin(state)) renderAtiva(); };
 G.delFin = id => { if(delFin(state,id)) renderAtiva(); };
 G.openEditFin = id => openEditFin(state, id);
