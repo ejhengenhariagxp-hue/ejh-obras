@@ -1350,6 +1350,14 @@ export function renderDashFinAvancado(state) {
   ).sort((a,b) => (a.data || '').localeCompare(b.data || ''));
   const totalVencidos = vencidosReceita.reduce((a,x) => a + (+x.valor||0), 0);
 
+  // Debug: mostrar pendentes/vencidos encontrados
+  if (vencidosReceita.length === 0) {
+    const todosReceitasPend = (state.fin || []).filter(f => f.tipo === 'Receita' && f.data?.includes('2026-04'));
+    console.log('🔍 Procurando vencidos em', hojeStr, '| Receitas Abril:', todosReceitasPend.map(f => ({desc: f.desc, data: f.data, status: f.status, valor: f.valor})));
+  } else {
+    console.log('✅ Vencidos encontrados:', vencidosReceita.length, vencidosReceita);
+  }
+
   // Gera options do select de filtro de mês (3 meses à frente até 23 meses atrás)
   const optsResumoMes = (() => {
     const opts = [];
