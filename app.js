@@ -23,7 +23,9 @@ import { addFin, delFin, openEditFin, openModalFin, openModalFinPessoal, renderF
          editarFaturamentoMes, salvarFaturamentoMes, resetarFaturamentoMes,
          setResumoMes, rolarPendentesProximoMes, moverParaProximoMes,
          abrirModalTransf, addTransferencia, delTransferencia,
-         importarAbril2026Planilha, importarMesPlanilha } from './modules/financeiro.js?v=20260505b';
+         addMeta, delMeta, openModalMeta, openEditMeta, addProgressoMeta,
+         addDivida, delDivida, openModalDivida, openEditDivida, pagarParcelaDivida,
+         importarAbril2026Planilha, importarMesPlanilha } from './modules/financeiro.js?v=20260505c';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260501g';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260501g';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
@@ -869,6 +871,54 @@ G.abrirDiarioObra = id => { abrirDiarioObra(id); renderAtiva(); };
 G.voltarDiarioObras = () => { voltarDiarioObras(); renderAtiva(); };
 G.openModalFin = tipo => openModalFin(state, tipo);
 G.openModalFinPessoal = tipo => openModalFinPessoal(state, tipo);
+// Metas Pessoais
+G.openModalMeta = () => openModalMeta();
+G.openEditMeta = id => openEditMeta(state, id);
+G.addMeta = () => {
+  if (addMeta(state)) {
+    saveStateLocal();
+    if (window._fbUser) clearTimeout(_fbSaveTimer), (_fbSaveTimer = setTimeout(saveToCloud, 400));
+    renderAtiva();
+  }
+};
+G.delMeta = id => {
+  if (delMeta(state, id)) {
+    saveStateLocal();
+    if (window._fbUser) clearTimeout(_fbSaveTimer), (_fbSaveTimer = setTimeout(saveToCloud, 400));
+    renderAtiva();
+  }
+};
+G.addProgressoMeta = id => {
+  if (addProgressoMeta(state, id)) {
+    saveStateLocal();
+    if (window._fbUser) clearTimeout(_fbSaveTimer), (_fbSaveTimer = setTimeout(saveToCloud, 400));
+    renderAtiva();
+  }
+};
+// Dívidas Pessoais
+G.openModalDivida = () => openModalDivida();
+G.openEditDivida = id => openEditDivida(state, id);
+G.addDivida = () => {
+  if (addDivida(state)) {
+    saveStateLocal();
+    if (window._fbUser) clearTimeout(_fbSaveTimer), (_fbSaveTimer = setTimeout(saveToCloud, 400));
+    renderAtiva();
+  }
+};
+G.delDivida = id => {
+  if (delDivida(state, id)) {
+    saveStateLocal();
+    if (window._fbUser) clearTimeout(_fbSaveTimer), (_fbSaveTimer = setTimeout(saveToCloud, 400));
+    renderAtiva();
+  }
+};
+G.pagarParcelaDivida = id => {
+  if (pagarParcelaDivida(state, id)) {
+    saveStateLocal();
+    if (window._fbUser) clearTimeout(_fbSaveTimer), (_fbSaveTimer = setTimeout(saveToCloud, 400));
+    renderAtiva();
+  }
+};
 G.addFin = () => { if(addFin(state)) renderAtiva(); };
 G.delFin = id => { if(delFin(state,id)) renderAtiva(); };
 G.openEditFin = id => openEditFin(state, id);

@@ -298,6 +298,180 @@ export function abrirModalConta() {
   openModal('modal-conta-bancaria');
 }
 
+// ── Metas Pessoais ────────────────────────────────────────────────────
+// state.metas = [{ id, nome, valorAlvo, valorAtual, prazoData, descricao, criadoEm }]
+export function addMeta(state) {
+  const nome = document.getElementById('f-meta-nome')?.value?.trim();
+  const valorAlvo = +document.getElementById('f-meta-alvo')?.value || 0;
+  const valorAtual = +document.getElementById('f-meta-atual')?.value || 0;
+  const prazoData = document.getElementById('f-meta-prazo')?.value || '';
+  const descricao = document.getElementById('f-meta-desc')?.value?.trim() || '';
+
+  if (!nome) { showToast('⚠️ Informe o nome da meta'); return false; }
+  if (valorAlvo <= 0) { showToast('⚠️ Informe um valor alvo maior que zero'); return false; }
+
+  if (!Array.isArray(state.metas)) state.metas = [];
+  if (!state.counters) state.counters = {};
+  if (!state.counters.met) state.counters.met = 1;
+
+  const editId = document.getElementById('f-meta-id')?.value;
+  const dados = { nome, valorAlvo, valorAtual, prazoData, descricao };
+
+  if (editId) {
+    const idx = state.metas.findIndex(m => m.id === editId);
+    if (idx < 0) { showToast('⚠️ Meta não encontrada'); return false; }
+    state.metas[idx] = { ...state.metas[idx], ...dados };
+    showToast('✅ Meta atualizada!');
+  } else {
+    state.metas.push({
+      id: 'MET-' + pad(state.counters.met),
+      criadoEm: new Date().toISOString().split('T')[0],
+      ...dados
+    });
+    state.counters.met++;
+    showToast('✅ Meta cadastrada!');
+  }
+  closeModal('modal-meta');
+  return true;
+}
+
+export function delMeta(state, id) {
+  if (!confirm('Excluir esta meta?')) return false;
+  state.metas = (state.metas || []).filter(m => m.id !== id);
+  markDeleted(state, 'metas', id);
+  showToast('✅ Meta excluída');
+  return true;
+}
+
+export function openModalMeta() {
+  ['f-meta-id','f-meta-nome','f-meta-alvo','f-meta-atual','f-meta-prazo','f-meta-desc'].forEach(k => {
+    const el = document.getElementById(k); if (el) el.value = '';
+  });
+  if (document.getElementById('f-meta-atual')) document.getElementById('f-meta-atual').value = '0';
+  const t = document.querySelector('#modal-meta .modal-title');
+  if (t) t.textContent = '🎯 Nova Meta';
+  openModal('modal-meta');
+}
+
+export function openEditMeta(state, id) {
+  const m = (state.metas || []).find(x => x.id === id);
+  if (!m) { showToast('⚠️ Meta não encontrada'); return; }
+  const set = (k, v) => { const el = document.getElementById(k); if (el) el.value = v ?? ''; };
+  set('f-meta-id', m.id);
+  set('f-meta-nome', m.nome);
+  set('f-meta-alvo', m.valorAlvo);
+  set('f-meta-atual', m.valorAtual);
+  set('f-meta-prazo', m.prazoData);
+  set('f-meta-desc', m.descricao);
+  const t = document.querySelector('#modal-meta .modal-title');
+  if (t) t.textContent = '✏️ Editar Meta';
+  openModal('modal-meta');
+}
+
+export function addProgressoMeta(state, id) {
+  const m = (state.metas || []).find(x => x.id === id);
+  if (!m) { showToast('⚠️ Meta não encontrada'); return false; }
+  const valStr = prompt(`Adicionar quanto à meta "${m.nome}"?\n\nProgresso atual: ${fmt(m.valorAtual)} / ${fmt(m.valorAlvo)}`, '0');
+  if (valStr === null) return false;
+  const val = parseFloat(String(valStr).replace(',', '.'));
+  if (isNaN(val) || val <= 0) { showToast('⚠️ Valor inválido'); return false; }
+  m.valorAtual = (+m.valorAtual || 0) + val;
+  showToast(`✅ +${fmt(val)} adicionado à meta`);
+  return true;
+}
+
+// ── Dívidas Pessoais ───────────────────────────────────────────────────
+// state.dividas = [{ id, credor, descricao, valorTotal, valorParcela, parcelasTotal, parcelasPagas, vencimentoDia, criadoEm }]
+export function addDivida(state) {
+  const credor = document.getElementById('f-div-credor')?.value?.trim();
+  const descricao = document.getElementById('f-div-desc')?.value?.trim() || '';
+  const valorTotal = +document.getElementById('f-div-total')?.value || 0;
+  const parcelasTotal = +document.getElementById('f-div-parc-tot')?.value || 1;
+  const parcelasPagas = +document.getElementById('f-div-parc-pg')?.value || 0;
+  const vencimentoDia = +document.getElementById('f-div-venc-dia')?.value || 1;
+
+  if (!credor) { showToast('⚠️ Informe o credor'); return false; }
+  if (valorTotal <= 0) { showToast('⚠️ Informe o valor total'); return false; }
+  if (parcelasTotal < 1) { showToast('⚠️ Mínimo 1 parcela'); return false; }
+  if (parcelasPagas > parcelasTotal) { showToast('⚠️ Parcelas pagas não podem exceder total'); return false; }
+
+  const valorParcela = valorTotal / parcelasTotal;
+
+  if (!Array.isArray(state.dividas)) state.dividas = [];
+  if (!state.counters) state.counters = {};
+  if (!state.counters.div) state.counters.div = 1;
+
+  const editId = document.getElementById('f-div-id')?.value;
+  const dados = { credor, descricao, valorTotal, valorParcela, parcelasTotal, parcelasPagas, vencimentoDia };
+
+  if (editId) {
+    const idx = state.dividas.findIndex(d => d.id === editId);
+    if (idx < 0) { showToast('⚠️ Dívida não encontrada'); return false; }
+    state.dividas[idx] = { ...state.dividas[idx], ...dados };
+    showToast('✅ Dívida atualizada!');
+  } else {
+    state.dividas.push({
+      id: 'DIV-' + pad(state.counters.div),
+      criadoEm: new Date().toISOString().split('T')[0],
+      ...dados
+    });
+    state.counters.div++;
+    showToast('✅ Dívida cadastrada!');
+  }
+  closeModal('modal-divida');
+  return true;
+}
+
+export function delDivida(state, id) {
+  if (!confirm('Excluir esta dívida?')) return false;
+  state.dividas = (state.dividas || []).filter(d => d.id !== id);
+  markDeleted(state, 'dividas', id);
+  showToast('✅ Dívida excluída');
+  return true;
+}
+
+export function openModalDivida() {
+  ['f-div-id','f-div-credor','f-div-desc','f-div-total','f-div-parc-tot','f-div-parc-pg','f-div-venc-dia'].forEach(k => {
+    const el = document.getElementById(k); if (el) el.value = '';
+  });
+  if (document.getElementById('f-div-parc-tot')) document.getElementById('f-div-parc-tot').value = '1';
+  if (document.getElementById('f-div-parc-pg')) document.getElementById('f-div-parc-pg').value = '0';
+  if (document.getElementById('f-div-venc-dia')) document.getElementById('f-div-venc-dia').value = '10';
+  const t = document.querySelector('#modal-divida .modal-title');
+  if (t) t.textContent = '💳 Nova Dívida';
+  openModal('modal-divida');
+}
+
+export function openEditDivida(state, id) {
+  const d = (state.dividas || []).find(x => x.id === id);
+  if (!d) { showToast('⚠️ Dívida não encontrada'); return; }
+  const set = (k, v) => { const el = document.getElementById(k); if (el) el.value = v ?? ''; };
+  set('f-div-id', d.id);
+  set('f-div-credor', d.credor);
+  set('f-div-desc', d.descricao);
+  set('f-div-total', d.valorTotal);
+  set('f-div-parc-tot', d.parcelasTotal);
+  set('f-div-parc-pg', d.parcelasPagas);
+  set('f-div-venc-dia', d.vencimentoDia);
+  const t = document.querySelector('#modal-divida .modal-title');
+  if (t) t.textContent = '✏️ Editar Dívida';
+  openModal('modal-divida');
+}
+
+export function pagarParcelaDivida(state, id) {
+  const d = (state.dividas || []).find(x => x.id === id);
+  if (!d) { showToast('⚠️ Dívida não encontrada'); return false; }
+  if (d.parcelasPagas >= d.parcelasTotal) { showToast('ℹ️ Dívida já quitada'); return false; }
+  if (!confirm(`Marcar parcela ${d.parcelasPagas + 1}/${d.parcelasTotal} de "${d.credor}" como paga?\n\nValor: ${fmt(d.valorParcela)}`)) return false;
+  d.parcelasPagas++;
+  if (d.parcelasPagas >= d.parcelasTotal) {
+    showToast(`🎉 Dívida "${d.credor}" quitada!`);
+  } else {
+    showToast(`✅ Parcela paga (${d.parcelasPagas}/${d.parcelasTotal})`);
+  }
+  return true;
+}
+
 function popularOpcoesBanco() {
   const sel = document.getElementById('f-cb-banco');
   if (!sel) return;
@@ -1382,13 +1556,23 @@ export function renderDashFinAvancado(state) {
   const gastosMes = finPessoal
     .filter(f => f.tipo === 'Despesa' && f.data?.startsWith(selMesKey) && f.status === 'pago')
     .reduce((a,x) => a + (+x.valor||0), 0);
-  const dividasAbertas = finPessoal
-    .filter(f => f.tipo === 'Despesa' && f.status !== 'pago' && (f.cat || '').toLowerCase().includes('dívid'))
-    .reduce((a,x) => a + (+x.valor||0), 0);
   const totalPessoalRec = finPessoal.filter(f => f.tipo === 'Receita' && f.status === 'pago').reduce((a,x) => a + (+x.valor||0), 0);
   const totalPessoalDes = finPessoal.filter(f => f.tipo === 'Despesa' && f.status === 'pago').reduce((a,x) => a + (+x.valor||0), 0);
   const saldoPessoal = totalPessoalRec - totalPessoalDes;
   const finPessoalSorted = [...finPessoal].sort((a,b) => (b.data || '').localeCompare(a.data || ''));
+
+  // 6b. Metas e Dívidas (entidades próprias)
+  const metas = (state.metas || []).slice().sort((a,b) => (a.prazoData || 'z').localeCompare(b.prazoData || 'z'));
+  const dividas = (state.dividas || []).slice().sort((a,b) => {
+    const aQ = (a.parcelasPagas || 0) >= (a.parcelasTotal || 0);
+    const bQ = (b.parcelasPagas || 0) >= (b.parcelasTotal || 0);
+    if (aQ !== bQ) return aQ ? 1 : -1;
+    return 0;
+  });
+  const dividasAbertas = dividas.reduce((acc, d) => {
+    const restantes = (d.parcelasTotal || 0) - (d.parcelasPagas || 0);
+    return acc + (restantes * (d.valorParcela || 0));
+  }, 0);
 
   // Gera options do select de filtro de mês (3 meses à frente até 23 meses atrás)
   const optsResumoMes = (() => {
@@ -1601,44 +1785,157 @@ export function renderDashFinAvancado(state) {
           <div class="kpi amber">
             <div class="kpi-label">💳 Dívidas em Aberto</div>
             <div class="kpi-value">${fmt(dividasAbertas)}</div>
-            <div class="kpi-sub">Categorize com "Dívida" no nome</div>
+            <div class="kpi-sub">${dividas.filter(d => (d.parcelasPagas||0) < (d.parcelasTotal||0)).length} dívida${dividas.length!==1?'s':''} ativa${dividas.length!==1?'s':''}</div>
           </div>
         </div>
-        ${finPessoalSorted.length === 0 ? `
-          <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">
-            Nenhum lançamento pessoal ainda. Use os botões acima para começar.
+
+        <!-- Sub-seção: Metas -->
+        <div style="margin-top:18px;border-top:1px solid #e2e8f0;padding-top:14px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+            <h4 style="margin:0;font-size:14px;color:#475569;flex:1">🎯 Metas Futuras</h4>
+            <button class="btn btn-outline btn-xs" style="font-size:11px;padding:3px 9px;color:#0891b2;border-color:#0891b2" onclick="openModalMeta()">＋ Nova Meta</button>
           </div>
-        ` : `
-          <div class="table-wrap" style="margin-top:14px">
-            <table style="font-size:13px">
-              <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Categoria</th><th>Status</th><th style="text-align:right">Valor</th><th></th></tr></thead>
-              <tbody>
-                ${finPessoalSorted.slice(0, 30).map(f => {
-                  const sBg = f.status==='pago' ? '#f0fdf4' : f.status==='pendente' ? '#fef2f2' : '#eff6ff';
-                  const sFg = f.status==='pago' ? 'var(--green)' : f.status==='pendente' ? 'var(--red)' : 'var(--blue)';
-                  const sLabel = f.status==='pago' ? '✅ Pago' : f.status==='pendente' ? '⚠️ Pendente' : '📅 A vencer';
-                  const tipoIcon = f.tipo === 'Receita' ? '💚' : '🔴';
-                  const valorCor = f.tipo === 'Receita' ? 'var(--green)' : 'var(--red)';
-                  return `
-                  <tr>
-                    <td style="white-space:nowrap;font-size:12px">${fmtD(f.data)}</td>
-                    <td>${tipoIcon} ${f.tipo}</td>
-                    <td>${f.desc || '—'}</td>
-                    <td style="font-size:12px;color:var(--muted)">${f.cat || '—'}</td>
-                    <td><span style="background:${sBg};color:${sFg};padding:2px 8px;border-radius:10px;font-size:11px">${sLabel}</span></td>
-                    <td style="text-align:right;font-weight:700;color:${valorCor};white-space:nowrap">${fmt(f.valor)}</td>
-                    <td style="white-space:nowrap">
-                      <button class="btn btn-outline btn-xs" onclick="openEditFin('${f.id}')" style="font-size:11px;padding:2px 6px" title="Editar">✎</button>
-                      <button class="btn btn-outline btn-xs" onclick="delFin('${f.id}')" style="color:var(--red);border-color:var(--red);font-size:11px;padding:2px 6px" title="Excluir">✕</button>
-                    </td>
-                  </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
-            ${finPessoalSorted.length > 30 ? `<div style="text-align:center;padding:8px;color:var(--muted);font-size:11px">Mostrando os 30 mais recentes de ${finPessoalSorted.length} lançamentos.</div>` : ''}
+          ${metas.length === 0 ? `
+            <div style="text-align:center;padding:14px;color:var(--muted);font-size:12px;background:#f8fafc;border-radius:6px">
+              Nenhuma meta cadastrada. Comece definindo seus objetivos: reserva, viagem, equipamento, etc.
+            </div>
+          ` : `
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px">
+              ${metas.map(m => {
+                const pct = m.valorAlvo > 0 ? Math.min(100, (m.valorAtual / m.valorAlvo) * 100) : 0;
+                const pctColor = pct >= 100 ? '#16a34a' : pct >= 50 ? '#0891b2' : '#7c3aed';
+                const concluida = pct >= 100;
+                const restante = Math.max(0, m.valorAlvo - m.valorAtual);
+                let prazoLbl = '';
+                if (m.prazoData) {
+                  const hoje = new Date();
+                  const prazo = new Date(m.prazoData);
+                  const diasRest = Math.ceil((prazo - hoje) / (1000 * 60 * 60 * 24));
+                  if (diasRest < 0) prazoLbl = `<span style="color:var(--red)">⚠️ Atrasada ${Math.abs(diasRest)} dia${Math.abs(diasRest)!==1?'s':''}</span>`;
+                  else if (diasRest === 0) prazoLbl = `<span style="color:var(--amber)">📅 Vence hoje</span>`;
+                  else prazoLbl = `📅 ${diasRest} dia${diasRest!==1?'s':''} restante${diasRest!==1?'s':''}`;
+                }
+                return `
+                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px">
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px">
+                    <div style="flex:1">
+                      <div style="font-weight:700;color:var(--navy);font-size:14px">${concluida ? '🏆 ' : '🎯 '}${m.nome}</div>
+                      ${m.descricao ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${m.descricao}</div>` : ''}
+                    </div>
+                    <div style="display:flex;gap:3px">
+                      <button class="btn btn-outline btn-xs" onclick="addProgressoMeta('${m.id}')" style="font-size:10px;padding:2px 6px;color:var(--green);border-color:var(--green)" title="Adicionar progresso">＋</button>
+                      <button class="btn btn-outline btn-xs" onclick="openEditMeta('${m.id}')" style="font-size:10px;padding:2px 6px" title="Editar">✎</button>
+                      <button class="btn btn-outline btn-xs" onclick="delMeta('${m.id}')" style="color:var(--red);border-color:var(--red);font-size:10px;padding:2px 6px" title="Excluir">✕</button>
+                    </div>
+                  </div>
+                  <div style="font-size:12px;margin-bottom:6px">
+                    <strong style="color:${pctColor}">${fmt(m.valorAtual)}</strong> / <span style="color:var(--muted)">${fmt(m.valorAlvo)}</span>
+                    <span style="float:right;color:${pctColor};font-weight:700">${pct.toFixed(0)}%</span>
+                  </div>
+                  <div style="background:#e2e8f0;border-radius:6px;height:8px;overflow:hidden">
+                    <div style="background:${pctColor};height:100%;width:${pct}%;transition:width .3s"></div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px">
+                    <span>Falta ${fmt(restante)}</span>
+                    <span>${prazoLbl}</span>
+                  </div>
+                </div>
+                `;
+              }).join('')}
+            </div>
+          `}
+        </div>
+
+        <!-- Sub-seção: Dívidas -->
+        <div style="margin-top:18px;border-top:1px solid #e2e8f0;padding-top:14px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+            <h4 style="margin:0;font-size:14px;color:#475569;flex:1">💳 Dívidas Particulares</h4>
+            <button class="btn btn-outline btn-xs" style="font-size:11px;padding:3px 9px;color:#dc2626;border-color:#dc2626" onclick="openModalDivida()">＋ Nova Dívida</button>
           </div>
-        `}
+          ${dividas.length === 0 ? `
+            <div style="text-align:center;padding:14px;color:var(--muted);font-size:12px;background:#f8fafc;border-radius:6px">
+              Nenhuma dívida cadastrada. Use para acompanhar empréstimos, financiamentos e parcelamentos pessoais.
+            </div>
+          ` : `
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px">
+              ${dividas.map(d => {
+                const parc = d.parcelasPagas || 0;
+                const tot = d.parcelasTotal || 1;
+                const pct = Math.min(100, (parc / tot) * 100);
+                const quitada = parc >= tot;
+                const restantes = tot - parc;
+                const valorRestante = restantes * (d.valorParcela || 0);
+                const corBorda = quitada ? '#16a34a' : '#dc2626';
+                return `
+                <div style="background:#fff;border:1px solid #e2e8f0;border-left:3px solid ${corBorda};border-radius:8px;padding:12px">
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px">
+                    <div style="flex:1">
+                      <div style="font-weight:700;color:var(--navy);font-size:14px">${quitada ? '✅ ' : '💳 '}${d.credor}</div>
+                      ${d.descricao ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${d.descricao}</div>` : ''}
+                    </div>
+                    <div style="display:flex;gap:3px">
+                      ${!quitada ? `<button class="btn btn-outline btn-xs" onclick="pagarParcelaDivida('${d.id}')" style="font-size:10px;padding:2px 6px;color:var(--green);border-color:var(--green)" title="Pagar parcela">✓</button>` : ''}
+                      <button class="btn btn-outline btn-xs" onclick="openEditDivida('${d.id}')" style="font-size:10px;padding:2px 6px" title="Editar">✎</button>
+                      <button class="btn btn-outline btn-xs" onclick="delDivida('${d.id}')" style="color:var(--red);border-color:var(--red);font-size:10px;padding:2px 6px" title="Excluir">✕</button>
+                    </div>
+                  </div>
+                  <div style="font-size:12px;margin-bottom:6px">
+                    Parcela <strong>${parc}/${tot}</strong>
+                    <span style="float:right;color:${quitada?'#16a34a':'#dc2626'};font-weight:700">${pct.toFixed(0)}% pago</span>
+                  </div>
+                  <div style="background:#e2e8f0;border-radius:6px;height:8px;overflow:hidden">
+                    <div style="background:${quitada?'#16a34a':'#dc2626'};height:100%;width:${pct}%;transition:width .3s"></div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px">
+                    <span>Parcela: ${fmt(d.valorParcela||0)}${d.vencimentoDia?` (dia ${d.vencimentoDia})`:''}</span>
+                    <span>${quitada ? '🎉 Quitada' : `Falta ${fmt(valorRestante)}`}</span>
+                  </div>
+                </div>
+                `;
+              }).join('')}
+            </div>
+          `}
+        </div>
+
+        <!-- Sub-seção: Lançamentos pessoais recentes -->
+        <div style="margin-top:18px;border-top:1px solid #e2e8f0;padding-top:14px">
+          <h4 style="margin:0 0 10px 0;font-size:14px;color:#475569">📋 Lançamentos Pessoais Recentes</h4>
+          ${finPessoalSorted.length === 0 ? `
+            <div style="text-align:center;padding:14px;color:var(--muted);font-size:12px;background:#f8fafc;border-radius:6px">
+              Nenhum lançamento pessoal ainda. Use os botões "+ Pró-labore" e "+ Gasto Pessoal" no topo.
+            </div>
+          ` : `
+            <div class="table-wrap">
+              <table style="font-size:13px">
+                <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Categoria</th><th>Status</th><th style="text-align:right">Valor</th><th></th></tr></thead>
+                <tbody>
+                  ${finPessoalSorted.slice(0, 30).map(f => {
+                    const sBg = f.status==='pago' ? '#f0fdf4' : f.status==='pendente' ? '#fef2f2' : '#eff6ff';
+                    const sFg = f.status==='pago' ? 'var(--green)' : f.status==='pendente' ? 'var(--red)' : 'var(--blue)';
+                    const sLabel = f.status==='pago' ? '✅ Pago' : f.status==='pendente' ? '⚠️ Pendente' : '📅 A vencer';
+                    const tipoIcon = f.tipo === 'Receita' ? '💚' : '🔴';
+                    const valorCor = f.tipo === 'Receita' ? 'var(--green)' : 'var(--red)';
+                    return `
+                    <tr>
+                      <td style="white-space:nowrap;font-size:12px">${fmtD(f.data)}</td>
+                      <td>${tipoIcon} ${f.tipo}</td>
+                      <td>${f.desc || '—'}</td>
+                      <td style="font-size:12px;color:var(--muted)">${f.cat || '—'}</td>
+                      <td><span style="background:${sBg};color:${sFg};padding:2px 8px;border-radius:10px;font-size:11px">${sLabel}</span></td>
+                      <td style="text-align:right;font-weight:700;color:${valorCor};white-space:nowrap">${fmt(f.valor)}</td>
+                      <td style="white-space:nowrap">
+                        <button class="btn btn-outline btn-xs" onclick="openEditFin('${f.id}')" style="font-size:11px;padding:2px 6px" title="Editar">✎</button>
+                        <button class="btn btn-outline btn-xs" onclick="delFin('${f.id}')" style="color:var(--red);border-color:var(--red);font-size:11px;padding:2px 6px" title="Excluir">✕</button>
+                      </td>
+                    </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+              ${finPessoalSorted.length > 30 ? `<div style="text-align:center;padding:8px;color:var(--muted);font-size:11px">Mostrando os 30 mais recentes de ${finPessoalSorted.length} lançamentos.</div>` : ''}
+            </div>
+          `}
+        </div>
       </div>
     </div>
   `;
