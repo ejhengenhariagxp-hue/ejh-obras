@@ -1343,6 +1343,13 @@ export function renderDashFinAvancado(state) {
   const diffMesColor = diffMesPct === null ? 'var(--muted)' : (diffMesPct >= 0 ? 'var(--green)' : 'var(--red)');
   const diffMesIcon  = diffMesPct === null ? '—' : (diffMesPct >= 0 ? '↗' : '↘');
 
+  // 5. Lançamentos vencidos (status = 'pendente' com data passada)
+  const hojeStr = new Date().toISOString().split('T')[0];
+  const vencidosReceita = (state.fin || []).filter(f =>
+    f.tipo === 'Receita' && f.status === 'pendente' && (f.data || '') < hojeStr && _semTransf(f)
+  ).sort((a,b) => (a.data || '').localeCompare(b.data || ''));
+  const totalVencidos = vencidosReceita.reduce((a,x) => a + (+x.valor||0), 0);
+
   // Gera options do select de filtro de mês (3 meses à frente até 23 meses atrás)
   const optsResumoMes = (() => {
     const opts = [];
@@ -1362,7 +1369,40 @@ export function renderDashFinAvancado(state) {
   const dispCol = id => isCol(id) ? 'display:none' : '';
   const iconCol = id => isCol(id) ? '▶' : '▼';
 
-  container.innerHTML = `
+  // Seção de alerta de vencidos (só mostra se houver)
+  const secVencidos = vencidosReceita.length > 0 ? `
+    <!-- Alerta: Lançamentos Vencidos -->
+    <div class="section" style="border-left:4px solid #dc2626;margin-top:20px;margin-bottom:18px;background:#fef2f2">
+      <div class="section-hdr">
+        <div class="section-title">⚠️ ${vencidosReceita.length} Lançamento${vencidosReceita.length!==1?'s':''} Vencido${vencidosReceita.length!==1?'s':''} (${fmt(totalVencidos)})</div>
+      </div>
+      <div style="padding:0 0 12px 0">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <tbody>
+            ${vencidosReceita.map(f => {
+              const contaNome = (state.contas || []).find(c => c.id === f.contaId)?.nome || '—';
+              return `
+              <tr style="border-bottom:1px solid #fecaca;padding:8px 0">
+                <td style="padding:8px 8px 8px 0;text-align:left">
+                  <div style="font-weight:600;color:#7c3aed">${f.desc}</div>
+                  <div style="font-size:11px;color:var(--muted)">${f.data} • ${contaNome}</div>
+                </td>
+                <td style="padding:8px 8px;text-align:right;white-space:nowrap;min-width:80px">
+                  <div style="font-weight:700;color:#dc2626">${fmt(f.valor)}</div>
+                </td>
+                <td style="padding:8px 0 8px 8px;text-align:right;white-space:nowrap">
+                  <button class="btn btn-outline btn-xs" style="font-size:11px;padding:3px 8px" onclick="moverParaProximoMes('${f.id}')">↪ Próximo mês</button>
+                </td>
+              </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  ` : '';
+
+  container.innerHTML = secVencidos + `
     <!-- Resumo do Mês -->
     <div class="section" style="border-left:4px solid #7c3aed;margin-top:20px;margin-bottom:18px">
       <div class="section-hdr" style="flex-wrap:wrap;gap:8px">
@@ -1538,6 +1578,34 @@ export function rolarPendentesProximoMes(state) {
   });
 
   showToast(`✅ ${pendentes.length} lançamento(s) copiado(s) para ${nextMesLabel}`);
+  return true;
+}
+
+// Move um lançamento vencido para o próximo mês (em vez de copiar)
+export function moverParaProximoMes(state, finId) {
+  if (!state || !Array.isArray(state.fin)) return false;
+  const idx = state.fin.findIndex(f => f.id === finId);
+  if (idx < 0) { showToast('⚠️ Lançamento não encontrado'); return false; }
+
+  const f = state.fin[idx];
+  const dataAtual = f.data || new Date().toISOString().split('T')[0];
+  const y = parseInt(dataAtual.substring(0, 4));
+  const m = parseInt(dataAtual.substring(5, 7));
+  const d = parseInt(dataAtual.substring(8, 10));
+
+  const ny = m === 12 ? y + 1 : y;
+  const nm = m === 12 ? 1 : m + 1;
+  const daysInNext = new Date(ny, nm, 0).getDate();
+  const safeDay = Math.min(d, daysInNext);
+  const newData = `${ny}-${String(nm).padStart(2,'0')}-${String(safeDay).padStart(2,'0')}`;
+
+  const now = new Date().toISOString().split('T')[0];
+  f.data = newData;
+  f.status = newData >= now ? 'a_vencer' : 'pendente';
+
+  const mesAtual = `${y}-${String(m).padStart(2,'0')}`;
+  const mesProx = `${ny}-${String(nm).padStart(2,'0')}`;
+  showToast(`✅ Movido de ${mesAtual} para ${mesProx}`);
   return true;
 }
 

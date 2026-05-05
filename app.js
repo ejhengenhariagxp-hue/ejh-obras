@@ -21,7 +21,7 @@ import { addFin, delFin, openEditFin, openModalFin, renderFinanceiro, toggleHide
          atualizarStatusVencimentos,
          importarFaturamentoHistoricoEJH, toggleFinSection,
          editarFaturamentoMes, salvarFaturamentoMes, resetarFaturamentoMes,
-         setResumoMes, rolarPendentesProximoMes,
+         setResumoMes, rolarPendentesProximoMes, moverParaProximoMes,
          abrirModalTransf, addTransferencia, delTransferencia,
          importarAbril2026Planilha, importarMesPlanilha } from './modules/financeiro.js?v=20260504e';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260501g';
@@ -910,6 +910,13 @@ G.resetarFaturamentoMes = () => {
 G.setResumoMes = val => { setResumoMes(val); renderAtiva(); };
 G.rolarPendentesProximoMes = () => {
   if (rolarPendentesProximoMes(state)) {
+    saveStateLocal();
+    if (window._fbUser) clearTimeout(_fbSaveTimer), (_fbSaveTimer = setTimeout(saveToCloud, 400));
+    renderAtiva();
+  }
+};
+G.moverParaProximoMes = (finId) => {
+  if (moverParaProximoMes(state, finId)) {
     saveStateLocal();
     if (window._fbUser) clearTimeout(_fbSaveTimer), (_fbSaveTimer = setTimeout(saveToCloud, 400));
     renderAtiva();
