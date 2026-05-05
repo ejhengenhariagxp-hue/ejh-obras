@@ -1590,6 +1590,35 @@ const _MES_NOME_LONGO = {
   '07':'Julho','08':'Agosto','09':'Setembro','10':'Outubro','11':'Novembro','12':'Dezembro'
 };
 
+// Cria "Caixa — Em Espécie" se não existir (para importadores com espécie)
+function ensureCaixaAccount(state) {
+  const temCaixa = (state.contas || []).some(c =>
+    c.ativo !== false && (
+      (c.banco || '').toLowerCase().includes('dinheiro') ||
+      (c.banco || '').toLowerCase().includes('caixa') ||
+      (c.nome  || '').toLowerCase().includes('caixa')
+    )
+  );
+  if (temCaixa) return;
+
+  if (!Array.isArray(state.contas)) state.contas = [];
+  if (!state.counters) state.counters = {};
+  if (!state.counters.cb) state.counters.cb = 1;
+
+  state.contas.push({
+    id: 'CB-' + pad(state.counters.cb),
+    nome: 'Caixa — Em Espécie',
+    banco: 'Dinheiro / Caixinha',
+    agencia: '',
+    conta: '',
+    tipo: 'Caixa',
+    saldoInicial: 0,
+    ativo: true,
+    cor: '#fef9c3'
+  });
+  state.counters.cb++;
+}
+
 // True se o mês tem planilha cadastrada E ainda há override (= não importou)
 export function temPlanilhaParaImportar(state, mesKey) {
   if (!_PLANILHA_NF_2026[mesKey]) return false;
@@ -1614,6 +1643,9 @@ export function importarMesPlanilha(state, mesKey) {
               `• Remove o override manual de ${mesNome}\n\n` +
               `Continuar?`;
   if (!confirm(msg)) return false;
+
+  // 0. Garante que existe conta para "Em espécie"
+  ensureCaixaAccount(state);
 
   // 1. Remove receitas atuais do mês (exceto transferências)
   aApagar.forEach(f => markDeleted(state, 'fin', f.id));
