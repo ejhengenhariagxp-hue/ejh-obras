@@ -186,6 +186,9 @@ export function openModalFin(state, tipo){
   if(document.getElementById('fin-modal-title')) document.getElementById('fin-modal-title').textContent=(tipo==='Receita'?'💚 Nova Receita':'🔴 Nova Despesa');
   if(document.getElementById('f-fin-data')) document.getElementById('f-fin-data').value = new Date().toISOString().split('T')[0];
   _modalFinPessoal = false;
+  // Garante que o campo Obra esteja visível (pode ter sido escondido pelo modo pessoal)
+  const obraField = document.getElementById('f-fin-obra')?.closest('.form-group, .form-row');
+  if (obraField) obraField.style.display = '';
   openModal('modal-fin');
 }
 
@@ -195,7 +198,15 @@ export function openModalFinPessoal(state, tipo){
   _modalFinPessoal = true;
   const titulo = tipo === 'Receita' ? '💼 Pró-labore / Receita Pessoal' : '🏠 Gasto Pessoal';
   if(document.getElementById('fin-modal-title')) document.getElementById('fin-modal-title').textContent = titulo;
+  // Esconde campo "Obra" — pessoal não está vinculado a obra
+  const obraField = document.getElementById('f-fin-obra')?.closest('.form-group, .form-row');
+  if (obraField) obraField.style.display = 'none';
+  // Atualiza categorias para opções pessoais
+  if (typeof window.atualizarCategoriasFin === 'function') window.atualizarCategoriasFin();
 }
+
+// Permite que app.js saiba se o modal-fin está em modo pessoal (para categorias)
+export function isModalFinPessoal() { return _modalFinPessoal; }
 
 // Toggle do bloco de parcelamento
 export function toggleParcFin() {

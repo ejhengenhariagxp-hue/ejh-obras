@@ -12,7 +12,7 @@ import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, sa
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260501g';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260501g';
 import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario, abrirDiarioObra, voltarDiarioObras } from './modules/diario.js?v=20260501g';
-import { addFin, delFin, openEditFin, openModalFin, openModalFinPessoal, renderFinanceiro, toggleHideRT, marcarFinPago,
+import { addFin, delFin, openEditFin, openModalFin, openModalFinPessoal, isModalFinPessoal, renderFinanceiro, toggleHideRT, marcarFinPago,
          addCustoFixo, delCustoFixo, toggleCustoFixoAtivo, openEditCustoFixo, abrirModalCustoFixo,
          preencherCustoFixoPadrao, gerarLancamentosCustosFixos,
          abrirDespesasPadraoObra, salvarDespesasPadraoObra,
@@ -25,7 +25,7 @@ import { addFin, delFin, openEditFin, openModalFin, openModalFinPessoal, renderF
          abrirModalTransf, addTransferencia, delTransferencia,
          addMeta, delMeta, openModalMeta, openEditMeta, addProgressoMeta,
          addDivida, delDivida, openModalDivida, openEditDivida, pagarParcelaDivida,
-         importarAbril2026Planilha, importarMesPlanilha } from './modules/financeiro.js?v=20260505c';
+         importarAbril2026Planilha, importarMesPlanilha } from './modules/financeiro.js?v=20260505d';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260501g';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260501g';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
@@ -748,11 +748,39 @@ const CAT_DESPESA = [
   '📐🏗 Projetos e Gestão da Obra',
   '🏗 Gestão de Obra',
 ];
+// Categorias pessoais (quando modal-fin é aberto em modo "pessoal")
+const CAT_RECEITA_PESSOAL = [
+  '💼 Pró-labore',
+  '🎁 Presente / Doação Recebida',
+  '💰 Rendimento / Investimento',
+  '↩ Reembolso',
+  '📦 Outros',
+];
+const CAT_DESPESA_PESSOAL = [
+  '🏠 Casa / Moradia',
+  '🛒 Mercado / Alimentação',
+  '🚗 Transporte / Combustível',
+  '💊 Saúde / Farmácia',
+  '👕 Vestuário',
+  '🎉 Lazer / Viagem',
+  '📚 Educação',
+  '💳 Dívida (parcela)',
+  '💸 Imposto / Taxa',
+  '📱 Assinaturas / Internet',
+  '👨‍👩‍👧 Família / Filhos',
+  '📦 Outros',
+];
 function atualizarCategoriasFin() {
   const tipo = document.getElementById('f-fin-tipo')?.value || 'Receita';
   const sel = document.getElementById('f-fin-cat');
   if (!sel) return;
-  const lista = tipo === 'Receita' ? CAT_RECEITA : CAT_DESPESA;
+  const ehPessoal = typeof isModalFinPessoal === 'function' && isModalFinPessoal();
+  let lista;
+  if (ehPessoal) {
+    lista = tipo === 'Receita' ? CAT_RECEITA_PESSOAL : CAT_DESPESA_PESSOAL;
+  } else {
+    lista = tipo === 'Receita' ? CAT_RECEITA : CAT_DESPESA;
+  }
   const valorAtual = sel.value;
   sel.innerHTML = lista.map(c => `<option>${c}</option>`).join('')
     + '<option value="__custom__">📝 Personalizada...</option>';
