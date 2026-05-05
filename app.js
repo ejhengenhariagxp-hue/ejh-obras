@@ -23,7 +23,7 @@ import { addFin, delFin, openEditFin, openModalFin, renderFinanceiro, toggleHide
          editarFaturamentoMes, salvarFaturamentoMes, resetarFaturamentoMes,
          setResumoMes, rolarPendentesProximoMes,
          abrirModalTransf, addTransferencia, delTransferencia,
-         importarAbril2026Planilha } from './modules/financeiro.js?v=20260504d';
+         importarAbril2026Planilha, importarMesPlanilha } from './modules/financeiro.js?v=20260504e';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260501g';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260501g';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
@@ -932,6 +932,13 @@ G.delTransferencia = grpId => {
 };
 G.importarAbril2026Planilha = () => {
   if (importarAbril2026Planilha(state)) {
+    saveStateLocal();
+    if (window._fbUser) clearTimeout(_fbSaveTimer), (_fbSaveTimer = setTimeout(saveToCloud, 400));
+    renderAtiva();
+  }
+};
+G.importarMesPlanilha = mesKey => {
+  if (importarMesPlanilha(state, mesKey)) {
     saveStateLocal();
     if (window._fbUser) clearTimeout(_fbSaveTimer), (_fbSaveTimer = setTimeout(saveToCloud, 400));
     renderAtiva();

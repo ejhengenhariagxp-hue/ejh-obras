@@ -1039,9 +1039,11 @@ export function renderFinanceiro(state){
   // Botão "Importar Histórico" só aparece se ainda não foi importado
   const btnImp = document.getElementById('btn-importar-historico-ejh');
   if (btnImp) btnImp.style.display = temFaturamentoHistoricoEJH(state) ? 'none' : '';
-  // Botão "Importar Abril/2026" só aparece enquanto override de abr/2026 existir
-  const btnAbr = document.getElementById('btn-importar-abril-2026');
-  if (btnAbr) btnAbr.style.display = temOverrideAbril2026(state) ? '' : 'none';
+  // Botões "Importar [Mês]/2026" só aparecem enquanto o override existir
+  ['2026-02','2026-03','2026-04'].forEach(mk => {
+    const btn = document.getElementById('btn-imp-' + mk);
+    if (btn) btn.style.display = temPlanilhaParaImportar(state, mk) ? '' : 'none';
+  });
 
   // KPIs do topo: ano corrente, respeitando overrides do comparativo (consistência)
   const anoAtual = String(new Date().getFullYear());
@@ -1539,48 +1541,84 @@ export function rolarPendentesProximoMes(state) {
   return true;
 }
 
-// ── Importação one-shot: Abril/2026 da planilha de NF do usuário ─────
-// Substitui TODAS as receitas de 04/2026 (exceto transferências) pelas
-// 11 entradas exatas da planilha de NF. Mantém despesas e transferências.
+// ── Importação one-shot: meses históricos da planilha de NF do usuário ──
+// Substitui as receitas do mês escolhido (exceto transferências) pelas
+// entradas exatas da planilha de NF. Mantém despesas e transferências.
 // Remove o override manual após importar (passa a usar valor calculado).
-const _ABRIL_2026_PLANILHA = [
-  { data: '2026-04-06', valor: 2250.00, desc: 'ACOMPANHAMENTO DE OBRA — BANDEIRANTES (Bauru-SP)',                                       conta: 'nubank',  cat: '📦 Acompanhamento Técnico' },
-  { data: '2026-04-07', valor:  750.00, desc: 'ELABORAÇÃO DE PROJETOS (ESTRUT/ELET/HIDRO/PCI) 50% PARCELA 2/3 — LICIA/BRUNO',           conta: 'nubank',  cat: '📐 Projetos c/ Acompanhamento da Execução' },
-  { data: '2026-04-10', valor: 1000.00, desc: 'ELABORAÇÃO DE PROJETOS (ARQ/ESTRUT/HIDRO/ELET) 1/5 — DANILO',                            conta: 'sicredi', cat: '📐 Projetos c/ Acompanhamento da Execução' },
-  { data: '2026-04-13', valor: 1162.50, desc: 'ELABORAÇÃO DE PROJETOS (ESTRUT/ELET/HIDRO/PCI) PARCELA 2/4 — WILLIAM',                   conta: 'nubank',  cat: '📐 Projetos c/ Acompanhamento da Execução', nf: '228' },
-  { data: '2026-04-20', valor:  800.00, desc: 'ELABORAÇÃO DE LAUDO TÉCNICO 5/5 — JULIANA',                                              conta: 'nubank',  cat: '🔍 Laudo', nf: '227' },
-  { data: '2026-04-22', valor:  400.00, desc: 'ACOMPANHAMENTO DE DOCUMENTAÇÃO DE DIVISÃO DE CONDOMÍNIO — PAULO CESAR',                  conta: 'nubank',  cat: '📦 Acompanhamento Técnico' },
-  { data: '2026-04-23', valor:  500.00, desc: 'ELABORAÇÃO DE PROJETO ARQUITETÔNICO E ESTRUTURAL — pgto final — RODRIGO/DAVI/VINICIUS',  conta: 'nubank',  cat: '📐 Projetos c/ Acompanhamento da Execução' },
-  { data: '2026-04-23', valor: 3000.00, desc: 'RT DE OBRA — GUSTAVO/STELLA',                                                             conta: 'nubank',  cat: '📦 Acompanhamento Técnico' },
-  { data: '2026-04-24', valor:  600.00, desc: 'ESTUDO DE ESPAÇO GOURMET E GARAGEM (Sítio) — PEDRO ROBERTO',                              conta: 'nubank',  cat: '🔍 Estudo' },
-  { data: '2026-04-27', valor: 1250.00, desc: 'ELABORAÇÃO DE PROJETO ARQ/ESTRUT/ELET/HIDRO 3/4 — JFI ADMINISTRADORA BENS',               conta: 'nubank',  cat: '📐 Projetos c/ Acompanhamento da Execução', nf: '229' },
-  { data: '2026-04-27', valor: 2250.00, desc: 'ACOMPANHAMENTO DE OBRA — BANDEIRANTES (Bauru-SP)',                                       conta: 'nubank',  cat: '📦 Acompanhamento Técnico' },
-];
+const _PLANILHA_NF_2026 = {
+  '2026-02': [
+    { data: '2026-02-02', valor:  700.00, desc: 'ACOMPANHAMENTO DE OBRA — CAIXA — PARCELA FEV/MAR (1+2/11) — MARLIZE',                       conta: 'nubank',  cat: '📦 Acompanhamento Técnico' },
+    { data: '2026-02-05', valor: 2250.00, desc: 'ACOMPANHAMENTO DE OBRA — BANDEIRANTES (Bauru-SP)',                                          conta: 'nubank',  cat: '📦 Acompanhamento Técnico' },
+    { data: '2026-02-08', valor: 1500.00, desc: 'ELABORAÇÃO DE PROJETO ARQUITETÔNICO E ESTRUTURAL (Entrada) — RODRIGO/DAVI/VINICIUS',         conta: 'nubank',  cat: '📐 Projetos c/ Acompanhamento da Execução', nf: '220' },
+    { data: '2026-02-10', valor: 1250.00, desc: 'ELABORAÇÃO DE PROJETOS (ESTRUT/ELET/HIDRO) 1/4 — JFI ADMINISTRADORA BENS',                  conta: 'nubank',  cat: '📐 Projetos c/ Acompanhamento da Execução', nf: '219' },
+    { data: '2026-02-12', valor: 1477.00, desc: 'ELABORAÇÃO DE PROJETOS (ESTRUT/ELÉTRICO/HIDRO) PARCELA 2 — LUIZ CARLOS',                    conta: 'sicredi', cat: '📐 Projetos c/ Acompanhamento da Execução' },
+    { data: '2026-02-12', valor:  500.00, desc: 'ELABORAÇÃO DE PROJETO ARQUITETÔNICO E ESTRUTURAL (Complemento da Entrada) — RODRIGO/DAVI/VINICIUS', conta: 'nubank', cat: '📐 Projetos c/ Acompanhamento da Execução', nf: '220' },
+    { data: '2026-02-18', valor:  800.00, desc: 'ELABORAÇÃO DE LAUDO TÉCNICO 3/5 — JULIANA',                                                  conta: 'nubank',  cat: '🔍 Laudo', nf: '221' },
+    { data: '2026-02-19', valor:  750.00, desc: 'ELABORAÇÃO DE PROJETOS (ESTRUT/ELET/HIDRO/PCI) 50% PARCELA 2/3 — LICIA/BRUNO',              conta: 'nubank',  cat: '📐 Projetos c/ Acompanhamento da Execução', nf: '222' },
+    { data: '2026-02-20', valor: 2500.00, desc: 'ELABORAÇÃO DE PROJETO ARQUITETÔNICO E ESTRUTURAL (Restante) — OLIVINO',                      conta: 'sicredi', cat: '📐 Projetos c/ Acompanhamento da Execução', nf: '223' },
+    { data: '2026-02-20', valor: 2250.00, desc: 'ACOMPANHAMENTO DE OBRA — BANDEIRANTES (Bauru-SP)',                                          conta: 'nubank',  cat: '📦 Acompanhamento Técnico' },
+  ],
+  '2026-03': [
+    { data: '2026-03-03', valor: 1000.00, desc: 'PROJETO ARQUITETÔNICO E ESTRUTURAL — Entrada 50% — DAVI',                                    conta: 'nubank',  cat: '📐 Projetos c/ Acompanhamento da Execução' },
+    { data: '2026-03-05', valor: 1500.00, desc: 'ELABORAÇÃO DE PROJETOS (ESTRUT/ELET/HIDRO/PCI) PARCELA 3/3 — LICIA/BRUNO',                  conta: 'nubank',  cat: '📐 Projetos c/ Acompanhamento da Execução', nf: '224' },
+    { data: '2026-03-09', valor: 1162.50, desc: 'ELABORAÇÃO DE PROJETOS (ESTRUT/ELET/HIDRO/PCI) PARCELA 1/4 — WILLIAM',                      conta: 'nubank',  cat: '📐 Projetos c/ Acompanhamento da Execução', nf: '225' },
+    { data: '2026-03-10', valor: 2250.00, desc: 'ACOMPANHAMENTO DE OBRA — BANDEIRANTES (Bauru-SP)',                                          conta: 'nubank',  cat: '📦 Acompanhamento Técnico' },
+    { data: '2026-03-11', valor: 1250.00, desc: 'ELABORAÇÃO DE PROJETO ARQ/ESTRUT/ELET/HIDRO 2/4 — JFI ADMINISTRADORA BENS',                  conta: 'nubank',  cat: '📐 Projetos c/ Acompanhamento da Execução', nf: '226' },
+    { data: '2026-03-14', valor: 1000.00, desc: 'PROJETO ARQUITETÔNICO E ESTRUTURAL — Entrada 50% — DAVI (2ª parte)',                         conta: 'nubank',  cat: '📐 Projetos c/ Acompanhamento da Execução' },
+    { data: '2026-03-16', valor:  800.00, desc: 'ELABORAÇÃO DE LAUDO TÉCNICO 4/5 — JULIANA',                                                  conta: 'especie', cat: '🔍 Laudo', nf: '227' },
+    { data: '2026-03-20', valor: 2250.00, desc: 'ACOMPANHAMENTO DE OBRA — BANDEIRANTES (Bauru-SP)',                                          conta: 'nubank',  cat: '📦 Acompanhamento Técnico' },
+    { data: '2026-03-27', valor: 2000.00, desc: 'ELABORAÇÃO DE PROJETO ARQUITETÔNICO E ESTRUTURAL (Pgto Parcial Rest. R$ 500) — RODRIGO/DAVI/VINICIUS', conta: 'nubank', cat: '📐 Projetos c/ Acompanhamento da Execução' },
+    { data: '2026-03-30', valor:  600.00, desc: 'SOLICITAÇÃO DE HABITE-SE E ISSQN — GUAXUCABOS',                                              conta: 'especie', cat: '📦 Acompanhamento Técnico' },
+  ],
+  '2026-04': [
+    { data: '2026-04-06', valor: 2250.00, desc: 'ACOMPANHAMENTO DE OBRA — BANDEIRANTES (Bauru-SP)',                                          conta: 'nubank',  cat: '📦 Acompanhamento Técnico' },
+    { data: '2026-04-07', valor:  750.00, desc: 'ELABORAÇÃO DE PROJETOS (ESTRUT/ELET/HIDRO/PCI) 50% PARCELA 2/3 — LICIA/BRUNO',              conta: 'nubank',  cat: '📐 Projetos c/ Acompanhamento da Execução' },
+    { data: '2026-04-10', valor: 1000.00, desc: 'ELABORAÇÃO DE PROJETOS (ARQ/ESTRUT/HIDRO/ELET) 1/5 — DANILO',                               conta: 'sicredi', cat: '📐 Projetos c/ Acompanhamento da Execução' },
+    { data: '2026-04-13', valor: 1162.50, desc: 'ELABORAÇÃO DE PROJETOS (ESTRUT/ELET/HIDRO/PCI) PARCELA 2/4 — WILLIAM',                      conta: 'nubank',  cat: '📐 Projetos c/ Acompanhamento da Execução', nf: '228' },
+    { data: '2026-04-20', valor:  800.00, desc: 'ELABORAÇÃO DE LAUDO TÉCNICO 5/5 — JULIANA',                                                 conta: 'nubank',  cat: '🔍 Laudo', nf: '227' },
+    { data: '2026-04-22', valor:  400.00, desc: 'ACOMPANHAMENTO DE DOCUMENTAÇÃO DE DIVISÃO DE CONDOMÍNIO — PAULO CESAR',                     conta: 'nubank',  cat: '📦 Acompanhamento Técnico' },
+    { data: '2026-04-23', valor:  500.00, desc: 'ELABORAÇÃO DE PROJETO ARQUITETÔNICO E ESTRUTURAL — pgto final — RODRIGO/DAVI/VINICIUS',     conta: 'nubank',  cat: '📐 Projetos c/ Acompanhamento da Execução' },
+    { data: '2026-04-23', valor: 3000.00, desc: 'RT DE OBRA — GUSTAVO/STELLA',                                                                conta: 'nubank',  cat: '📦 Acompanhamento Técnico' },
+    { data: '2026-04-24', valor:  600.00, desc: 'ESTUDO DE ESPAÇO GOURMET E GARAGEM (Sítio) — PEDRO ROBERTO',                                 conta: 'nubank',  cat: '🔍 Estudo' },
+    { data: '2026-04-27', valor: 1250.00, desc: 'ELABORAÇÃO DE PROJETO ARQ/ESTRUT/ELET/HIDRO 3/4 — JFI ADMINISTRADORA BENS',                  conta: 'nubank',  cat: '📐 Projetos c/ Acompanhamento da Execução', nf: '229' },
+    { data: '2026-04-27', valor: 2250.00, desc: 'ACOMPANHAMENTO DE OBRA — BANDEIRANTES (Bauru-SP)',                                          conta: 'nubank',  cat: '📦 Acompanhamento Técnico' },
+  ],
+};
 
-// True se ainda há override de abril/2026 (= ainda não importou da planilha)
-export function temOverrideAbril2026(state) {
-  return state?.faturamentoMensal?.['2026-04'] !== undefined &&
-         state?.faturamentoMensal?.['2026-04'] !== null;
+const _MES_NOME_LONGO = {
+  '01':'Janeiro','02':'Fevereiro','03':'Março','04':'Abril','05':'Maio','06':'Junho',
+  '07':'Julho','08':'Agosto','09':'Setembro','10':'Outubro','11':'Novembro','12':'Dezembro'
+};
+
+// True se o mês tem planilha cadastrada E ainda há override (= não importou)
+export function temPlanilhaParaImportar(state, mesKey) {
+  if (!_PLANILHA_NF_2026[mesKey]) return false;
+  const ov = state?.faturamentoMensal?.[mesKey];
+  return ov !== undefined && ov !== null;
 }
 
-export function importarAbril2026Planilha(state) {
+export function importarMesPlanilha(state, mesKey) {
+  const entradas = _PLANILHA_NF_2026[mesKey];
+  if (!entradas) { showToast('⚠️ Planilha não cadastrada para ' + mesKey); return false; }
   if (!Array.isArray(state.fin)) state.fin = [];
+
   const aApagar = state.fin.filter(f =>
-    f.tipo === 'Receita' && f.data?.startsWith('2026-04') && !f.transferGroupId
+    f.tipo === 'Receita' && f.data?.startsWith(mesKey) && !f.transferGroupId
   );
-  const totalNovo = _ABRIL_2026_PLANILHA.reduce((a,x) => a + x.valor, 0);
-  const msg = `📋 Importar Abril/2026 da Planilha\n\n` +
-              `• Apaga ${aApagar.length} receitas existentes em 04/2026\n` +
-              `• Cria ${_ABRIL_2026_PLANILHA.length} lançamentos novos (total ${fmt(totalNovo)})\n` +
+  const totalNovo = entradas.reduce((a,x) => a + x.valor, 0);
+  const mesNome = _MES_NOME_LONGO[mesKey.split('-')[1]] + '/' + mesKey.split('-')[0];
+  const msg = `📋 Importar ${mesNome} da Planilha\n\n` +
+              `• Apaga ${aApagar.length} receitas existentes em ${mesKey}\n` +
+              `• Cria ${entradas.length} lançamentos novos (total ${fmt(totalNovo)})\n` +
               `• Mantém despesas e transferências do mês\n` +
-              `• Remove o override manual de Abril/2026\n\n` +
+              `• Remove o override manual de ${mesNome}\n\n` +
               `Continuar?`;
   if (!confirm(msg)) return false;
 
-  // 1. Remove receitas atuais de abril (exceto transferências)
+  // 1. Remove receitas atuais do mês (exceto transferências)
   aApagar.forEach(f => markDeleted(state, 'fin', f.id));
   state.fin = state.fin.filter(f => !(
-    f.tipo === 'Receita' && f.data?.startsWith('2026-04') && !f.transferGroupId
+    f.tipo === 'Receita' && f.data?.startsWith(mesKey) && !f.transferGroupId
   ));
 
   // 2. Resolve contas por nome do banco
@@ -1592,32 +1630,41 @@ export function importarAbril2026Planilha(state) {
   )?.id || '';
   const contaNubank  = acharConta('nubank');
   const contaSicredi = acharConta('sicredi');
+  const contaEspecie = acharConta('dinheiro') || acharConta('caixinha') || acharConta('caixa');
 
   // 3. Cria os lançamentos
   if (!state.counters) state.counters = {};
   if (!state.counters.fin) state.counters.fin = 1;
-  _ABRIL_2026_PLANILHA.forEach(e => {
+  entradas.forEach(e => {
+    let contaId = '';
+    if (e.conta === 'sicredi')      contaId = contaSicredi;
+    else if (e.conta === 'especie') contaId = contaEspecie;
+    else                            contaId = contaNubank;
     state.fin.push({
       id: 'FIN-' + pad(state.counters.fin),
       tipo: 'Receita',
       obraId: '',
       data: e.data,
-      contaId: e.conta === 'sicredi' ? contaSicredi : contaNubank,
+      contaId,
       desc: e.desc,
       cat: e.cat,
       status: 'pago',
       valor: e.valor,
-      obs: e.nf ? `NF ${e.nf}` : '',
+      obs: e.nf ? `NF ${e.nf}` : (e.conta === 'especie' ? 'Em espécie' : ''),
     });
     state.counters.fin++;
   });
 
   // 4. Remove override (passa a usar valor calculado)
-  if (state.faturamentoMensal) delete state.faturamentoMensal['2026-04'];
+  if (state.faturamentoMensal) delete state.faturamentoMensal[mesKey];
 
-  showToast(`✅ Abril/2026 importado: ${_ABRIL_2026_PLANILHA.length} receitas (${fmt(totalNovo)})`);
+  showToast(`✅ ${mesNome} importado: ${entradas.length} receitas (${fmt(totalNovo)})`);
   return true;
 }
+
+// Wrappers de backwards-compat (botão antigo no HTML ainda usa)
+export function temOverrideAbril2026(state) { return temPlanilhaParaImportar(state, '2026-04'); }
+export function importarAbril2026Planilha(state) { return importarMesPlanilha(state, '2026-04'); }
 
 // ── Edição de faturamento mensal (override) ──────────────────────────
 // state.faturamentoMensal['YYYY-MM'] = valor; sobrescreve a soma calculada
