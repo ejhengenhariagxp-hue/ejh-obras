@@ -23,7 +23,7 @@ import { addFin, delFin, openEditFin, openModalFin, renderFinanceiro, toggleHide
          editarFaturamentoMes, salvarFaturamentoMes, resetarFaturamentoMes,
          setResumoMes, rolarPendentesProximoMes, moverParaProximoMes,
          abrirModalTransf, addTransferencia, delTransferencia,
-         importarAbril2026Planilha, importarMesPlanilha } from './modules/financeiro.js?v=20260504e';
+         importarAbril2026Planilha, importarMesPlanilha } from './modules/financeiro.js?v=20260505a';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260501g';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260501g';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
