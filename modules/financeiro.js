@@ -84,9 +84,50 @@ export function addFin(state){
     if (idx < 0) { showToast('⚠️ Lançamento não encontrado'); return false; }
     // Preserva flag pessoal já existente ao editar (caso o modal não esteja em modo pessoal)
     const pessoalAnterior = state.fin[idx].pessoal;
+    const grpAnterior = state.fin[idx].transferGroupId;
     state.fin[idx] = { ...state.fin[idx], ...dados };
     if (!_modalFinPessoal && pessoalAnterior) state.fin[idx].pessoal = true;
+    // Se é pessoal com par espelho na empresa, atualiza valor/data/conta do espelho
+    if (state.fin[idx].pessoal && grpAnterior) {
+      state.fin[idx].transferGroupId = grpAnterior;
+      const espelhoIdx = state.fin.findIndex(x => x.transferGroupId === grpAnterior && x.id !== editId);
+      if (espelhoIdx >= 0) {
+        state.fin[espelhoIdx].valor = dados.valor;
+        state.fin[espelhoIdx].data = dados.data;
+        state.fin[espelhoIdx].contaId = dados.contaId;
+        state.fin[espelhoIdx].status = dados.status;
+      }
+    }
     showToast('✅ Lançamento atualizado!');
+  } else if (_modalFinPessoal && dados.contaId) {
+    // Pessoal COM conta da empresa: cria par com transferência (saída da empresa + entrada/saída pessoal)
+    if (!state.counters.transf) state.counters.transf = 1;
+    const grpId = 'TRF-' + pad(state.counters.transf);
+    state.counters.transf++;
+    // Lançamento PESSOAL (sem conta — não polui saldos da empresa)
+    const idPessoal = 'FIN-' + pad(state.counters.fin++);
+    state.fin.push({
+      id: idPessoal, ...dados,
+      contaId: '',
+      transferGroupId: grpId,
+    });
+    // Espelho na EMPRESA: Despesa na conta da empresa (saí o dinheiro real)
+    const idEmpresa = 'FIN-' + pad(state.counters.fin++);
+    const tipoLabel = dados.tipo === 'Receita' ? 'Pró-labore' : 'Gasto pessoal';
+    state.fin.push({
+      id: idEmpresa,
+      tipo: 'Despesa',
+      obraId: '',
+      data: dados.data,
+      desc: `↪ ${tipoLabel}: ${dados.desc}`,
+      cat: dados.tipo === 'Receita' ? '💼 Pró-labore (saída)' : '🏠 Gasto pessoal (saída)',
+      status: dados.status,
+      valor: dados.valor,
+      obs: 'Saída automática para Controle Particular',
+      contaId: dados.contaId,
+      transferGroupId: grpId,
+    });
+    showToast(`✅ ${tipoLabel} registrado: saiu de ${(state.contas||[]).find(c=>c.id===dados.contaId)?.nome || 'conta'}`);
   } else {
     state.fin.push({ id: 'FIN-'+pad(state.counters.fin), ...dados });
     state.counters.fin++;
@@ -102,6 +143,10 @@ export function openEditFin(state, id) {
   if (!f) { showToast('⚠️ Lançamento não encontrado'); return; }
   popularSelectsObras(state);
   const set = (k, v) => { const el = document.getElementById(k); if (el) el.value = v ?? ''; };
+  // Detecta se é pessoal — ativa modo pessoal e esconde campo Obra
+  _modalFinPessoal = !!f.pessoal;
+  const obraField = document.getElementById('f-fin-obra')?.closest('.form-group, .form-row');
+  if (obraField) obraField.style.display = f.pessoal ? 'none' : '';
   set('f-fin-id', f.id);
   set('f-fin-tipo', f.tipo);
   // Atualiza categorias do tipo escolhido antes de setar
@@ -113,7 +158,13 @@ export function openEditFin(state, id) {
   set('f-fin-valor', f.valor);
   set('f-fin-obs', f.obs);
   popularContasSelect(state, 'f-fin-conta');
-  set('f-fin-conta', f.contaId || '');
+  // Se pessoal com par espelho: pega contaId do espelho (que é o que está na conta da empresa)
+  let contaIdExibir = f.contaId || '';
+  if (f.pessoal && f.transferGroupId && !f.contaId) {
+    const espelho = state.fin.find(x => x.transferGroupId === f.transferGroupId && x.id !== f.id);
+    if (espelho?.contaId) contaIdExibir = espelho.contaId;
+  }
+  set('f-fin-conta', contaIdExibir);
   // Categoria: se existe na lista padrão usa, senão é personalizada
   const sel = document.getElementById('f-fin-cat');
   const opcoes = Array.from(sel?.options || []).map(o => o.value);
@@ -125,7 +176,11 @@ export function openEditFin(state, id) {
     if (inp) inp.value = f.cat;
   }
   if (typeof window.toggleCatPersonalizada === 'function') window.toggleCatPersonalizada();
-  if(document.getElementById('fin-modal-title')) document.getElementById('fin-modal-title').textContent = '✏️ Editar Lançamento';
+  if(document.getElementById('fin-modal-title')) {
+    document.getElementById('fin-modal-title').textContent = f.pessoal
+      ? (f.tipo === 'Receita' ? '✏️ Editar Pró-labore' : '✏️ Editar Gasto Pessoal')
+      : '✏️ Editar Lançamento';
+  }
 
   // Desabilita parcelamento ao editar (não faz sentido parcelar lançamento existente)
   const cbParc = document.getElementById('f-fin-parc-on');
@@ -1126,7 +1181,7 @@ export function renderAgendamentos(state) {
   const limiteStr = limite.toISOString().split('T')[0];
 
   const futuros = state.fin
-    .filter(f => (f.status === 'a_vencer' || f.status === 'pendente') && f.data >= hojeStr && f.data <= limiteStr)
+    .filter(f => (f.status === 'a_vencer' || f.status === 'pendente') && f.data >= hojeStr && f.data <= limiteStr && _semTransf(f))
     .sort((a,b) => a.data.localeCompare(b.data));
 
   if (!futuros.length) {
