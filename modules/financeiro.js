@@ -524,17 +524,114 @@ export function openEditDivida(state, id) {
   openModal('modal-divida');
 }
 
+// Variável de módulo para guardar a dívida sendo paga (entre abrir modal e confirmar)
+let _dividaPagandoId = null;
+
 export function pagarParcelaDivida(state, id) {
   const d = (state.dividas || []).find(x => x.id === id);
   if (!d) { showToast('⚠️ Dívida não encontrada'); return false; }
   if (d.parcelasPagas >= d.parcelasTotal) { showToast('ℹ️ Dívida já quitada'); return false; }
-  if (!confirm(`Marcar parcela ${d.parcelasPagas + 1}/${d.parcelasTotal} de "${d.credor}" como paga?\n\nValor: ${fmt(d.valorParcela)}`)) return false;
-  d.parcelasPagas++;
-  if (d.parcelasPagas >= d.parcelasTotal) {
-    showToast(`🎉 Dívida "${d.credor}" quitada!`);
-  } else {
-    showToast(`✅ Parcela paga (${d.parcelasPagas}/${d.parcelasTotal})`);
+
+  _dividaPagandoId = id;
+  const numParc = (d.parcelasPagas || 0) + 1;
+  const info = document.getElementById('f-pdiv-info');
+  if (info) {
+    info.innerHTML = `
+      <strong style="color:#dc2626">${d.credor}</strong> — Parcela <strong>${numParc}/${d.parcelasTotal}</strong><br>
+      ${d.descricao ? `<span style="color:var(--muted);font-size:11px">${d.descricao}</span><br>` : ''}
+      Valor da parcela: <strong>${fmt(d.valorParcela || 0)}</strong>
+    `;
   }
+  popularContasSelect(state, 'f-pdiv-conta');
+  const setVal = (k, v) => { const el = document.getElementById(k); if (el) el.value = v; };
+  setVal('f-pdiv-id', id);
+  setVal('f-pdiv-juros', '0');
+  setVal('f-pdiv-data', new Date().toISOString().split('T')[0]);
+  // Atualiza total inicial
+  setTimeout(() => atualizarTotalPagamentoDivida(state), 50);
+  openModal('modal-pagar-divida');
+  return false; // não atualiza estado ainda — espera confirmação
+}
+
+export function atualizarTotalPagamentoDivida(state) {
+  const d = (state.dividas || []).find(x => x.id === _dividaPagandoId);
+  if (!d) return;
+  const juros = +document.getElementById('f-pdiv-juros')?.value || 0;
+  const total = (+d.valorParcela || 0) + juros;
+  const el = document.getElementById('f-pdiv-total');
+  if (el) el.textContent = fmt(total);
+}
+
+export function confirmarPagamentoDivida(state) {
+  const d = (state.dividas || []).find(x => x.id === _dividaPagandoId);
+  if (!d) { showToast('⚠️ Dívida não encontrada'); return false; }
+
+  const juros = +document.getElementById('f-pdiv-juros')?.value || 0;
+  const contaId = document.getElementById('f-pdiv-conta')?.value || '';
+  const data = document.getElementById('f-pdiv-data')?.value || new Date().toISOString().split('T')[0];
+
+  if (!contaId) { showToast('⚠️ Selecione a conta de onde sai o pagamento'); return false; }
+
+  const valorParcela = +d.valorParcela || 0;
+  const valorTotal = valorParcela + juros;
+  const numParc = (d.parcelasPagas || 0) + 1;
+
+  // Cria par de lançamentos (transferência: pessoal + espelho na empresa)
+  if (!state.counters) state.counters = {};
+  if (!state.counters.transf) state.counters.transf = 1;
+  if (!state.counters.fin) state.counters.fin = 1;
+  const grpId = 'TRF-' + pad(state.counters.transf++);
+
+  const desc = `${d.credor} — Parcela ${numParc}/${d.parcelasTotal}${juros > 0 ? ' (com juros)' : ''}`;
+  const obs = juros > 0
+    ? `Parcela ${fmt(valorParcela)} + Juros ${fmt(juros)} = ${fmt(valorTotal)}`
+    : '';
+
+  // Lançamento PESSOAL — entra no Controle Particular como Gasto
+  state.fin.push({
+    id: 'FIN-' + pad(state.counters.fin++),
+    tipo: 'Despesa',
+    obraId: '',
+    data,
+    desc,
+    cat: '💳 Dívida (parcela)',
+    status: 'pago',
+    valor: valorTotal,
+    obs,
+    contaId: '',
+    pessoal: true,
+    transferGroupId: grpId,
+    dividaId: d.id,
+  });
+
+  // Espelho na EMPRESA — saída real da conta (afeta saldo)
+  state.fin.push({
+    id: 'FIN-' + pad(state.counters.fin++),
+    tipo: 'Despesa',
+    obraId: '',
+    data,
+    desc: `↪ Pgto dívida: ${desc}`,
+    cat: '💳 Dívida (parcela) (saída)',
+    status: 'pago',
+    valor: valorTotal,
+    obs: 'Saída automática para Controle Particular',
+    contaId,
+    transferGroupId: grpId,
+  });
+
+  // Atualiza dívida
+  d.parcelasPagas++;
+  const conta = (state.contas || []).find(c => c.id === contaId);
+  const nomeConta = conta?.nome || 'conta';
+
+  if (d.parcelasPagas >= d.parcelasTotal) {
+    showToast(`🎉 Dívida "${d.credor}" quitada! Pagou ${fmt(valorTotal)} de ${nomeConta}`);
+  } else {
+    showToast(`✅ Parcela ${d.parcelasPagas}/${d.parcelasTotal} paga: ${fmt(valorTotal)} de ${nomeConta}`);
+  }
+
+  closeModal('modal-pagar-divida');
+  _dividaPagandoId = null;
   return true;
 }
 

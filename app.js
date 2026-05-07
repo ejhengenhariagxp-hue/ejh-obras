@@ -25,7 +25,8 @@ import { addFin, delFin, openEditFin, openModalFin, openModalFinPessoal, isModal
          abrirModalTransf, addTransferencia, delTransferencia,
          addMeta, delMeta, openModalMeta, openEditMeta, addProgressoMeta,
          addDivida, delDivida, openModalDivida, openEditDivida, pagarParcelaDivida,
-         importarAbril2026Planilha, importarMesPlanilha } from './modules/financeiro.js?v=20260505e';
+         atualizarTotalPagamentoDivida, confirmarPagamentoDivida,
+         importarAbril2026Planilha, importarMesPlanilha } from './modules/financeiro.js?v=20260505f';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260501g';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260501g';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
@@ -940,8 +941,10 @@ G.delDivida = id => {
     renderAtiva();
   }
 };
-G.pagarParcelaDivida = id => {
-  if (pagarParcelaDivida(state, id)) {
+G.pagarParcelaDivida = id => pagarParcelaDivida(state, id);
+G.atualizarTotalPagamentoDivida = () => atualizarTotalPagamentoDivida(state);
+G.confirmarPagamentoDivida = () => {
+  if (confirmarPagamentoDivida(state)) {
     saveStateLocal();
     if (window._fbUser) clearTimeout(_fbSaveTimer), (_fbSaveTimer = setTimeout(saveToCloud, 400));
     renderAtiva();

@@ -1144,6 +1144,38 @@
   </div>
 </div></div>
 
+<!-- Pagar Parcela de Dívida -->
+<div class="modal-bg" id="modal-pagar-divida"><div class="modal" style="max-width:480px">
+  <div class="modal-hdr">
+    <div class="modal-title">💳 Pagar Parcela</div>
+    <button class="modal-x" onclick="closeModal('modal-pagar-divida')">×</button>
+  </div>
+  <input type="hidden" id="f-pdiv-id">
+  <div id="f-pdiv-info" style="background:#f8fafc;padding:10px;border-radius:6px;margin-bottom:14px;font-size:13px;border-left:3px solid #dc2626"></div>
+  <div class="form-grid">
+    <div class="form-row">
+      <label>Data do Pagamento</label>
+      <input id="f-pdiv-data" type="date">
+    </div>
+    <div class="form-row">
+      <label>Juros / Multa (R$)</label>
+      <input id="f-pdiv-juros" type="number" step="0.01" value="0" oninput="atualizarTotalPagamentoDivida()">
+    </div>
+    <div class="form-row" style="grid-column:1/-1">
+      <label>🏦 Conta de onde sai o pagamento *</label>
+      <select id="f-pdiv-conta"></select>
+    </div>
+    <div class="form-row" style="grid-column:1/-1">
+      <label>Total a Pagar</label>
+      <div id="f-pdiv-total" style="font-weight:700;font-size:20px;color:var(--red);padding:8px 12px;background:#fef2f2;border-radius:6px">R$ 0,00</div>
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-outline" onclick="closeModal('modal-pagar-divida')">Cancelar</button>
+    <button class="btn btn-primary" onclick="confirmarPagamentoDivida()" style="background:#16a34a">✓ Confirmar Pagamento</button>
+  </div>
+</div></div>
+
 <!-- Medição -->
 <div class="modal-bg" id="modal-medicao"><div class="modal modal-wide">
   <div class="modal-title">📏 Nova Medição</div>
