@@ -523,7 +523,7 @@ export function printProposta(state, id){
     <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#0f2744;margin-bottom:6px">
       ${p.tipo==='projeto'?'📐 Serviços de Elaboração de Projeto':'🏗 Orçamento de Obra'} — Escopo e Valores
     </div>
-    ${(p.escopo||p.obs)?`<div style="font-size:13px;color:#475569;margin-bottom:10px;font-style:italic">${escapeHtml(p.escopo||p.obs)}</div>`:''}
+    ${p.escopo?`<div style="font-size:13px;color:#475569;margin-bottom:10px;font-style:italic">${escapeHtml(p.escopo)}</div>`:''}
     ${itensHtml}
 
     ${p.obs&&p.tipo==='projeto'?`<div style="margin-top:16px;padding:12px 16px;background:#f0f9ff;border-radius:8px;font-size:12.5px;color:#1e40af"><b>Observações:</b> ${escapeHtml(p.obs)}</div>`:''}
