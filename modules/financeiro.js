@@ -455,6 +455,8 @@ export function addDivida(state) {
   const parcelasTotal = +document.getElementById('f-div-parc-tot')?.value || 1;
   const parcelasPagas = +document.getElementById('f-div-parc-pg')?.value || 0;
   const vencimentoDia = +document.getElementById('f-div-venc-dia')?.value || 1;
+  const saldoQuitStr = document.getElementById('f-div-saldo-quit')?.value;
+  const saldoQuitacao = saldoQuitStr ? +saldoQuitStr : null;
 
   if (!credor) { showToast('⚠️ Informe o credor'); return false; }
   if (valorTotal <= 0) { showToast('⚠️ Informe o valor total'); return false; }
@@ -468,7 +470,7 @@ export function addDivida(state) {
   if (!state.counters.div) state.counters.div = 1;
 
   const editId = document.getElementById('f-div-id')?.value;
-  const dados = { credor, descricao, valorTotal, valorParcela, parcelasTotal, parcelasPagas, vencimentoDia };
+  const dados = { credor, descricao, valorTotal, valorParcela, parcelasTotal, parcelasPagas, vencimentoDia, saldoQuitacao };
 
   if (editId) {
     const idx = state.dividas.findIndex(d => d.id === editId);
@@ -497,7 +499,7 @@ export function delDivida(state, id) {
 }
 
 export function openModalDivida() {
-  ['f-div-id','f-div-credor','f-div-desc','f-div-total','f-div-parc-tot','f-div-parc-pg','f-div-venc-dia'].forEach(k => {
+  ['f-div-id','f-div-credor','f-div-desc','f-div-total','f-div-parc-tot','f-div-parc-pg','f-div-venc-dia','f-div-saldo-quit'].forEach(k => {
     const el = document.getElementById(k); if (el) el.value = '';
   });
   if (document.getElementById('f-div-parc-tot')) document.getElementById('f-div-parc-tot').value = '1';
@@ -519,6 +521,7 @@ export function openEditDivida(state, id) {
   set('f-div-parc-tot', d.parcelasTotal);
   set('f-div-parc-pg', d.parcelasPagas);
   set('f-div-venc-dia', d.vencimentoDia);
+  set('f-div-saldo-quit', d.saldoQuitacao ?? '');
   const t = document.querySelector('#modal-divida .modal-title');
   if (t) t.textContent = '✏️ Editar Dívida';
   openModal('modal-divida');
@@ -1732,7 +1735,11 @@ export function renderDashFinAvancado(state) {
     if (aQ !== bQ) return aQ ? 1 : -1;
     return 0;
   });
+  // Para cada dívida: usa saldoQuitacao se informado, senão calcula restante (parcelas × valor)
   const dividasAbertas = dividas.reduce((acc, d) => {
+    const quitada = (d.parcelasPagas || 0) >= (d.parcelasTotal || 0);
+    if (quitada) return acc;
+    if (d.saldoQuitacao != null && d.saldoQuitacao > 0) return acc + (+d.saldoQuitacao);
     const restantes = (d.parcelasTotal || 0) - (d.parcelasPagas || 0);
     return acc + (restantes * (d.valorParcela || 0));
   }, 0);
@@ -1948,7 +1955,7 @@ export function renderDashFinAvancado(state) {
           <div class="kpi amber">
             <div class="kpi-label">💳 Dívidas em Aberto</div>
             <div class="kpi-value">${fmt(dividasAbertas)}</div>
-            <div class="kpi-sub">${dividas.filter(d => (d.parcelasPagas||0) < (d.parcelasTotal||0)).length} dívida${dividas.length!==1?'s':''} ativa${dividas.length!==1?'s':''}</div>
+            <div class="kpi-sub">${dividas.filter(d => (d.parcelasPagas||0) < (d.parcelasTotal||0)).length} dívida${dividas.length!==1?'s':''} ativa${dividas.length!==1?'s':''}${dividas.some(d => d.saldoQuitacao != null && d.saldoQuitacao > 0 && (d.parcelasPagas||0) < (d.parcelasTotal||0)) ? ' • inclui saldo p/ quitação' : ''}</div>
           </div>
         </div>
 
@@ -2051,8 +2058,13 @@ export function renderDashFinAvancado(state) {
                   </div>
                   <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px">
                     <span>Parcela: ${fmt(d.valorParcela||0)}${d.vencimentoDia?` (dia ${d.vencimentoDia})`:''}</span>
-                    <span>${quitada ? '🎉 Quitada' : `Falta ${fmt(valorRestante)}`}</span>
+                    <span>${quitada ? '🎉 Quitada' : (d.saldoQuitacao != null && d.saldoQuitacao > 0 ? `💰 Quitação: ${fmt(d.saldoQuitacao)}` : `Falta ${fmt(valorRestante)}`)}</span>
                   </div>
+                  ${!quitada && d.saldoQuitacao != null && d.saldoQuitacao > 0 ? `
+                    <div style="font-size:10px;color:var(--muted);margin-top:3px;font-style:italic">
+                      ${restantes} parcela${restantes!==1?'s':''} a vencer (${fmt(valorRestante)} nominais)
+                    </div>
+                  ` : ''}
                 </div>
                 `;
               }).join('')}
