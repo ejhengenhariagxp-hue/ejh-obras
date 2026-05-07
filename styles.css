@@ -1,4 +1,25 @@
+/* ============================================================
+   EJHV Brand Tokens
+   ============================================================ */
+:root {
+  --ejhv-green-dk:   #0c3d2a;  /* EJH em fundo claro */
+  --ejhv-green:      #1fbf90;  /* símbolo + accent */
+  --ejhv-copper:     #b87333;  /* V + destaques */
+  --ejhv-concrete:   #c8d0cc;  /* EJH em fundo escuro */
+  --ejhv-secondary:  #7a9088;
+  --ejhv-bg:         #080c0a;
+  --ejhv-surface:    #111916;
+  --ejhv-border:     #253028;
 
+  /* Compatibilidade — aponta tokens antigos para a paleta EJHV */
+  --accent:           var(--ejhv-copper);
+  --accent-secondary: var(--ejhv-green);
+  --text-primary:     var(--ejhv-concrete);
+  --text-secondary:   var(--ejhv-secondary);
+  --bg-deep:          var(--ejhv-bg);
+  --bg-surface:       var(--ejhv-surface);
+  --border:           var(--ejhv-border);
+}
 :root{--navy:#0f2744;--blue:#2563eb;--sky:#3b82f6;--amber:#f59e0b;--green:#10b981;--red:#ef4444;--purple:#8b5cf6;--teal:#0d9488;--bg:#f0f4fa;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--radius:14px;--shadow:0 2px 16px rgba(15,39,68,.09)}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
@@ -464,3 +485,26 @@ textarea{resize:vertical;min-height:70px}
 @keyframes iaBounce{from{opacity:.3;transform:translateY(0)}to{opacity:1;transform:translateY(-4px)}}
 .ia-result{background:rgba(255,255,255,.1);border-radius:8px;padding:12px;margin-top:12px;font-size:12.5px;line-height:1.6;display:none}
 .ia-result.show{display:block}
+
+
+/* ============================================================
+   EJHV Logo Component
+   ============================================================ */
+.ejhv-logo { display: flex; align-items: center; gap: 10px; }
+.ejhv-wordmark { line-height: 1; }
+.ejhv-wordmark .ejh {
+  font-weight: 900; font-size: 20px;
+  color: var(--ejhv-concrete); letter-spacing: -.5px;
+  font-family: 'Barlow Condensed', system-ui, sans-serif;
+}
+.ejhv-wordmark .v {
+  font-weight: 900; font-size: 20px;
+  color: var(--ejhv-copper); letter-spacing: -.5px;
+  font-family: 'Barlow Condensed', system-ui, sans-serif;
+}
+.ejhv-wordmark .tag {
+  font-size: 9px; font-weight: 600;
+  color: var(--ejhv-secondary);
+  letter-spacing: 1.5px; text-transform: uppercase;
+  margin-top: 3px;
+}
