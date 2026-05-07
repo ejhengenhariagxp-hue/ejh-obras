@@ -32,16 +32,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .logo-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#fff;letter-spacing:.5px}
 .logo-sub{font-size:10.5px;color:rgba(255,255,255,.45);margin-top:3px;letter-spacing:.7px;text-transform:uppercase;font-weight:600}
 
-/* EJHV Wordmark — logo com SVG dos prédios + texto em concreto/cobre */
-.ejhv-logo{display:flex;align-items:center;gap:10px}
-.ejhv-logo svg{flex-shrink:0}
-.ejhv-wordmark{display:flex;flex-direction:column;line-height:1}
-.ejhv-wordmark .ejh,
-.ejhv-wordmark .v{font-family:'Barlow Condensed','Syne',sans-serif;font-weight:900;font-size:24px;letter-spacing:.5px}
-.ejhv-wordmark .ejh{color:#fff}
-.ejhv-wordmark .v{color:#b87333}
-.ejhv-wordmark .tag{font-size:9.5px;color:rgba(255,255,255,.55);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-top:2px}
-
 /* IAsô Promo Button — destaque no topo */
 .iaso-promo{margin:14px 14px 8px;padding:12px 14px;background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);border:none;border-radius:12px;display:flex;align-items:center;gap:11px;cursor:pointer;color:#fff;width:calc(100% - 28px);transition:all .2s;box-shadow:0 4px 14px rgba(124,58,237,.35);font-family:'DM Sans',sans-serif;text-align:left}
 .iaso-promo:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(124,58,237,.5);background:linear-gradient(135deg,#8b5cf6 0%,#6d28d9 100%)}
@@ -498,23 +488,31 @@ textarea{resize:vertical;min-height:70px}
 
 
 /* ============================================================
+   KPIs do Dashboard com paleta EJHV
+   ============================================================ */
+.kpi-dashboard-ejhv .kpi.blue  { border-top-color: var(--ejhv-green,    #1fbf90); }
+.kpi-dashboard-ejhv .kpi.amber { border-top-color: var(--ejhv-copper,   #b87333); }
+.kpi-dashboard-ejhv .kpi.green { border-top-color: var(--ejhv-green-dk, #0c3d2a); }
+/* teal mantém — saldo verde claro */
+
+/* ============================================================
    EJHV Logo Component
    ============================================================ */
 .ejhv-logo { display: flex; align-items: center; gap: 10px; }
+.ejhv-logo svg { flex-shrink: 0; }
 .ejhv-wordmark { line-height: 1; }
-.ejhv-wordmark .ejh {
-  font-weight: 900; font-size: 20px;
-  color: var(--ejhv-concrete); letter-spacing: -.5px;
-  font-family: 'Barlow Condensed', system-ui, sans-serif;
-}
+.ejhv-wordmark .ejh,
 .ejhv-wordmark .v {
-  font-weight: 900; font-size: 20px;
-  color: var(--ejhv-copper); letter-spacing: -.5px;
+  font-weight: 900; font-size: 22px;
+  letter-spacing: -.5px;
   font-family: 'Barlow Condensed', system-ui, sans-serif;
 }
+.ejhv-wordmark .ejh { color: #fff; }
+.ejhv-wordmark .v { color: var(--ejhv-copper, #b87333); }
 .ejhv-wordmark .tag {
+  display: block;
   font-size: 9px; font-weight: 600;
-  color: var(--ejhv-secondary);
+  color: rgba(255,255,255,.55);
   letter-spacing: 1.5px; text-transform: uppercase;
   margin-top: 3px;
 }
