@@ -26,16 +26,16 @@ import { addFin, delFin, openEditFin, openModalFin, openModalFinPessoal, isModal
          addMeta, delMeta, openModalMeta, openEditMeta, addProgressoMeta,
          addDivida, delDivida, openModalDivida, openEditDivida, pagarParcelaDivida,
          atualizarTotalPagamentoDivida, confirmarPagamentoDivida,
-         importarAbril2026Planilha, importarMesPlanilha } from './modules/financeiro.js?v=20260505g';
-import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260501g';
+         importarAbril2026Planilha, importarMesPlanilha } from './modules/financeiro.js?v=20260505i';
+import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260505i';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260501g';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
          saveProposta, delProposta, editProposta, printProposta, compartilharWhatsApp,
          colherAssinaturaProposta, importFromOrcamento, addObraItem,
          addProjServico, addProjExtra, toggleModoGlobal, renderPropostas,
-         atualizarStatusProposta, gerarObraDeProposta } from './modules/propostas.js?v=20260505h';
+         atualizarStatusProposta, gerarObraDeProposta } from './modules/propostas.js?v=20260505i';
 import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260501g';
-import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260501g';
+import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260505i';
 import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260501g';
 import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js?v=20260501g';
 import { novaComposicao, addInsumoComp, renderInsumosComp, calcTotalComp,
@@ -44,7 +44,7 @@ import { novaComposicao, addInsumoComp, renderInsumosComp, calcTotalComp,
          inserirComposicaoNoOrcamento, editarComposicao,
          abrirCopiaSinapi, _setCopiaSrc, _filtrarCopiaSinapi, _copiarDeSinapi,
          setInsumoField, removeInsumoAt } from './modules/composicoes.js?v=20260501g';
-import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js?v=20260501g';
+import { exportarOrcamentoExcel, exportarOrcamentoExcelObra, exportarMedicoesExcel } from './modules/excel_export.js?v=20260505i';
 import { importExcel, importCSV, importPDF, importManual, applyMapping,
          _selectSheet, _updateImportItem, _removeImportItem, addImportRow,
          cancelImport, confirmImport } from './modules/importar.js?v=20260501g';
@@ -1168,7 +1168,7 @@ G.gerarDiarioPDF = () => {
     <div class="hdr">
       <div>
         ${state.logoData ? `<img src="${state.logoData}" style="height:42px;max-width:160px;object-fit:contain;margin-bottom:6px">` : ''}
-        <div class="logo">${state.empNome || state.empresaNome || 'EJH ENGENHARIA'}</div>
+        <div class="logo">${state.empNome || state.empresaNome || 'EJHV ENGENHARIA'}</div>
         <div class="sub">Engenharia Civil • Projetos • Obras</div>
         <div class="titulo">Relatório do Diário de Obra</div>
       </div>
@@ -1179,7 +1179,7 @@ G.gerarDiarioPDF = () => {
     </div>
     ${corpo}
     <div class="footer">
-      <span>${state.relatorioRodape || 'EJH Engenharia — Sistema de Gestão de Obras'}</span>
+      <span>${state.relatorioRodape || 'EJHV Engenharia — Sistema de Gestão de Obras'}</span>
       <span>Emitido em ${hoje}</span>
     </div>
     <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script>
@@ -1194,7 +1194,7 @@ G.gerarDiarioWpp = async () => {
   const obras = obraId ? state.obras.filter(o => o.id === obraId) : state.obras;
   if (!obras.length) { showToast('⚠️ Nenhuma obra selecionada'); return; }
   const hoje = new Date().toLocaleDateString('pt-BR');
-  const empresa = state.empNome || state.empresaNome || 'EJH Engenharia';
+  const empresa = state.empNome || state.empresaNome || 'EJHV Engenharia';
 
   let msg = `*${empresa}*\n📋 *Diário de Obra* — ${hoje}\n\n`;
   for (const o of obras) {
@@ -1316,7 +1316,7 @@ G.gerarMedicaoPDF = () => {
     <div class="hdr">
       <div>
         ${state.logoData ? `<img src="${state.logoData}" style="height:42px;max-width:160px;object-fit:contain;margin-bottom:6px">` : ''}
-        <div class="logo">${state.empNome || state.empresaNome || 'EJH ENGENHARIA'}</div>
+        <div class="logo">${state.empNome || state.empresaNome || 'EJHV ENGENHARIA'}</div>
         <div class="sub">Engenharia Civil • Projetos • Obras</div>
         <div class="titulo">Relatório de Medições</div>
       </div>
@@ -1327,7 +1327,7 @@ G.gerarMedicaoPDF = () => {
     </div>
     ${corpo}
     <div class="footer">
-      <span>${state.relatorioRodape || 'EJH Engenharia — Sistema de Gestão de Obras'}</span>
+      <span>${state.relatorioRodape || 'EJHV Engenharia — Sistema de Gestão de Obras'}</span>
       <span>Emitido em ${hoje}</span>
     </div>
     <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script>

@@ -501,7 +501,7 @@ export function printProposta(state, id){
     </style></head>
     <body>
     <div class="hdr">
-      <div><div class="logo">EJH ENGENHARIA</div>
+      <div><div class="logo">EJHV ENGENHARIA</div>
         <div class="logo-sub">Engenharia Civil • Projetos • Obras<br>CREA/MG • Guaxupé/MG</div>
       </div>
       <div style="text-align:right">
@@ -531,11 +531,11 @@ export function printProposta(state, id){
     ${p.validade?`<div class="validade-box">⏰ Esta proposta tem validade de <b>${p.validade} dias</b> a partir da data de emissão.</div>`:''}
 
     <div class="assinaturas">
-      <div><div style="height:48px"></div><div class="ass-line">EJH Engenharia<br>Engenheiro Responsável</div></div>
+      <div><div style="height:48px"></div><div class="ass-line">EJHV Engenharia<br>Engenheiro Responsável</div></div>
       <div><div style="height:48px"></div><div class="ass-line">${escapeHtml(p.cliente||'')}<br>Contratante</div></div>
     </div>
 
-    <div class="footer"><span>${escapeHtml(state.relatorioRodape || 'EJH Engenharia')} — ${p.id}</span><span>Gerado em ${hoje}</span></div>
+    <div class="footer"><span>${escapeHtml(state.relatorioRodape || 'EJHV Engenharia')} — ${p.id}</span><span>Gerado em ${hoje}</span></div>
     <script>window.onload=()=>window.print()<\/script>
     </body></html>`);
   win.document.close();
@@ -549,7 +549,7 @@ export function printProposta(state, id){
 export function compartilharWhatsApp(state, id){
   const p=state.propostas.find(x=>x.id===id); if(!p) return;
   const tipo={projeto:'Elaboração de Projetos',obra:'Orçamento de Obra',completa:'Projeto + Obra'}[p.tipo]||'Proposta';
-  const msg=`*EJH ENGENHARIA — ${tipo}*\n\n`+
+  const msg=`*EJHV ENGENHARIA — ${tipo}*\n\n`+
     `*Cliente:* ${p.cliente||'—'}\n`+
     `*Empreendimento:* ${p.empreend||'—'}\n`+
     (p.area?`*Área:* ${p.area} m²\n`:'')+
@@ -559,7 +559,7 @@ export function compartilharWhatsApp(state, id){
     (p.validade?`_Proposta válida por ${p.validade} dias_\n\n`:'')+
     (p.parcela?`*Pagamento:* ${p.parcela}\n`:'')+
     `Para visualizar a proposta completa, solicite o PDF pelo retorno desta mensagem.\n\n`+
-    `*EJH Engenharia* • Guaxupé/MG`;
+    `*EJHV Engenharia* • Guaxupé/MG`;
   const url='https://api.whatsapp.com/send?text='+encodeURIComponent(msg);
   window.open(url,'_blank');
 }

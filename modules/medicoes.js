@@ -168,7 +168,7 @@ export function printMedicao(state, id){
     <div class="hdr">
       <div>
         ${state.logoData?`<img src="${state.logoData}" class="logo-img">`:''}
-        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#0f2744">${state.empNome || 'EJH ENGENHARIA'}</div>
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#0f2744">${state.empNome || 'EJHV ENGENHARIA'}</div>
         <div style="font-size:12px;color:#64748b;margin-top:2px">Boletim de Medição</div>
       </div>
       <div style="text-align:right">
@@ -204,7 +204,7 @@ export function printMedicao(state, id){
         <div style="color:#64748b">Aprovação${m.assinatura?.data?' — '+m.assinatura.data:''}</div>
       </div>
     </div>
-    <div class="footer"><span>${state.relatorioRodape || 'EJH Engenharia'} — ${m.id}</span><span>Gerado em ${new Date().toLocaleDateString('pt-BR')}</span></div>
+    <div class="footer"><span>${state.relatorioRodape || 'EJHV Engenharia'} — ${m.id}</span><span>Gerado em ${new Date().toLocaleDateString('pt-BR')}</span></div>
     <script>window.onload=()=>window.print()<\/script>
   </body></html>`);
   win.document.close();

@@ -74,11 +74,11 @@ export function exportarOrcamentoExcelObra(state) {
 function gerarAbaResumo(state, obras) {
   const rows = [];
   const hoje = new Date().toLocaleDateString('pt-BR');
-  const engNome = state.engNome || 'EJH Engenharia';
+  const engNome = state.engNome || 'EJHV Engenharia';
   const engReg  = state.engRegistro || '';
 
   // Cabeçalho
-  rows.push([{ v: 'EJH ENGENHARIA — RESUMO GERAL DE ORÇAMENTOS', t:'s', s:{ font:FONTE_TITULO, alignment:{horizontal:'left'} }}]);
+  rows.push([{ v: 'EJHV ENGENHARIA — RESUMO GERAL DE ORÇAMENTOS', t:'s', s:{ font:FONTE_TITULO, alignment:{horizontal:'left'} }}]);
   rows.push([{ v: `Gerado em: ${hoje}  |  ${engNome}  ${engReg}`, t:'s', s:{ font:FONTE_NORM, font2:{italic:true}, alignment:{horizontal:'left'}, fill:{patternType:'solid',fgColor:{rgb:'F0F5FF'}} }}]);
   rows.push([]);
   rows.push([
@@ -131,12 +131,12 @@ function gerarAbaResumo(state, obras) {
 function gerarAbaObra(state, obra) {
   const itens = state.orc.filter(x => x.obraId === obra.id);
   const hoje  = new Date().toLocaleDateString('pt-BR');
-  const engNome = state.engNome || 'EJH Engenharia';
+  const engNome = state.engNome || 'EJHV Engenharia';
   const engReg  = state.engRegistro || '';
   const rows = [];
 
   // Header da proposta
-  rows.push([{ v: 'EJH ENGENHARIA — ORÇAMENTO DE OBRA', t:'s', s:{ font:FONTE_TITULO, alignment:{horizontal:'left'} }}]);
+  rows.push([{ v: 'EJHV ENGENHARIA — ORÇAMENTO DE OBRA', t:'s', s:{ font:FONTE_TITULO, alignment:{horizontal:'left'} }}]);
   rows.push([{ v: `Obra: ${obra.nome}  |  Cliente: ${obra.cliente||'—'}  |  Área: ${obra.area||0} m²`, t:'s', s:{ font:{bold:true,sz:11,name:'Calibri'}, alignment:{horizontal:'left'}, fill:{patternType:'solid',fgColor:{rgb:'EBF5FF'}} }}]);
   rows.push([{ v: `${engNome}  ${engReg}  |  Data: ${hoje}`, t:'s', s:{ font:FONTE_NORM, alignment:{horizontal:'left'} }}]);
   rows.push([]);

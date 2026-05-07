@@ -1843,7 +1843,7 @@ export function renderDashFinAvancado(state) {
     <!-- Saldo Geral Histórico -->
     <div class="section" style="border-left:4px solid #0f766e;margin-bottom:18px">
       <div class="section-hdr" style="cursor:pointer" onclick="toggleFinSection('saldo-geral')">
-        <div class="section-title">💰 Saldo Geral — Histórico EJH (2016–${yearNow})</div>
+        <div class="section-title">💰 Saldo Geral — Histórico EJHV (2016–${yearNow})</div>
         <button class="btn btn-outline btn-xs" style="font-size:11px;padding:3px 9px" id="tog-saldo-geral" type="button">${iconCol('saldo-geral')}</button>
       </div>
       <div id="sec-saldo-geral" style="${dispCol('saldo-geral')}">
@@ -1903,10 +1903,10 @@ export function renderDashFinAvancado(state) {
       </div>
     </div>
 
-    <!-- Histórico Anual EJH (2016–${yearNow}) -->
+    <!-- Histórico Anual EJHV (2016–${yearNow}) -->
     <div class="section" style="border-left:4px solid #0891b2;margin-bottom:18px">
       <div class="section-hdr" style="cursor:pointer" onclick="toggleFinSection('hist-anual')">
-        <div class="section-title">📈 Histórico Anual EJH (${anoInicio}–${yearNow})</div>
+        <div class="section-title">📈 Histórico Anual EJHV (${anoInicio}–${yearNow})</div>
         <button class="btn btn-outline btn-xs" style="font-size:11px;padding:3px 9px" id="tog-hist-anual" type="button">${iconCol('hist-anual')}</button>
       </div>
       <div id="sec-hist-anual" style="${dispCol('hist-anual')}">
