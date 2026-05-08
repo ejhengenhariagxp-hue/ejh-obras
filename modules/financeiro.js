@@ -1360,26 +1360,37 @@ export function renderAgendamentos(state) {
     <div class="section" style="border-left:4px solid #2563eb">
       <div class="section-hdr">
         <div class="section-title">📅 Lançamentos Agendados — Próximos 90 dias</div>
-        <div style="display:flex;gap:8px;font-size:12px;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;font-size:12px;flex-wrap:wrap;align-items:center">
           <span style="padding:4px 10px;background:#f0fdf4;color:var(--green);border-radius:8px;font-weight:600">↗ ${fmt(totalReceita)} a receber</span>
           <span style="padding:4px 10px;background:#fef2f2;color:var(--red);border-radius:8px;font-weight:600">↘ ${fmt(totalDespesa)} a pagar</span>
           <span style="padding:4px 10px;background:${saldoPrevisto>=0?'#eff6ff':'#fee2e2'};color:${saldoPrevisto>=0?'var(--blue)':'var(--red)'};border-radius:8px;font-weight:700">Saldo previsto: ${fmt(saldoPrevisto)}</span>
+          <button class="btn btn-outline btn-xs" onclick="toggleTodosAgend()" style="font-size:11px" title="Expandir/recolher todos os meses">⇅ Todos</button>
         </div>
       </div>
-      ${Object.keys(meses).sort().map(mesKey => {
+      ${Object.keys(meses).sort().map((mesKey, idx) => {
         const lista = meses[mesKey];
         const subRec = lista.filter(f => f.tipo === 'Receita').reduce((a,x) => a + x.valor, 0);
         const subDes = lista.filter(f => f.tipo === 'Despesa').reduce((a,x) => a + x.valor, 0);
+        // Default: 1º mês aberto, demais colapsados (primeira visita); depois respeita localStorage
+        const lsKey = 'ejh_agend_' + mesKey;
+        const lsVal = localStorage.getItem(lsKey);
+        const colapsado = lsVal === null ? (idx > 0) : (lsVal === '1');
+        const icon = colapsado ? '▶' : '▼';
         return `
-          <div style="margin-bottom:14px">
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8faff;border-radius:8px;margin-bottom:8px">
-              <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--navy);font-size:13.5px;text-transform:capitalize">📆 ${mesNome(mesKey)}</div>
+          <div style="margin-bottom:10px">
+            <div onclick="toggleAgendMes('${mesKey}')" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8faff;border-radius:8px;margin-bottom:8px;cursor:pointer;user-select:none" title="Clique para expandir/recolher">
+              <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--navy);font-size:13.5px;text-transform:capitalize;display:flex;align-items:center;gap:8px">
+                <span id="ico-agend-${mesKey}" style="font-size:11px;color:var(--muted);width:12px;display:inline-block">${icon}</span>
+                📆 ${mesNome(mesKey)}
+                <span style="font-size:11px;font-weight:500;color:var(--muted);background:#e2e8f0;padding:1px 7px;border-radius:10px">${lista.length} item${lista.length!==1?'s':''}</span>
+              </div>
               <div style="font-size:12px;color:var(--muted)">
                 ${subRec>0?`<span style="color:var(--green);font-weight:600">+${fmt(subRec)}</span>`:''}
                 ${subRec>0&&subDes>0?' · ':''}
                 ${subDes>0?`<span style="color:var(--red);font-weight:600">-${fmt(subDes)}</span>`:''}
               </div>
             </div>
+            <div id="lst-agend-${mesKey}" style="${colapsado?'display:none':''}">
             ${lista.map(f => {
               const obra = obraName(state, f.obraId);
               const cor = f.tipo === 'Receita' ? 'var(--green)' : 'var(--red)';
@@ -1401,10 +1412,36 @@ export function renderAgendamentos(state) {
                   </div>
                 </div>`;
             }).join('')}
+            </div>
           </div>`;
       }).join('')}
     </div>
   `;
+}
+
+// Alterna a exibição de um mês na seção Lançamentos Agendados
+export function toggleAgendMes(mesKey) {
+  const lst = document.getElementById('lst-agend-' + mesKey);
+  const ico = document.getElementById('ico-agend-' + mesKey);
+  if (!lst) return;
+  const willCollapse = lst.style.display !== 'none';
+  lst.style.display = willCollapse ? 'none' : '';
+  if (ico) ico.textContent = willCollapse ? '▶' : '▼';
+  try { localStorage.setItem('ejh_agend_' + mesKey, willCollapse ? '1' : '0'); } catch(e) {}
+}
+
+// Expande/recolhe todos os meses (alterna baseado no estado do primeiro)
+export function toggleTodosAgend() {
+  const lists = document.querySelectorAll('[id^="lst-agend-"]');
+  if (!lists.length) return;
+  const todosAbertos = [...lists].every(l => l.style.display !== 'none');
+  lists.forEach(l => {
+    const mesKey = l.id.replace('lst-agend-', '');
+    l.style.display = todosAbertos ? 'none' : '';
+    const ico = document.getElementById('ico-agend-' + mesKey);
+    if (ico) ico.textContent = todosAbertos ? '▶' : '▼';
+    try { localStorage.setItem('ejh_agend_' + mesKey, todosAbertos ? '1' : '0'); } catch(e) {}
+  });
 }
 
 // Marca um lançamento como pago/recebido (botão rápido nos agendamentos)

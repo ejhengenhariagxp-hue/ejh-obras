@@ -19,7 +19,7 @@ import { addFin, delFin, openEditFin, openModalFin, openModalFinPessoal, isModal
          addConta, delConta, openEditConta, abrirModalConta,
          gerarParcelas, toggleParcFin, aplicarFiltrosFin, limparFiltrosFin,
          atualizarStatusVencimentos,
-         importarFaturamentoHistoricoEJH, toggleFinSection,
+         importarFaturamentoHistoricoEJH, toggleFinSection, toggleAgendMes, toggleTodosAgend,
          editarFaturamentoMes, salvarFaturamentoMes, resetarFaturamentoMes,
          setResumoMes, rolarPendentesProximoMes, moverParaProximoMes,
          abrirModalTransf, addTransferencia, delTransferencia,
@@ -27,7 +27,7 @@ import { addFin, delFin, openEditFin, openModalFin, openModalFinPessoal, isModal
          addDivida, delDivida, openModalDivida, openEditDivida, pagarParcelaDivida,
          atualizarTotalPagamentoDivida, confirmarPagamentoDivida,
          importarAbril2026Planilha, importarMesPlanilha,
-         renderEjhLife, setEjhLifeFiltro, limparEjhLifeFiltros } from './modules/financeiro.js?v=20260508f';
+         renderEjhLife, setEjhLifeFiltro, limparEjhLifeFiltros } from './modules/financeiro.js?v=20260508g';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260505i';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260501g';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
@@ -981,6 +981,8 @@ G.limparFiltrosFin = () => { limparFiltrosFin(); renderAtiva(); };
 G.toggleHideRT = cb => { toggleHideRT(state, cb); renderAtiva(); };
 G.importarFaturamentoHistoricoEJH = () => { if(importarFaturamentoHistoricoEJH(state)) renderAtiva(); };
 G.toggleFinSection = id => toggleFinSection(id);
+G.toggleAgendMes = mesKey => toggleAgendMes(mesKey);
+G.toggleTodosAgend = () => toggleTodosAgend();
 G.editarFaturamentoMes = (year, month) => editarFaturamentoMes(state, year, month);
 G.salvarFaturamentoMes = () => {
   if(salvarFaturamentoMes(state)) {
