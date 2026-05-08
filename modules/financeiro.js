@@ -2568,6 +2568,59 @@ export function renderEjhLife(state) {
       </div>
     </div>
 
+    ${(() => {
+      // Calcula próximas datas de vencimento das dívidas ativas
+      const hojeMS = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const proximos = dividas
+        .filter(d => (d.parcelasPagas||0) < (d.parcelasTotal||0) && d.vencimentoDia)
+        .map(d => {
+          const dia = +d.vencimentoDia;
+          let dt = new Date(now.getFullYear(), now.getMonth(), dia);
+          if (dt.getTime() < hojeMS) dt = new Date(now.getFullYear(), now.getMonth()+1, dia);
+          const diasFalta = Math.ceil((dt.getTime() - hojeMS) / 86400000);
+          return { divida: d, data: dt, diasFalta };
+        })
+        .filter(x => x.diasFalta <= 30)
+        .sort((a,b) => a.diasFalta - b.diasFalta);
+      if (!proximos.length) return '';
+      const urgentes = proximos.filter(x => x.diasFalta <= 7);
+      const totalUrgente = urgentes.reduce((a,x) => a + (x.divida.valorParcela||0), 0);
+      return `
+      <!-- Próximos Vencimentos -->
+      <div class="ejhlife-section" style="border-left:4px solid ${urgentes.length?'#dc2626':'#f59e0b'}">
+        <div class="ejhlife-section-title">
+          <span>🔔 Próximos Vencimentos${urgentes.length?` <span style="background:#fef2f2;color:#dc2626;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px">${urgentes.length} urgente${urgentes.length>1?'s':''}</span>`:''}</span>
+          ${urgentes.length?`<span style="font-size:12px;color:var(--red);font-weight:600">Total urgente: ${fmt(totalUrgente)}</span>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${proximos.map(x => {
+            const d = x.divida;
+            const cor = x.diasFalta <= 3 ? '#dc2626' : x.diasFalta <= 7 ? '#f59e0b' : '#0891b2';
+            const bg = x.diasFalta <= 3 ? '#fef2f2' : x.diasFalta <= 7 ? '#fffbeb' : '#f0f9ff';
+            const txtPrazo = x.diasFalta === 0 ? '⚠️ Vence HOJE' :
+                              x.diasFalta === 1 ? '⚠️ Vence amanhã' :
+                              x.diasFalta <= 7 ? `⚠️ Em ${x.diasFalta} dias` :
+                              `📅 Em ${x.diasFalta} dias`;
+            const dataLbl = x.data.toLocaleDateString('pt-BR');
+            const parc = (d.parcelasPagas||0) + 1;
+            const tot = d.parcelasTotal||0;
+            return `
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:${bg};border-radius:8px;border-left:3px solid ${cor}">
+                <div style="flex:1;min-width:0">
+                  <div style="font-weight:700;color:var(--navy);font-size:13.5px">💳 ${d.credor}</div>
+                  <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Parcela ${parc}/${tot} · ${dataLbl}${d.descricao?` · ${d.descricao}`:''}</div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-weight:800;color:${cor};font-size:14px;white-space:nowrap">${fmt(d.valorParcela||0)}</div>
+                  <div style="font-size:11px;color:${cor};font-weight:700;white-space:nowrap;margin-top:2px">${txtPrazo}</div>
+                </div>
+                <button class="btn btn-outline btn-xs" onclick="pagarParcelaDivida('${d.id}')" style="font-size:11px;padding:4px 10px;color:var(--green);border-color:var(--green);white-space:nowrap" title="Marcar parcela como paga">✓ Pagar</button>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    })()}
+
     <!-- Metas -->
     <div class="ejhlife-section">
       <div class="ejhlife-section-title">
