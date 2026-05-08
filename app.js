@@ -27,7 +27,7 @@ import { addFin, delFin, openEditFin, openModalFin, openModalFinPessoal, isModal
          addDivida, delDivida, openModalDivida, openEditDivida, pagarParcelaDivida,
          atualizarTotalPagamentoDivida, confirmarPagamentoDivida,
          importarAbril2026Planilha, importarMesPlanilha,
-         renderEjhLife, setEjhLifeFiltro, limparEjhLifeFiltros } from './modules/financeiro.js?v=20260508g';
+         renderEjhLife, setEjhLifeFiltro, limparEjhLifeFiltros } from './modules/financeiro.js?v=20260508h';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260505i';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260501g';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
