@@ -947,7 +947,7 @@ export function delTransferencia(state, transferGroupId) {
 }
 
 // ── FILTROS DA TELA FINANCEIRO ──────────────────────────────────────
-let _finFiltros = { tipo:'', obraId:'', cat:'', contaId:'', status:'', q:'' };
+let _finFiltros = { tipo:'', obraId:'', cat:'', contaId:'', status:'', q:'', mes:'' };
 export function aplicarFiltrosFin() {
   _finFiltros = {
     tipo: document.getElementById('fil-fin-tipo')?.value || '',
@@ -956,14 +956,52 @@ export function aplicarFiltrosFin() {
     contaId: document.getElementById('fil-fin-conta')?.value || '',
     status: document.getElementById('fil-fin-status')?.value || '',
     q: (document.getElementById('fil-fin-q')?.value || '').toLowerCase().trim(),
+    mes: document.getElementById('fil-fin-mes')?.value || '',
   };
   return true;
 }
 export function limparFiltrosFin() {
-  _finFiltros = { tipo:'', obraId:'', cat:'', contaId:'', status:'', q:'' };
-  ['fil-fin-tipo','fil-fin-obra','fil-fin-cat','fil-fin-conta','fil-fin-status','fil-fin-q'].forEach(k => {
+  _finFiltros = { tipo:'', obraId:'', cat:'', contaId:'', status:'', q:'', mes:'' };
+  ['fil-fin-tipo','fil-fin-obra','fil-fin-cat','fil-fin-conta','fil-fin-status','fil-fin-q','fil-fin-mes'].forEach(k => {
     const el = document.getElementById(k); if (el) el.value = '';
   });
+  return true;
+}
+
+// Audita lançamentos duplicados — agrupa por (tipo + data + descrição + valor)
+// e mostra grupos com 2+ entradas. Usuário decide quais excluir.
+export function auditarDuplicatasFin(state) {
+  const fin = (state.fin || []).filter(f => !f.transferGroupId); // ignora pares de transferência
+  const buckets = new Map();
+  fin.forEach(f => {
+    const key = [f.tipo, f.data || '', (f.desc || '').toLowerCase().trim(), Math.round((f.valor||0) * 100)].join('|');
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(f);
+  });
+  const duplicados = [...buckets.values()].filter(g => g.length >= 2);
+  if (!duplicados.length) {
+    alert('✅ Nenhum lançamento duplicado encontrado.\n\nForam analisados ' + fin.length + ' lançamento(s) (excluindo transferências internas).');
+    return false;
+  }
+  // Monta mensagem detalhada
+  const total = duplicados.reduce((a,g) => a + (g.length - 1), 0);
+  const detalhes = duplicados.map(g => {
+    const f = g[0];
+    return `• ${f.tipo} ${f.data} — "${f.desc}" — ${fmt(f.valor)}\n   IDs: ${g.map(x => x.id).join(', ')}`;
+  }).join('\n\n');
+  const msg = `⚠️ Encontrados ${duplicados.length} grupo${duplicados.length>1?'s':''} de duplicatas (${total} lançamento${total>1?'s':''} extras):\n\n${detalhes}\n\n⚠️ Atenção: vou manter o PRIMEIRO de cada grupo e excluir os demais. Os IDs eliminados serão os que aparecem após o primeiro de cada lista acima.\n\nConfirmar exclusão dos ${total} duplicado${total>1?'s':''}?`;
+  if (!confirm(msg)) return false;
+
+  // Exclui os duplicados (mantém o primeiro de cada grupo)
+  const idsExcluir = new Set();
+  duplicados.forEach(g => {
+    g.slice(1).forEach(x => idsExcluir.add(x.id));
+  });
+  state.fin = state.fin.filter(f => !idsExcluir.has(f.id));
+  if (!state.deletedIds) state.deletedIds = {};
+  if (!state.deletedIds.fin) state.deletedIds.fin = [];
+  idsExcluir.forEach(id => { if (!state.deletedIds.fin.includes(id)) state.deletedIds.fin.push(id); });
+  showToast(`✅ ${idsExcluir.size} duplicata${idsExcluir.size>1?'s':''} removida${idsExcluir.size>1?'s':''}!`);
   return true;
 }
 function aplicarFiltrosLista(lista) {
@@ -973,6 +1011,7 @@ function aplicarFiltrosLista(lista) {
     if (_finFiltros.cat && f.cat !== _finFiltros.cat) return false;
     if (_finFiltros.contaId && f.contaId !== _finFiltros.contaId) return false;
     if (_finFiltros.status && f.status !== _finFiltros.status) return false;
+    if (_finFiltros.mes && !(f.data || '').startsWith(_finFiltros.mes)) return false;
     if (_finFiltros.q) {
       const txt = `${f.desc||''} ${f.cat||''} ${f.obs||''}`.toLowerCase();
       if (!txt.includes(_finFiltros.q)) return false;

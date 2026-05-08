@@ -17,7 +17,7 @@ import { addFin, delFin, openEditFin, openModalFin, openModalFinPessoal, isModal
          preencherCustoFixoPadrao, gerarLancamentosCustosFixos,
          abrirDespesasPadraoObra, salvarDespesasPadraoObra,
          addConta, delConta, openEditConta, abrirModalConta,
-         gerarParcelas, toggleParcFin, aplicarFiltrosFin, limparFiltrosFin,
+         gerarParcelas, toggleParcFin, aplicarFiltrosFin, limparFiltrosFin, auditarDuplicatasFin,
          atualizarStatusVencimentos,
          importarFaturamentoHistoricoEJH, toggleFinSection, toggleAgendMes, toggleTodosAgend,
          editarFaturamentoMes, salvarFaturamentoMes, resetarFaturamentoMes,
@@ -27,7 +27,7 @@ import { addFin, delFin, openEditFin, openModalFin, openModalFinPessoal, isModal
          addDivida, delDivida, openModalDivida, openEditDivida, pagarParcelaDivida,
          atualizarTotalPagamentoDivida, confirmarPagamentoDivida,
          importarAbril2026Planilha, importarMesPlanilha,
-         renderEjhLife, setEjhLifeFiltro, limparEjhLifeFiltros } from './modules/financeiro.js?v=20260508h';
+         renderEjhLife, setEjhLifeFiltro, limparEjhLifeFiltros } from './modules/financeiro.js?v=20260508i';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260505i';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260501g';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
@@ -978,6 +978,7 @@ G.gerarParcelas = () => { if(gerarParcelas(state)) renderAtiva(); };
 G.toggleParcFin = toggleParcFin;
 G.aplicarFiltrosFin = () => { aplicarFiltrosFin(); renderAtiva(); };
 G.limparFiltrosFin = () => { limparFiltrosFin(); renderAtiva(); };
+G.auditarDuplicatasFin = () => { if (auditarDuplicatasFin(state)) renderAtiva(); };
 G.toggleHideRT = cb => { toggleHideRT(state, cb); renderAtiva(); };
 G.importarFaturamentoHistoricoEJH = () => { if(importarFaturamentoHistoricoEJH(state)) renderAtiva(); };
 G.toggleFinSection = id => toggleFinSection(id);
