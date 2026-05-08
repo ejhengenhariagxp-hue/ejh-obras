@@ -26,7 +26,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260508a"></script>
+<script type="module" src="./app.js?v=20260508b"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Lucide icons (modern SVG icon library) -->
@@ -1367,7 +1367,16 @@
   <button class="btn btn-outline btn-sm" onclick="addProjExtra()" style="margin-top:8px">＋ Adicionar serviço extra</button>
   <div class="divider"></div>
   <div class="form-grid">
+    <div class="form-group full"><label>📋 Metodologia / Carta de Apresentação <span style="font-weight:400;color:var(--muted)">(aparece no PDF antes da tabela)</span></label><textarea id="f-pp-metod" rows="4" placeholder="Ex:&#10;1. Estudo Preliminar — Análise do projeto arquitetônico e levantamento de dados&#10;2. Desenvolvimento — Elaboração dos projetos conforme ABNT&#10;3. Entrega — Arquivo digital completo com suporte durante a obra"></textarea></div>
     <div class="form-group full"><label>Observações / Condições</label><textarea id="f-pp-obs" placeholder="Incluso ART, levantamento topográfico, revisões…"></textarea></div>
+    <div class="form-group full">
+      <label>📸 Fotos do Portfolio <span style="font-weight:400;color:var(--muted)">(até 6 — aparecem na página 2 do PDF)</span></label>
+      <div>
+        <input type="file" id="prop-foto-input" multiple accept="image/*" style="display:none" onchange="addPropFoto(this)">
+        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('prop-foto-input').click()">📷 Adicionar fotos do portfolio</button>
+        <div id="prop-fotos-preview" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;padding:10px;background:var(--bg);border-radius:8px;min-height:36px;border:1.5px dashed var(--border)"></div>
+      </div>
+    </div>
     <div class="form-group"><label>Desconto (%)</label><input id="f-pp-desc" type="number" min="0" max="100" value="0" oninput="calcPropProjeto()"></div>
     <div class="form-group"><label style="color:var(--navy)">TOTAL DA PROPOSTA</label>
       <input id="f-pp-total" readonly style="background:#f0f9ff;font-weight:700;font-size:15px;color:var(--navy)"></div>
@@ -1426,6 +1435,7 @@
       <label>Validade da Proposta (dias)</label>
       <input id="f-po-validade" type="number" value="30" placeholder="30">
     </div>
+    <div class="form-group full"><label>📋 Metodologia <span style="font-weight:400;color:var(--muted)">(aparece no PDF)</span></label><textarea id="f-po-metod" rows="3" placeholder="Descreva como o trabalho será conduzido…"></textarea></div>
     <div class="form-group full"><label>Observações / Condições contratuais</label><textarea id="f-po-obs" placeholder="Exclusões, garantias, reajustes…"></textarea></div>
   </div>
   <div class="modal-actions">

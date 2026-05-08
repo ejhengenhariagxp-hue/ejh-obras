@@ -1,10 +1,11 @@
 // modules/propostas.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, markDeleted, escapeHtml } from '../utils.js?v=20260501a';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, markDeleted, escapeHtml } from '../utils.js?v=20260501g';
 
 window.projServicos = window.projServicos || [];
 window.projExtras = window.projExtras || [];
 window.obraItens = window.obraItens || [];
 window.modoGlobalProjeto = window.modoGlobalProjeto || false;
+window.propFotos = window.propFotos || [];
 
 const PROP_STATUS = {
   em_negociacao: { label: 'Em Negociação', icon: '🤝', bg: '#dbeafe', color: '#1d4ed8' },
@@ -46,6 +47,20 @@ const PRECO_PROJETOS = [
     {id:'ASB', nome:'Consultoria Técnica', un:'hr', preco:280.00, desc:'Assessoria técnica especializada por hora consultada'},
 ];
 
+const ENTREGAS_PROJ = {
+  'ARQ': { titulo: 'Projeto Arquitetônico',        itens: ['Plantas baixas de todos os pavimentos', 'Cortes e fachadas', 'Planta de situação e locação', 'Memorial descritivo', 'Perspectiva 3D ilustrativa'] },
+  'EST': { titulo: 'Projeto Estrutural',            itens: ['Cálculo estrutural completo', 'Pranchas de forma e locação', 'Detalhamento de armaduras', 'Memorial de cálculo', 'ART de projeto incluída'] },
+  'HID': { titulo: 'Projeto Hidrossanitário',       itens: ['Planta de água fria e quente', 'Planta de esgoto sanitário', 'Rede de águas pluviais', 'Detalhes isométricos', 'Lista de materiais', 'ART de projeto incluída'] },
+  'ELE': { titulo: 'Projeto Elétrico',              itens: ['Planta de iluminação e tomadas', 'Rede de comunicação (TV, internet)', 'Diagrama unifilar', 'Quadro de cargas e demandas', 'Lista de materiais', 'ART de projeto incluída'] },
+  'PREV':{ titulo: 'PPCI — Prevenção de Incêndio', itens: ['Projeto conforme normas CBMMG', 'Memória de cálculo', 'Pranchas técnicas', 'ART de projeto incluída'] },
+  'ACO': { titulo: 'Acompanhamento Técnico',        itens: ['Visitas técnicas periódicas', 'Relatórios fotográficos de vistoria', 'Verificação de conformidade com projeto', 'Orientação à equipe de obra'] },
+  'GER': { titulo: 'Gerenciamento de Obra',         itens: ['Controle de cronograma', 'Gestão de contratos e fornecedores', 'Controle de custos e medições', 'Relatórios mensais de andamento'] },
+  'LAU': { titulo: 'Laudo de Engenharia',           itens: ['Vistoria técnica detalhada', 'Diagnóstico de patologias', 'Recomendações técnicas', 'Relatório com registro fotográfico', 'ART incluída'] },
+  'VIS': { titulo: 'Vistoria Técnica',              itens: ['Vistoria in loco', 'Relatório técnico fotográfico', 'Recomendações de intervenção'] },
+  'TOP': { titulo: 'Topografia',                    itens: ['Levantamento planialtimétrico', 'Georreferenciamento', 'Locação de divisas', 'Relatório técnico', 'ART incluída'] },
+  'AR2': { titulo: 'Regularização / Prefeitura',   itens: ['Processo administrativo completo', 'Projeto de regularização', 'Acompanhamento junto à Prefeitura', 'Obtenção de Habite-se'] },
+};
+
 export function openPropProjeto(state){
   const draftStr = localStorage.getItem('rascunho_proposta');
   if (draftStr) {
@@ -75,6 +90,8 @@ export function openPropProjeto(state){
   document.getElementById('f-pp-data').value=new Date().toISOString().split('T')[0];
   const btn=document.getElementById('btn-modo-global');
   if(btn){ btn.textContent='💰 Modo: Por Unidade'; btn.style.background='#fff'; btn.style.color='var(--muted)'; btn.style.borderColor='var(--border)'; }
+  window.propFotos = [];
+  setTimeout(() => renderPropFotos(), 50);
   document.getElementById('modal-proposta-projeto').classList.add('open');
 }
 
@@ -262,6 +279,64 @@ window.renderObraItens = renderObraItens;
 window.calcPropProjeto = calcPropProjeto;
 window.calcPropostaObra = calcPropostaObra;
 
+// ── Fotos de portfolio por proposta ─────────────────────────────────
+function _resizePropFoto(file) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const maxW = 900, scale = Math.min(1, maxW / img.width);
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * scale);
+      c.height = Math.round(img.height * scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL('image/jpeg', 0.75));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
+export function renderPropFotos() {
+  const container = document.getElementById('prop-fotos-preview');
+  if (!container) return;
+  if (!window.propFotos.length) {
+    container.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:4px 0">Nenhuma foto. Adicione fotos de projetos similares para incluir na página 2 do PDF.</div>';
+    return;
+  }
+  container.innerHTML = window.propFotos.map((f, i) => `
+    <div style="position:relative;flex-shrink:0;width:100px">
+      <img src="${f.dataUrl}" style="width:100px;height:70px;object-fit:cover;border-radius:6px;border:1.5px solid var(--border)">
+      <input value="${escapeHtml(f.legenda || '')}" placeholder="Legenda…"
+        oninput="propFotos[${i}].legenda=this.value"
+        style="width:100%;display:block;margin-top:3px;font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;box-sizing:border-box">
+      <button onclick="removePropFoto(${i})"
+        style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.65);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:9px;cursor:pointer;line-height:1.8;padding:0">✕</button>
+    </div>`).join('');
+}
+
+export async function addPropFoto(input) {
+  const files = Array.from(input.files || []);
+  const available = 6 - window.propFotos.length;
+  if (available <= 0) { showToast('⚠️ Máximo de 6 fotos por proposta.'); input.value=''; return; }
+  for (const file of files.slice(0, available)) {
+    if (!file.type.startsWith('image/')) continue;
+    const dataUrl = await _resizePropFoto(file);
+    if (dataUrl) window.propFotos.push({ dataUrl, legenda: '' });
+  }
+  renderPropFotos();
+  input.value = '';
+}
+
+export function removePropFoto(idx) {
+  window.propFotos.splice(idx, 1);
+  renderPropFotos();
+}
+
+window.renderPropFotos = renderPropFotos;
+window.removePropFoto = removePropFoto;
+
 export function saveProposta(state, tipo){
   if(!Array.isArray(state.propostas)) state.propostas=[];
   if(!state.counters.prop) state.counters.prop=1;
@@ -292,6 +367,8 @@ export function saveProposta(state, tipo){
         area, prazo:document.getElementById('f-pp-prazo').value||'',
         validade:document.getElementById('f-pp-val').value||'30',
         obs:document.getElementById('f-pp-obs').value||'',
+        metodologia:document.getElementById('f-pp-metod')?.value||'',
+        fotos:[...(window.propFotos||[])],
         parcela, desconto:desc, subtotal, total:subtotal*(1-desc/100),
         itens, data:document.getElementById('f-pp-data').value||new Date().toISOString().split('T')[0],
       };
@@ -319,6 +396,8 @@ export function saveProposta(state, tipo){
         escopo:document.getElementById('f-po-escopo').value||'',
         obs:document.getElementById('f-po-obs').value||'',
         parcela:parcObraEl?parcObraEl.value:'Por medição',
+        metodologia:document.getElementById('f-po-metod')?.value||'',
+        fotos:[...(window.propFotos||[])],
         bdi, desconto:desc, subtotal:sub,
         total:sub*(1+bdi/100)*(1-desc/100),
         itens:window.obraItens.map(x=>({...x})), data:document.getElementById('f-po-data').value||new Date().toISOString().split('T')[0],
@@ -382,7 +461,10 @@ export function editProposta(state, id) {
     document.getElementById('f-pp-prazo').value = p.prazo || '';
     document.getElementById('f-pp-desc').value = p.desconto || 0;
     document.getElementById('f-pp-obs').value = p.obs || '';
-    
+    if(document.getElementById('f-pp-metod')) document.getElementById('f-pp-metod').value = p.metodologia || '';
+    window.propFotos = [...(p.fotos || [])];
+    setTimeout(() => renderPropFotos(), 50);
+
     // Carregar itens
     window.projServicos = PRECO_PROJETOS.map(def => {
       const match = (p.itens || []).find(it => it.id === def.id);
@@ -406,7 +488,10 @@ export function editProposta(state, id) {
     document.getElementById('f-po-desc').value = p.desconto || 0;
     document.getElementById('f-po-escopo').value = p.escopo || '';
     if (document.getElementById('f-po-tipo')) document.getElementById('f-po-tipo').value = p.tipoObra || 'obra';
-    
+    if(document.getElementById('f-po-metod')) document.getElementById('f-po-metod').value = p.metodologia || '';
+    window.propFotos = [...(p.fotos || [])];
+    setTimeout(() => renderPropFotos(), 50);
+
     window.obraItens = [...(p.itens || [])];
     renderObraItens();
     calcPropostaObra(state);
@@ -417,133 +502,214 @@ export function editProposta(state, id) {
 export function printProposta(state, id){
   const p=state.propostas.find(x=>x.id===id);
   if(!p){ showToast('⚠️ Proposta não encontrada'); return; }
-  // Garante estrutura mínima — propostas antigas/recém-salvas podem estar com campos vazios
   const itens = Array.isArray(p.itens) ? p.itens : [];
   const subtotal = +p.subtotal || 0;
   const total = +p.total || 0;
   const bdi = +p.bdi || 0;
   const desconto = +p.desconto || 0;
-  const hoje=new Date().toLocaleDateString('pt-BR');
-  let itensHtml='';
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const fotos = Array.isArray(p.fotos) ? p.fotos : [];
+  const engNome = state.engNome || 'Eng. Responsável';
+  const rodape = state.relatorioRodape || 'RUA SEBASTIÃO VITOR, 325 – AGENOR DE LIMA – GUAXUPÉ/MG';
+
+  // ── Tabela de serviços ────────────────────────────────────────────
+  let itensHtml = '';
   if(p.tipo==='projeto'){
-    itensHtml=`<table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-top:14px">
-      <thead><tr style="background:#0f2744;color:#fff">
-        <th style="padding:9px 13px;text-align:left">Serviço de Projeto</th>
-        <th style="padding:9px 13px">Un.</th><th style="padding:9px 13px">Qtd</th>
-        <th style="padding:9px 13px">V.Unit.</th><th style="padding:9px 13px">Total</th>
+    itensHtml=`<table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="background:#1c2126;color:#fff">
+        <th style="padding:10px 14px;text-align:left">Serviço de Projeto</th>
+        <th style="padding:10px 8px;width:44px;text-align:center">Un.</th>
+        <th style="padding:10px 8px;width:40px;text-align:center">Qtd</th>
+        <th style="padding:10px 12px;width:105px;text-align:right">V.Unit.</th>
+        <th style="padding:10px 12px;width:105px;text-align:right">Total</th>
       </tr></thead>
       <tbody>${itens.map((s,i)=>{
-        const preco=+(s.preco??s.vunit??0);
-        const qtd=+(s.qtd||0);
-        return `<tr style="background:${i%2===0?'#f8faff':'#fff'};border-bottom:1px solid #e2e8f0">
-        <td style="padding:9px 13px"><b>${escapeHtml(s.nome||s.item||'—')}</b><br><span style="font-size:11px;color:#64748b">${escapeHtml(s.desc||'')}</span></td>
-        <td style="padding:9px 13px;text-align:center">${escapeHtml(s.un||'')}</td>
-        <td style="padding:9px 13px;text-align:center">${qtd}</td>
-        <td style="padding:9px 13px;text-align:right">${fmt(preco)}</td>
-        <td style="padding:9px 13px;text-align:right;font-weight:700">${fmt(qtd*preco)}</td>
-      </tr>`}).join('')}</tbody>
-      <tfoot><tr style="background:#0f2744;color:#fff;font-weight:700">
-        ${desconto>0?`<td colspan="4" style="padding:9px 13px;text-align:right">Subtotal</td><td style="padding:9px 13px;text-align:right">${fmt(subtotal)}</td></tr>
-        <tr style="background:#1a3c5e;color:#fff;font-weight:700"><td colspan="4" style="padding:9px 13px;text-align:right">Desconto (${desconto}%)</td><td style="padding:9px 13px;text-align:right">- ${fmt(subtotal*desconto/100)}</td></tr>
-        <tr style="background:#0f2744;color:#fff;font-weight:800;font-size:14px">`:''}
-        <td colspan="4" style="padding:9px 13px;text-align:right">TOTAL DA PROPOSTA</td>
-        <td style="padding:9px 13px;text-align:right">${fmt(total)}</td>
-      </tr></tfoot>
+        const preco=+(s.preco??s.vunit??0), qtd=+(s.qtd||0);
+        return `<tr style="border-bottom:1px solid #e8e6e1;background:${i%2===0?'#faf9f7':'#fff'}">
+          <td style="padding:10px 14px">
+            <div style="font-weight:700;color:#1c2126;font-size:12.5px">${escapeHtml(s.nome||s.item||'—')}</div>
+            ${s.desc?`<div style="font-size:10.5px;color:#6b7068;margin-top:2px;line-height:1.4">${escapeHtml(s.desc)}</div>`:''}
+          </td>
+          <td style="padding:10px 8px;text-align:center;color:#6b7068;font-size:11px">${escapeHtml(s.un||'')}</td>
+          <td style="padding:10px 8px;text-align:center">${qtd}</td>
+          <td style="padding:10px 12px;text-align:right;color:#6b7068">${fmt(preco)}</td>
+          <td style="padding:10px 12px;text-align:right;font-weight:700;color:#1c2126">${fmt(qtd*preco)}</td>
+        </tr>`;}).join('')}
+      </tbody>
+      <tfoot>
+        ${desconto>0?`
+        <tr style="background:#f5f3f0"><td colspan="4" style="padding:9px 12px;text-align:right;color:#6b7068;font-weight:600">Subtotal</td><td style="padding:9px 12px;text-align:right;font-weight:700">${fmt(subtotal)}</td></tr>
+        <tr style="background:#fef3c7"><td colspan="4" style="padding:9px 12px;text-align:right;color:#92400e;font-weight:600">Desconto (${desconto}%)</td><td style="padding:9px 12px;text-align:right;font-weight:700;color:#92400e">− ${fmt(subtotal*desconto/100)}</td></tr>`:''}
+        <tr style="background:#1c2126;color:#fff">
+          <td colspan="4" style="padding:11px 14px;text-align:right;font-weight:700;letter-spacing:.3px">TOTAL DA PROPOSTA</td>
+          <td style="padding:11px 12px;text-align:right;font-weight:800;font-size:15px;color:#b87333">${fmt(total)}</td>
+        </tr>
+      </tfoot>
     </table>`;
   } else {
-    itensHtml=`<table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-top:14px">
-      <thead><tr style="background:#0f2744;color:#fff">
-        <th style="padding:9px 13px;text-align:left">Item / Serviço</th>
-        <th style="padding:9px 13px">Un.</th><th style="padding:9px 13px">Qtd</th>
-        <th style="padding:9px 13px">V.Unit.</th><th style="padding:9px 13px">Total</th>
+    itensHtml=`<table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="background:#1c2126;color:#fff">
+        <th style="padding:10px 14px;text-align:left">Item / Serviço</th>
+        <th style="padding:10px 8px;width:44px;text-align:center">Un.</th>
+        <th style="padding:10px 8px;width:40px;text-align:center">Qtd</th>
+        <th style="padding:10px 12px;width:105px;text-align:right">V.Unit.</th>
+        <th style="padding:10px 12px;width:105px;text-align:right">Total</th>
       </tr></thead>
       <tbody>${itens.map((x,i)=>{
-        const vu=+(x.vunit||x.preco||0);
-        const qt=+(x.qtd||0);
-        return `<tr style="background:${i%2===0?'#f8faff':'#fff'};border-bottom:1px solid #e2e8f0">
-        <td style="padding:9px 13px">${escapeHtml(x.item||x.nome||'—')}</td>
-        <td style="padding:9px 13px;text-align:center">${escapeHtml(x.un||'')}</td>
-        <td style="padding:9px 13px;text-align:center">${qt}</td>
-        <td style="padding:9px 13px;text-align:right">${fmt(vu)}</td>
-        <td style="padding:9px 13px;text-align:right;font-weight:700">${fmt(qt*vu)}</td>
-      </tr>`}).join('')}</tbody>
+        const vu=+(x.vunit||x.preco||0), qt=+(x.qtd||0);
+        return `<tr style="border-bottom:1px solid #e8e6e1;background:${i%2===0?'#faf9f7':'#fff'}">
+          <td style="padding:10px 14px;font-size:12.5px">${escapeHtml(x.item||x.nome||'—')}</td>
+          <td style="padding:10px 8px;text-align:center;color:#6b7068;font-size:11px">${escapeHtml(x.un||'')}</td>
+          <td style="padding:10px 8px;text-align:center">${qt}</td>
+          <td style="padding:10px 12px;text-align:right;color:#6b7068">${fmt(vu)}</td>
+          <td style="padding:10px 12px;text-align:right;font-weight:700;color:#1c2126">${fmt(qt*vu)}</td>
+        </tr>`;}).join('')}
+      </tbody>
       <tfoot>
-        <tr style="background:#f8faff;font-weight:700"><td colspan="4" style="padding:9px 13px;text-align:right">Subtotal (sem BDI)</td><td style="padding:9px 13px;text-align:right">${fmt(subtotal)}</td></tr>
-        <tr style="background:#f0f4fa;font-weight:700"><td colspan="4" style="padding:9px 13px;text-align:right">BDI (${bdi}%)</td><td style="padding:9px 13px;text-align:right">+ ${fmt(subtotal*bdi/100)}</td></tr>
-        ${desconto>0?`<tr style="background:#fff3cd;font-weight:700"><td colspan="4" style="padding:9px 13px;text-align:right">Desconto (${desconto}%)</td><td style="padding:9px 13px;text-align:right">- ${fmt(subtotal*(1+bdi/100)*desconto/100)}</td></tr>`:''}
-        <tr style="background:#0f2744;color:#fff;font-weight:800;font-size:14px"><td colspan="4" style="padding:9px 13px;text-align:right">TOTAL GERAL</td><td style="padding:9px 13px;text-align:right">${fmt(total)}</td></tr>
+        <tr style="background:#f5f3f0"><td colspan="4" style="padding:9px 12px;text-align:right;color:#6b7068;font-weight:600">Subtotal (sem BDI)</td><td style="padding:9px 12px;text-align:right;font-weight:700">${fmt(subtotal)}</td></tr>
+        <tr style="background:#eef2f5"><td colspan="4" style="padding:9px 12px;text-align:right;color:#4b6880;font-weight:600">BDI (${bdi}%)</td><td style="padding:9px 12px;text-align:right;font-weight:700">+ ${fmt(subtotal*bdi/100)}</td></tr>
+        ${desconto>0?`<tr style="background:#fef3c7"><td colspan="4" style="padding:9px 12px;text-align:right;color:#92400e;font-weight:600">Desconto (${desconto}%)</td><td style="padding:9px 12px;text-align:right;font-weight:700;color:#92400e">− ${fmt(subtotal*(1+bdi/100)*desconto/100)}</td></tr>`:''}
+        <tr style="background:#1c2126;color:#fff">
+          <td colspan="4" style="padding:11px 14px;text-align:right;font-weight:700">TOTAL GERAL</td>
+          <td style="padding:11px 12px;text-align:right;font-weight:800;font-size:15px;color:#b87333">${fmt(total)}</td>
+        </tr>
       </tfoot>
     </table>`;
   }
 
+  // ── Seção de metodologia ──────────────────────────────────────────
+  const metodHtml = p.metodologia ? `
+    <div style="margin:18px 0;padding:16px 20px;background:#f0edea;border-radius:10px;border-left:4px solid #2c657a">
+      <div style="font-weight:700;font-size:12px;color:#2c657a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">📋 Metodologia de Trabalho</div>
+      <div style="font-size:12.5px;color:#1c2126;line-height:1.65;white-space:pre-line">${escapeHtml(p.metodologia)}</div>
+    </div>` : '';
+
+  // ── Página 2 — Fotos + Entregas ───────────────────────────────────
+  const fotosPage = fotos.length > 0 ? `
+    <div style="page-break-before:always;padding:40px 40px 30px">
+      <div style="text-align:center;margin-bottom:28px;border-bottom:2px solid #1c2126;padding-bottom:16px">
+        <div style="font-size:20px;font-weight:800;color:#1c2126;letter-spacing:-.5px">Nossos Projetos</div>
+        <div style="font-size:12px;color:#6b7068;margin-top:4px">Referências de projetos realizados pela EJHV Engenharia</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(${fotos.length>4?3:2},1fr);gap:14px;margin-bottom:32px">
+        ${fotos.map(f=>`
+          <div style="text-align:center">
+            <img src="${f.dataUrl}" style="width:100%;height:190px;object-fit:cover;border-radius:8px;border:1px solid #dbd9d4;display:block">
+            ${f.legenda?`<div style="font-size:11px;color:#6b7068;margin-top:6px;font-style:italic">${escapeHtml(f.legenda)}</div>`:''}
+          </div>`).join('')}
+      </div>
+      ${_buildEntregasHtml(itens)}
+      <div style="margin-top:32px;padding-top:12px;border-top:1px solid #dbd9d4;font-size:10px;color:#94a3b8;display:flex;justify-content:space-between">
+        <span>${escapeHtml(rodape)}</span><span>${p.id} — Gerado em ${hoje}</span>
+      </div>
+    </div>` : '';
+
+  // ── Carta de apresentação ─────────────────────────────────────────
+  const nomeCliente = p.cliente ? p.cliente.split('/')[0].trim() : 'Cliente';
+  const tipoServico = p.tipo==='projeto' ? 'elaboração dos projetos técnicos' : 'execução dos serviços de engenharia';
+  const introHtml = `
+    <div style="margin:18px 0 22px;font-size:13px;color:#3a3a38;line-height:1.7">
+      <p style="margin:0 0 10px">Prezado(a) <strong>${escapeHtml(nomeCliente)}</strong>,</p>
+      <p style="margin:0 0 10px">Agradecemos a oportunidade de apresentar nossa proposta técnica e comercial para ${escapeHtml(p.empreend?`"${p.empreend}"`:tipoServico)}. Com base nas informações fornecidas, elaboramos uma solução que garante segurança técnica, conformidade com as normas vigentes e agilidade na entrega.</p>
+      <p style="margin:0">Nossa equipe está comprometida com a qualidade e o prazo estabelecido, mantendo você informado em cada etapa do processo. Estamos à disposição para qualquer esclarecimento.</p>
+    </div>`;
+
   const win=window.open('','_blank');
-  if(!win){
-    showToast('⚠️ Pop-up bloqueado. Permita pop-ups deste site no navegador para gerar o PDF.', 6000);
-    return;
-  }
+  if(!win){ showToast('⚠️ Pop-up bloqueado. Permita pop-ups deste site no navegador para gerar o PDF.', 6000); return; }
   try {
-  win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-    <title>Proposta ${p.id} — ${escapeHtml(p.cliente||'')}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <style>
-      body{font-family:'DM Sans',sans-serif;padding:40px;max-width:820px;margin:0 auto;color:#1e293b}
-      .hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0f2744;padding-bottom:18px;margin-bottom:24px}
-      .logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#0f2744}
-      .logo-sub{font-size:12px;color:#64748b;margin-top:2px}
-      .info-box{background:#f8faff;border-radius:10px;padding:16px 20px;margin-bottom:20px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
-      .info-row{font-size:13px}
-      .info-label{color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
-      .validade-box{background:#fef3c7;border-radius:8px;padding:10px 16px;font-size:12.5px;color:#92400e;margin-top:16px}
-      .assinaturas{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:40px}
-      .ass-line{border-top:1.5px solid #0f2744;padding-top:8px;font-size:12px;color:#64748b;text-align:center}
-      .footer{margin-top:28px;padding-top:14px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;display:flex;justify-content:space-between}
-      @media print{body{padding:20px}}
-    </style></head>
-    <body>
-    <div class="hdr">
-      <div><div class="logo">EJHV ENGENHARIA</div>
-        <div class="logo-sub">Engenharia Civil • Projetos • Obras<br>CREA/MG • Guaxupé/MG</div>
+    win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+      <title>Proposta ${p.id} — ${escapeHtml(p.cliente||'')}</title>
+      <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+      <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'DM Sans',sans-serif;color:#1c2126;background:#fff;font-size:13px}
+        .pg1{padding:36px 40px 28px;max-width:840px;margin:0 auto}
+        .hdr{background:#1c2126;color:#fff;border-radius:10px;padding:18px 24px;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}
+        .hdr-logo{font-family:'Syne',sans-serif;font-size:21px;font-weight:800;letter-spacing:-.5px}
+        .hdr-logo span{color:#b87333}
+        .hdr-sub{font-size:11px;opacity:.6;margin-top:3px}
+        .hdr-right{text-align:right}
+        .hdr-id{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:#b87333}
+        .hdr-meta{font-size:11px;opacity:.65;margin-top:3px}
+        .info-box{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:#f5f3f0;border-radius:10px;padding:16px 20px;margin-bottom:16px}
+        .info-cell .lbl{font-size:10px;font-weight:700;color:#6b7068;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+        .info-cell .val{font-size:13px;font-weight:600;color:#1c2126}
+        .sec-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#1c2126;padding:10px 0 8px;border-bottom:2px solid #1c2126;margin-bottom:0;letter-spacing:-.2px}
+        .pay-box{background:#f0f9f4;border:1.5px solid #a7f3d0;border-radius:8px;padding:12px 16px;margin-top:16px;font-size:12.5px;display:flex;align-items:center;gap:10px}
+        .pay-icon{font-size:22px;flex-shrink:0}
+        .val-box{background:#fef9ec;border:1.5px solid #fcd34d;border-radius:8px;padding:11px 16px;margin-top:10px;font-size:12px;color:#78350f}
+        .obs-box{background:#f0f6ff;border-radius:8px;padding:12px 16px;font-size:12px;color:#1e3a5f;margin-top:10px;line-height:1.55}
+        .assinaturas{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:36px}
+        .ass-blk .ass-line{border-top:1.5px solid #1c2126;padding-top:9px;font-size:12px;color:#6b7068;text-align:center}
+        .footer{margin-top:22px;padding-top:12px;border-top:1px solid #dbd9d4;font-size:10px;color:#94a3b8;display:flex;justify-content:space-between}
+        @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.pg1{padding:24px 28px}}
+      </style>
+    </head><body>
+    <div class="pg1">
+      <div class="hdr">
+        <div>
+          <div class="hdr-logo">EJH<span>V</span> ENGENHARIA</div>
+          <div class="hdr-sub">Engenharia Civil • Projetos • Obras<br>CREA/MG • Guaxupé/MG</div>
+        </div>
+        <div class="hdr-right">
+          <div style="font-size:10px;opacity:.65;margin-bottom:4px">Proposta Comercial</div>
+          <div class="hdr-id">${p.id}</div>
+          <div class="hdr-meta">Data: ${fmtD(p.data)}</div>
+        </div>
       </div>
-      <div style="text-align:right">
-        <div style="font-size:11px;color:#64748b">Proposta Comercial</div>
-        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#0f2744">${p.id}</div>
-        <div style="font-size:12px;color:#64748b">Data: ${fmtD(p.data)}</div>
+
+      ${introHtml}
+
+      <div class="info-box">
+        <div class="info-cell"><div class="lbl">Cliente</div><div class="val">${escapeHtml(p.cliente||'—')}</div></div>
+        <div class="info-cell"><div class="lbl">Empreendimento</div><div class="val">${escapeHtml(p.empreend||'—')}</div></div>
+        ${p.area?`<div class="info-cell"><div class="lbl">Área</div><div class="val">${p.area} m²</div></div>`:''}
+        ${p.prazo?`<div class="info-cell"><div class="lbl">Prazo de entrega</div><div class="val">${escapeHtml(p.prazo)}</div></div>`:''}
       </div>
+
+      ${metodHtml}
+
+      <div class="sec-title">${p.tipo==='projeto'?'📐 Serviços de Elaboração de Projeto':'🏗 Orçamento de Execução de Obra'}</div>
+      ${p.escopo?`<div style="font-size:12.5px;color:#475569;padding:8px 0 6px;font-style:italic">${escapeHtml(p.escopo)}</div>`:''}
+      <div style="margin-bottom:2px">${itensHtml}</div>
+
+      ${p.parcela?`<div class="pay-box"><div class="pay-icon">💳</div><div><div style="font-weight:700;color:#064e3b;font-size:13px">Condições de Pagamento</div><div style="margin-top:3px;color:#065f46">${escapeHtml(p.parcela)}</div></div></div>`:''}
+      ${p.obs?`<div class="obs-box"><strong>Observações:</strong> ${escapeHtml(p.obs)}</div>`:''}
+      ${p.validade?`<div class="val-box">⏰ Esta proposta tem validade de <strong>${p.validade} dias</strong> a partir da data de emissão.</div>`:''}
+
+      <div class="assinaturas">
+        <div class="ass-blk"><div style="height:46px"></div><div class="ass-line">EJHV Engenharia<br>${escapeHtml(engNome)}</div></div>
+        <div class="ass-blk"><div style="height:46px"></div><div class="ass-line">${escapeHtml(p.cliente||'')}<br>Contratante</div></div>
+      </div>
+
+      <div class="footer"><span>${escapeHtml(rodape)} — ${p.id}</span><span>Gerado em ${hoje}</span></div>
     </div>
-
-    <div class="info-box">
-      <div><div class="info-label">Cliente</div><div class="info-row" style="font-weight:600">${escapeHtml(p.cliente||'—')}</div></div>
-      <div><div class="info-label">Empreendimento</div><div class="info-row">${escapeHtml(p.empreend||'—')}</div></div>
-      ${p.area?`<div><div class="info-label">Área</div><div class="info-row">${p.area} m²</div></div>`:''}
-      ${p.prazo?`<div><div class="info-label">Prazo</div><div class="info-row">${escapeHtml(p.prazo)}</div></div>`:''}
-      ${p.parcela?`<div><div class="info-label">Pagamento</div><div class="info-row" style="font-weight:600">${escapeHtml(p.parcela)}</div></div>`:''}
-      ${p.validade?`<div><div class="info-label">Validade</div><div class="info-row">${p.validade} dias</div></div>`:''}
-    </div>
-
-    <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#0f2744;margin-bottom:6px">
-      ${p.tipo==='projeto'?'📐 Serviços de Elaboração de Projeto':'🏗 Orçamento de Obra'} — Escopo e Valores
-    </div>
-    ${p.escopo?`<div style="font-size:13px;color:#475569;margin-bottom:10px;font-style:italic">${escapeHtml(p.escopo)}</div>`:''}
-    ${itensHtml}
-
-    ${p.obs&&p.tipo==='projeto'?`<div style="margin-top:16px;padding:12px 16px;background:#f0f9ff;border-radius:8px;font-size:12.5px;color:#1e40af"><b>Observações:</b> ${escapeHtml(p.obs)}</div>`:''}
-
-    ${p.validade?`<div class="validade-box">⏰ Esta proposta tem validade de <b>${p.validade} dias</b> a partir da data de emissão.</div>`:''}
-
-    <div class="assinaturas">
-      <div><div style="height:48px"></div><div class="ass-line">EJHV Engenharia<br>Engenheiro Responsável</div></div>
-      <div><div style="height:48px"></div><div class="ass-line">${escapeHtml(p.cliente||'')}<br>Contratante</div></div>
-    </div>
-
-    <div class="footer"><span>${escapeHtml(state.relatorioRodape || 'EJHV Engenharia')} — ${p.id}</span><span>Gerado em ${hoje}</span></div>
+    ${fotosPage}
     <script>window.onload=()=>window.print()<\/script>
     </body></html>`);
-  win.document.close();
+    win.document.close();
   } catch(e) {
-    console.error('Erro ao gerar PDF da proposta:', e);
-    showToast('❌ Erro ao gerar PDF: ' + (e.message || 'desconhecido'), 5000);
+    console.error('Erro ao gerar PDF:', e);
+    showToast('❌ Erro ao gerar PDF: ' + (e.message||'desconhecido'), 5000);
     try { win.close(); } catch(_){}
   }
+}
+
+function _buildEntregasHtml(itens) {
+  const ids = itens.map(s => s.id).filter(Boolean);
+  const relevantes = Object.entries(ENTREGAS_PROJ).filter(([k]) => ids.includes(k));
+  if (!relevantes.length) return '';
+  return `
+    <div style="border-top:1px solid #dbd9d4;padding-top:24px">
+      <div style="font-size:14px;font-weight:800;color:#1c2126;margin-bottom:14px;font-family:'Syne',sans-serif">O que está incluído na proposta</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">
+        ${relevantes.map(([,e]) => `
+          <div style="background:#f5f3f0;border-radius:8px;padding:14px 16px">
+            <div style="font-weight:700;color:#1c2126;font-size:12.5px;margin-bottom:8px">${escapeHtml(e.titulo)}</div>
+            ${e.itens.map(it=>`<div style="display:flex;align-items:flex-start;gap:6px;font-size:11.5px;color:#3a3a38;margin-bottom:4px"><span style="color:#2c657a;font-weight:800;flex-shrink:0">✓</span>${escapeHtml(it)}</div>`).join('')}
+          </div>`).join('')}
+      </div>
+    </div>`;
 }
 
 export function compartilharWhatsApp(state, id){

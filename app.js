@@ -34,7 +34,8 @@ import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
          saveProposta, delProposta, editProposta, printProposta, compartilharWhatsApp,
          colherAssinaturaProposta, importFromOrcamento, addObraItem,
          addProjServico, addProjExtra, toggleModoGlobal, renderPropostas,
-         atualizarStatusProposta, gerarObraDeProposta } from './modules/propostas.js?v=20260505i';
+         atualizarStatusProposta, gerarObraDeProposta,
+         addPropFoto, removePropFoto, renderPropFotos } from './modules/propostas.js?v=20260508b';
 import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260501g';
 import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260505i';
 import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260501g';
@@ -1077,6 +1078,8 @@ G.addProjExtra = () => addProjExtra(state);
 G.toggleModoGlobal = () => toggleModoGlobal(state);
 G.atualizarStatusProposta = (id, novoStatus) => { if(atualizarStatusProposta(state, id, novoStatus)) renderAtiva(); };
 G.gerarObraDeProposta = id => { if(gerarObraDeProposta(state, id)) renderAtiva(); };
+G.addPropFoto = input => { addPropFoto(input); };
+G.removePropFoto = idx => { removePropFoto(idx); renderPropFotos(); };
 G.filterSinapi = q => filterSinapi(state,q);
 G.setSinapiCat = c => setSinapiCat(state,c);
 G.setTabelaSrc = s => setTabelaSrc(state,s);
