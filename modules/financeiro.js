@@ -16,6 +16,17 @@ const _ehPessoal = f => f.pessoal === true;
 let _hideRT = false;
 let _resumoMesSel = ''; // '' = mês corrente
 let _modalFinPessoal = false; // marca se o modal-fin foi aberto em modo "pessoal"
+let _ejhLifeFiltros = { mes:'', tipo:'', status:'', q:'' };
+
+export function setEjhLifeFiltro(campo, valor) {
+  if (Object.prototype.hasOwnProperty.call(_ejhLifeFiltros, campo)) _ejhLifeFiltros[campo] = valor || '';
+  return true;
+}
+
+export function limparEjhLifeFiltros() {
+  _ejhLifeFiltros = { mes:'', tipo:'', status:'', q:'' };
+  return true;
+}
 
 export function toggleHideRT(state, cb) {
   _hideRT = !!(cb && cb.checked);
@@ -2506,12 +2517,65 @@ export function renderEjhLife(state) {
         <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;background:#f5f3f0;border-radius:8px">
           Nenhum lançamento pessoal ainda.
         </div>
-      ` : `
+      ` : (() => {
+        // Opções do select de mês: união de todos os meses presentes nos lançamentos
+        const mesesSet = new Set(finPessoalSorted.map(f => (f.data||'').slice(0,7)).filter(Boolean));
+        const mesesOpts = [...mesesSet].sort().reverse().map(mk => {
+          const [yy, mm] = mk.split('-');
+          const lbl = MESES_FULL[parseInt(mm,10)-1] + ' / ' + yy;
+          return `<option value="${mk}"${_ejhLifeFiltros.mes===mk?' selected':''}>${lbl}</option>`;
+        }).join('');
+        // Aplica filtros
+        const filtrados = finPessoalSorted.filter(f => {
+          if (_ejhLifeFiltros.mes && !(f.data||'').startsWith(_ejhLifeFiltros.mes)) return false;
+          if (_ejhLifeFiltros.tipo && f.tipo !== _ejhLifeFiltros.tipo) return false;
+          if (_ejhLifeFiltros.status && f.status !== _ejhLifeFiltros.status) return false;
+          if (_ejhLifeFiltros.q) {
+            const q = _ejhLifeFiltros.q.toLowerCase();
+            const alvo = ((f.desc||'') + ' ' + (f.cat||'')).toLowerCase();
+            if (!alvo.includes(q)) return false;
+          }
+          return true;
+        });
+        const temFiltro = !!(_ejhLifeFiltros.mes || _ejhLifeFiltros.tipo || _ejhLifeFiltros.status || _ejhLifeFiltros.q);
+        const totalFiltradoRec = filtrados.filter(f => f.tipo==='Receita').reduce((a,x)=>a+(+x.valor||0),0);
+        const totalFiltradoDes = filtrados.filter(f => f.tipo==='Despesa').reduce((a,x)=>a+(+x.valor||0),0);
+        return `
+        <!-- Filtros -->
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;padding:10px 12px;background:var(--bg);border-radius:8px">
+          <select onchange="setEjhLifeFiltro('mes',this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px;background:#fff">
+            <option value="">Todos os meses</option>${mesesOpts}
+          </select>
+          <select onchange="setEjhLifeFiltro('tipo',this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px;background:#fff">
+            <option value="">Receitas + Despesas</option>
+            <option value="Receita"${_ejhLifeFiltros.tipo==='Receita'?' selected':''}>↑ Receitas</option>
+            <option value="Despesa"${_ejhLifeFiltros.tipo==='Despesa'?' selected':''}>↓ Despesas</option>
+          </select>
+          <select onchange="setEjhLifeFiltro('status',this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px;background:#fff">
+            <option value="">Todos os status</option>
+            <option value="pago"${_ejhLifeFiltros.status==='pago'?' selected':''}>✅ Pago</option>
+            <option value="pendente"${_ejhLifeFiltros.status==='pendente'?' selected':''}>⚠️ Vencido</option>
+            <option value="a_vencer"${_ejhLifeFiltros.status==='a_vencer'?' selected':''}>📅 A vencer</option>
+          </select>
+          <input type="text" placeholder="🔍 Buscar descrição/categoria… (Enter)" value="${_ejhLifeFiltros.q.replace(/"/g,'&quot;')}" onchange="setEjhLifeFiltro('q',this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px;background:#fff;flex:1;min-width:180px">
+          ${temFiltro?`<button class="btn btn-outline btn-xs" onclick="limparEjhLifeFiltros()" style="font-size:11px">✕ Limpar</button>`:''}
+          <span style="margin-left:auto;font-size:12px;color:var(--muted)">${filtrados.length} de ${finPessoalSorted.length} lançamento${finPessoalSorted.length!==1?'s':''}</span>
+        </div>
+        ${temFiltro?`<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin-bottom:10px;padding:6px 12px;background:#f0fdf4;border-radius:6px;color:var(--muted)">
+          <span>Receitas filtradas: <strong style="color:var(--green)">${fmt(totalFiltradoRec)}</strong></span>
+          <span>Despesas filtradas: <strong style="color:var(--red)">${fmt(totalFiltradoDes)}</strong></span>
+          <span>Saldo: <strong style="color:${(totalFiltradoRec-totalFiltradoDes)>=0?'var(--green)':'var(--red)'}">${fmt(totalFiltradoRec-totalFiltradoDes)}</strong></span>
+        </div>`:''}
+        ${filtrados.length === 0 ? `
+          <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;background:#f5f3f0;border-radius:8px">
+            Nenhum lançamento com os filtros atuais.
+          </div>
+        ` : `
         <div class="table-wrap">
           <table>
             <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Categoria</th><th>Status</th><th style="text-align:right">Valor</th><th></th></tr></thead>
             <tbody>
-              ${finPessoalSorted.slice(0,50).map(f => {
+              ${filtrados.slice(0,100).map(f => {
                 const sLabel = f.status==='pago'?'Pago':f.status==='pendente'?'Vencido':'A Vencer';
                 const sBg = f.status==='pago'?'#f0fdf4':f.status==='pendente'?'#fef2f2':'#eff6ff';
                 const sFg = f.status==='pago'?'var(--green)':f.status==='pendente'?'var(--red)':'var(--blue)';
@@ -2532,9 +2596,10 @@ export function renderEjhLife(state) {
               }).join('')}
             </tbody>
           </table>
-          ${finPessoalSorted.length>50?`<div style="text-align:center;padding:8px;color:var(--muted);font-size:11px">Mostrando 50 de ${finPessoalSorted.length} lançamentos.</div>`:''}
+          ${filtrados.length>100?`<div style="text-align:center;padding:8px;color:var(--muted);font-size:11px">Mostrando 100 de ${filtrados.length} lançamentos. Refine os filtros para ver mais.</div>`:''}
         </div>
-      `}
+        `}
+      `;})()}
     </div>
   `;
 }
