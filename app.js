@@ -26,7 +26,8 @@ import { addFin, delFin, openEditFin, openModalFin, openModalFinPessoal, isModal
          addMeta, delMeta, openModalMeta, openEditMeta, addProgressoMeta,
          addDivida, delDivida, openModalDivida, openEditDivida, pagarParcelaDivida,
          atualizarTotalPagamentoDivida, confirmarPagamentoDivida,
-         importarAbril2026Planilha, importarMesPlanilha } from './modules/financeiro.js?v=20260505i';
+         importarAbril2026Planilha, importarMesPlanilha,
+         renderEjhLife } from './modules/financeiro.js?v=20260508a';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260505i';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260501g';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
@@ -90,6 +91,7 @@ const PAGE_RENDER_MAP = {
   'captura':    () => renderCaptura(state),
   'composicoes':() => renderComposicoes(state),
   'importar':   () => {},
+  'ejhlife':    () => renderEjhLife(state),
 };
 
 let _fbSaveTimer = null;

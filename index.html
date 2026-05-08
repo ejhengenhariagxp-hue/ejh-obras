@@ -19,14 +19,14 @@
 
 
 <!-- build:20260424_1930 -->
-<link rel="stylesheet" href="./styles.css?v=20260505j">
+<link rel="stylesheet" href="./styles.css?v=20260508a">
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260501a"></script>
+<script type="module" src="./app.js?v=20260508a"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Lucide icons (modern SVG icon library) -->
@@ -88,6 +88,9 @@
     <div class="nav-item" onclick="nav('financeiro',this)"><i class="nav-icon" data-lucide="wallet"></i><span>Financeiro</span></div>
     <div class="nav-item" onclick="nav('propostas',this)"><i class="nav-icon" data-lucide="file-signature"></i><span>Propostas</span></div>
     <div class="nav-item" onclick="nav('captura',this)"><span class="nav-icon nav-emoji">👷</span><span>IAsô (Captura)</span></div>
+
+    <div class="nav-group">Pessoal</div>
+    <div class="nav-item" onclick="nav('ejhlife',this)"><span class="nav-icon nav-emoji">💼</span><span>EJH Life</span></div>
 
     <div class="nav-group">Cadastros & Config</div>
     <div class="nav-item" onclick="nav('tabelas',this)"><i class="nav-icon" data-lucide="book-open"></i><span>SINAPI / SICOR-MG</span></div>
@@ -1658,6 +1661,17 @@
     </div>
   </div>
 </div></div>
+
+<!-- EJH LIFE — Finanças Pessoais -->
+<div id="page-ejhlife" class="page">
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">💼 EJH Life</div>
+      <div class="page-sub">Controle pessoal — pró-labore, gastos, metas e dívidas separados da empresa</div>
+    </div>
+  </div>
+  <div id="ejhlife-container"></div>
+</div>
 
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
   <span class="lightbox-close">✕</span>

@@ -2547,3 +2547,223 @@ export function importarFaturamentoHistoricoEJH(state) {
   return true;
 }
 
+// ── EJH Life — página standalone de finanças pessoais ────────────────
+export function renderEjhLife(state) {
+  const container = document.getElementById('ejhlife-container');
+  if (!container) return;
+
+  const now = new Date();
+  const monthNow = now.getMonth() + 1;
+  const yearNow = now.getFullYear();
+  const MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const selMesKey = `${yearNow}-${String(monthNow).padStart(2,'0')}`;
+  const mesNomeAtual = MESES_FULL[monthNow - 1];
+
+  const finPessoal = (state.fin || []).filter(f => f.pessoal === true);
+  const prolaboreMes = finPessoal
+    .filter(f => f.tipo === 'Receita' && f.data?.startsWith(selMesKey) && f.status === 'pago')
+    .reduce((a,x) => a + (+x.valor||0), 0);
+  const gastosMes = finPessoal
+    .filter(f => f.tipo === 'Despesa' && f.data?.startsWith(selMesKey) && f.status === 'pago')
+    .reduce((a,x) => a + (+x.valor||0), 0);
+  const totalRec = finPessoal.filter(f => f.tipo === 'Receita' && f.status === 'pago').reduce((a,x) => a + (+x.valor||0), 0);
+  const totalDes = finPessoal.filter(f => f.tipo === 'Despesa' && f.status === 'pago').reduce((a,x) => a + (+x.valor||0), 0);
+  const saldoPessoal = totalRec - totalDes;
+  const finPessoalSorted = [...finPessoal].sort((a,b) => (b.data||'').localeCompare(a.data||''));
+
+  const metas = (state.metas || []).slice().sort((a,b) => (a.prazoData||'z').localeCompare(b.prazoData||'z'));
+  const dividas = (state.dividas || []).slice().sort((a,b) => {
+    const aQ = (a.parcelasPagas||0) >= (a.parcelasTotal||0);
+    const bQ = (b.parcelasPagas||0) >= (b.parcelasTotal||0);
+    return aQ !== bQ ? (aQ ? 1 : -1) : 0;
+  });
+  const dividasAbertas = dividas.reduce((acc, d) => {
+    if ((d.parcelasPagas||0) >= (d.parcelasTotal||0)) return acc;
+    if (d.saldoQuitacao != null && d.saldoQuitacao > 0) return acc + (+d.saldoQuitacao);
+    return acc + ((d.parcelasTotal||0) - (d.parcelasPagas||0)) * (d.valorParcela||0);
+  }, 0);
+  const dividasAtivas = dividas.filter(d => (d.parcelasPagas||0) < (d.parcelasTotal||0)).length;
+
+  container.innerHTML = `
+    <div class="ejhlife-hero">
+      <div class="ejhlife-hero-icon">💼</div>
+      <div class="ejhlife-hero-body">
+        <div class="ejhlife-hero-title">EJH Life — Finanças Pessoais</div>
+        <div class="ejhlife-hero-sub">Pró-labore, gastos, metas e dívidas isolados dos dados da empresa</div>
+        <div class="ejhlife-actions">
+          <button class="btn btn-sm" onclick="openModalFinPessoal('Receita')">＋ Pró-labore / Entrada</button>
+          <button class="btn btn-sm" onclick="openModalFinPessoal('Despesa')">＋ Gasto Pessoal</button>
+          <button class="btn btn-sm" onclick="openModalMeta()">🎯 Nova Meta</button>
+          <button class="btn btn-sm" onclick="openModalDivida()">💳 Nova Dívida</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ejhlife-notice">ℹ️ Lançamentos desta seção <strong>não somam</strong> nos totais da empresa.</div>
+
+    <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+      <div class="kpi green">
+        <div class="kpi-label">💼 Pró-labore (${mesNomeAtual})</div>
+        <div class="kpi-value">${fmt(prolaboreMes)}</div>
+        <div class="kpi-sub">Entradas pessoais do mês</div>
+      </div>
+      <div class="kpi red">
+        <div class="kpi-label">🏠 Gastos do Mês</div>
+        <div class="kpi-value">${fmt(gastosMes)}</div>
+        <div class="kpi-sub">Despesas pessoais pagas</div>
+      </div>
+      <div class="kpi ${saldoPessoal >= 0 ? 'teal' : 'amber'}">
+        <div class="kpi-label">💰 Saldo Pessoal</div>
+        <div class="kpi-value">${fmt(saldoPessoal)}</div>
+        <div class="kpi-sub">Acumulado: ${fmt(totalRec)} − ${fmt(totalDes)}</div>
+      </div>
+      <div class="kpi amber">
+        <div class="kpi-label">💳 Dívidas em Aberto</div>
+        <div class="kpi-value">${fmt(dividasAbertas)}</div>
+        <div class="kpi-sub">${dividasAtivas} dívida${dividasAtivas!==1?'s':''} ativa${dividasAtivas!==1?'s':''}</div>
+      </div>
+    </div>
+
+    <!-- Metas -->
+    <div class="ejhlife-section">
+      <div class="ejhlife-section-title">
+        <span>🎯 Metas Futuras</span>
+        <button class="btn btn-outline btn-sm" onclick="openModalMeta()">＋ Nova Meta</button>
+      </div>
+      ${metas.length === 0 ? `
+        <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;background:#f5f3f0;border-radius:8px">
+          Nenhuma meta cadastrada. Comece definindo seus objetivos: reserva, viagem, equipamento, etc.
+        </div>
+      ` : `
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
+          ${metas.map(m => {
+            const pct = m.valorAlvo > 0 ? Math.min(100, (m.valorAtual / m.valorAlvo) * 100) : 0;
+            const pctColor = pct >= 100 ? '#16a34a' : pct >= 50 ? '#0891b2' : '#7c3aed';
+            const concluida = pct >= 100;
+            let prazoLbl = '';
+            if (m.prazoData) {
+              const dias = Math.ceil((new Date(m.prazoData) - new Date()) / 864e5);
+              if (dias < 0) prazoLbl = `<span style="color:var(--red)">⚠️ Atrasada ${Math.abs(dias)}d</span>`;
+              else if (dias === 0) prazoLbl = `<span style="color:var(--amber)">📅 Hoje</span>`;
+              else prazoLbl = `📅 ${dias}d`;
+            }
+            return `
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px">
+                <div style="flex:1">
+                  <div style="font-weight:700;color:var(--navy);font-size:14px">${concluida?'🏆 ':'🎯 '}${m.nome}</div>
+                  ${m.descricao?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${m.descricao}</div>`:''}
+                </div>
+                <div style="display:flex;gap:3px">
+                  <button class="btn btn-outline btn-xs" onclick="addProgressoMeta('${m.id}')" style="color:var(--green);border-color:var(--green)">＋</button>
+                  <button class="btn btn-outline btn-xs" onclick="openEditMeta('${m.id}')">✎</button>
+                  <button class="btn btn-outline btn-xs" onclick="delMeta('${m.id}')" style="color:var(--red);border-color:var(--red)">✕</button>
+                </div>
+              </div>
+              <div style="font-size:12px;margin-bottom:8px">
+                <strong style="color:${pctColor}">${fmt(m.valorAtual)}</strong> / <span style="color:var(--muted)">${fmt(m.valorAlvo)}</span>
+                <span style="float:right;color:${pctColor};font-weight:700">${pct.toFixed(0)}%</span>
+              </div>
+              <div style="background:var(--border);border-radius:6px;height:8px;overflow:hidden">
+                <div style="background:${pctColor};height:100%;width:${pct}%;transition:width .3s"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px">
+                <span>Falta ${fmt(Math.max(0, m.valorAlvo - m.valorAtual))}</span>
+                <span>${prazoLbl}</span>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      `}
+    </div>
+
+    <!-- Dívidas -->
+    <div class="ejhlife-section">
+      <div class="ejhlife-section-title">
+        <span>💳 Dívidas Particulares</span>
+        <button class="btn btn-outline btn-sm" style="color:#dc2626;border-color:#dc2626" onclick="openModalDivida()">＋ Nova Dívida</button>
+      </div>
+      ${dividas.length === 0 ? `
+        <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;background:#f5f3f0;border-radius:8px">
+          Nenhuma dívida cadastrada.
+        </div>
+      ` : `
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
+          ${dividas.map(d => {
+            const parc = d.parcelasPagas||0, tot = d.parcelasTotal||1;
+            const pct = Math.min(100, (parc/tot)*100);
+            const quitada = parc >= tot;
+            const restantes = tot - parc;
+            const valorRestante = restantes * (d.valorParcela||0);
+            const corBorda = quitada ? '#16a34a' : '#dc2626';
+            return `
+            <div style="background:var(--bg);border:1px solid var(--border);border-left:3px solid ${corBorda};border-radius:10px;padding:16px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px">
+                <div style="flex:1">
+                  <div style="font-weight:700;color:var(--navy);font-size:14px">${quitada?'✅ ':'💳 '}${d.credor}</div>
+                  ${d.descricao?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${d.descricao}</div>`:''}
+                </div>
+                <div style="display:flex;gap:3px">
+                  ${!quitada?`<button class="btn btn-outline btn-xs" onclick="pagarParcelaDivida('${d.id}')" style="color:var(--green);border-color:var(--green)">✓</button>`:''}
+                  <button class="btn btn-outline btn-xs" onclick="openEditDivida('${d.id}')">✎</button>
+                  <button class="btn btn-outline btn-xs" onclick="delDivida('${d.id}')" style="color:var(--red);border-color:var(--red)">✕</button>
+                </div>
+              </div>
+              <div style="font-size:12px;margin-bottom:8px">
+                Parcela <strong>${parc}/${tot}</strong>
+                <span style="float:right;color:${quitada?'#16a34a':'#dc2626'};font-weight:700">${pct.toFixed(0)}% pago</span>
+              </div>
+              <div style="background:var(--border);border-radius:6px;height:8px;overflow:hidden">
+                <div style="background:${quitada?'#16a34a':'#dc2626'};height:100%;width:${pct}%;transition:width .3s"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px">
+                <span>Parcela: ${fmt(d.valorParcela||0)}${d.vencimentoDia?` (dia ${d.vencimentoDia})`:''}</span>
+                <span>${quitada?'🎉 Quitada':(d.saldoQuitacao!=null&&d.saldoQuitacao>0?`💰 Quitação: ${fmt(d.saldoQuitacao)}`:`Falta ${fmt(valorRestante)}`)}</span>
+              </div>
+              ${!quitada&&d.saldoQuitacao!=null&&d.saldoQuitacao>0?`<div style="font-size:10px;color:var(--muted);margin-top:3px;font-style:italic">${restantes} parcela${restantes!==1?'s':''} a vencer (${fmt(valorRestante)} nominais)</div>`:''}
+            </div>`;
+          }).join('')}
+        </div>
+      `}
+    </div>
+
+    <!-- Lançamentos pessoais -->
+    <div class="ejhlife-section">
+      <div class="ejhlife-section-title">📋 Lançamentos Pessoais</div>
+      ${finPessoalSorted.length === 0 ? `
+        <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;background:#f5f3f0;border-radius:8px">
+          Nenhum lançamento pessoal ainda.
+        </div>
+      ` : `
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Categoria</th><th>Status</th><th style="text-align:right">Valor</th><th></th></tr></thead>
+            <tbody>
+              ${finPessoalSorted.slice(0,50).map(f => {
+                const sLabel = f.status==='pago'?'Pago':f.status==='pendente'?'Vencido':'A Vencer';
+                const sBg = f.status==='pago'?'#f0fdf4':f.status==='pendente'?'#fef2f2':'#eff6ff';
+                const sFg = f.status==='pago'?'var(--green)':f.status==='pendente'?'var(--red)':'var(--blue)';
+                const valorCor = f.tipo==='Receita'?'var(--green)':'var(--red)';
+                return `
+                <tr>
+                  <td style="white-space:nowrap;font-size:12px">${fmtD(f.data)}</td>
+                  <td>${f.tipo==='Receita'?'↑':'↓'} ${f.tipo}</td>
+                  <td>${f.desc||'—'}</td>
+                  <td style="font-size:12px;color:var(--muted)">${f.cat||'—'}</td>
+                  <td><span style="background:${sBg};color:${sFg};padding:2px 8px;border-radius:10px;font-size:11px">${sLabel}</span></td>
+                  <td style="text-align:right;font-weight:700;color:${valorCor};white-space:nowrap">${fmt(f.valor)}</td>
+                  <td style="white-space:nowrap">
+                    <button class="btn btn-outline btn-xs" onclick="openEditFin('${f.id}')" style="font-size:11px;padding:2px 6px">✎</button>
+                    <button class="btn btn-outline btn-xs" onclick="delFin('${f.id}')" style="color:var(--red);border-color:var(--red);font-size:11px;padding:2px 6px">✕</button>
+                  </td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+          ${finPessoalSorted.length>50?`<div style="text-align:center;padding:8px;color:var(--muted);font-size:11px">Mostrando 50 de ${finPessoalSorted.length} lançamentos.</div>`:''}
+        </div>
+      `}
+    </div>
+  `;
+}
+
