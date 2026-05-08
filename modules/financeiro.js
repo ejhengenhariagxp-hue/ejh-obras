@@ -1538,19 +1538,64 @@ export function renderFinanceiro(state){
     </tr>`;
   };
 
-  // Por categoria R1 (Projetos)
-  const tbR1 = document.getElementById('tbody-fin-r1');
-  if(tbR1) {
-    const obrasR1 = state.obras.filter(o => o.tipo === 'R1' || o.tipo === 'projeto');
-    tbR1.innerHTML = obrasR1.map(renderObraRow).join('') || '<tr><td colspan="6" style="color:var(--muted);padding:10px">Nenhum R1 (Projeto) encontrado.</td></tr>';
+  // Por tipo de atividade — agrupa dinamicamente todas as obras
+  const grupContainer = document.getElementById('fin-grupos-obras');
+  if (grupContainer) {
+    const TIPO_LABEL = {
+      projeto: { titulo: '📐 Projetos', singular: 'Projeto' },
+      obra: { titulo: '🏗 Obras', singular: 'Obra' },
+      acompanhamento: { titulo: '👷 Acompanhamento Técnico (RT)', singular: 'RT' },
+      consultoria: { titulo: '📋 Consultoria', singular: 'Consultoria' },
+    };
+    // Agrupa obras pelo campo tipo. Tipos pré-definidos têm label especial; qualquer
+    // outro valor (custom type salvo direto em obra.tipo) vira um grupo próprio.
+    const grupos = new Map();
+    state.obras.forEach(o => {
+      let key, titulo, singular;
+      const t = (o.tipo || 'obra').trim();
+      if (t === 'R1' || t === 'projeto') { key = 'projeto'; titulo = TIPO_LABEL.projeto.titulo; singular = TIPO_LABEL.projeto.singular; }
+      else if (t === 'R2' || t === 'obra') { key = 'obra'; titulo = TIPO_LABEL.obra.titulo; singular = TIPO_LABEL.obra.singular; }
+      else if (t === 'acompanhamento') { key = 'acompanhamento'; titulo = TIPO_LABEL.acompanhamento.titulo; singular = TIPO_LABEL.acompanhamento.singular; }
+      else if (t === 'consultoria') { key = 'consultoria'; titulo = TIPO_LABEL.consultoria.titulo; singular = TIPO_LABEL.consultoria.singular; }
+      else {
+        // Custom type — usa o próprio nome do tipo como rótulo
+        key = '_custom_' + t.toLowerCase();
+        titulo = '📝 ' + t;
+        singular = t;
+      }
+      if (!grupos.has(key)) grupos.set(key, { titulo, singular, obras: [] });
+      grupos.get(key).obras.push(o);
+    });
+    // Ordem: projeto, obra, acompanhamento, consultoria, custom (ordem alfa), outros
+    const ORDEM = ['projeto','obra','acompanhamento','consultoria'];
+    const customs = [...grupos.keys()].filter(k => k.startsWith('_custom_')).sort();
+    const outros = grupos.has('_outros') ? ['_outros'] : [];
+    const ordemFinal = [...ORDEM.filter(k => grupos.has(k)), ...customs, ...outros];
+
+    grupContainer.innerHTML = ordemFinal.length === 0
+      ? `<div class="section"><div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Nenhuma obra ou projeto cadastrado ainda.</div></div>`
+      : ordemFinal.map(key => {
+          const g = grupos.get(key);
+          const totalRec = g.obras.reduce((a,o) => a + state.fin.filter(x=>x.obraId===o.id&&x.tipo==='Receita'&&_semTransf(x)).reduce((s,x)=>s+x.valor,0), 0);
+          const totalDes = g.obras.reduce((a,o) => a + state.fin.filter(x=>x.obraId===o.id&&x.tipo==='Despesa'&&_semTransf(x)).reduce((s,x)=>s+x.valor,0), 0);
+          const totalSal = totalRec - totalDes;
+          return `<div class="section">
+            <div class="section-hdr">
+              <div class="section-title">${g.titulo} <span style="font-size:11px;font-weight:500;color:var(--muted);background:#e2e8f0;padding:1px 7px;border-radius:10px;margin-left:6px">${g.obras.length}</span></div>
+              <div style="display:flex;gap:6px;font-size:11.5px;flex-wrap:wrap">
+                <span style="padding:3px 9px;background:#f0fdf4;color:var(--green);border-radius:7px;font-weight:600">+${fmt(totalRec)}</span>
+                <span style="padding:3px 9px;background:#fef2f2;color:var(--red);border-radius:7px;font-weight:600">-${fmt(totalDes)}</span>
+                <span style="padding:3px 9px;background:${totalSal>=0?'#eff6ff':'#fee2e2'};color:${totalSal>=0?'var(--blue)':'var(--red)'};border-radius:7px;font-weight:700">Saldo: ${fmt(totalSal)}</span>
+              </div>
+            </div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>${g.singular}</th><th>Receitas</th><th>Despesas</th><th>Saldo</th><th>Status</th><th>Ações</th></tr></thead>
+              <tbody>${g.obras.map(renderObraRow).join('')}</tbody>
+            </table></div>
+          </div>`;
+        }).join('');
   }
 
-  // Por categoria R2 (Obras)
-  const tbR2 = document.getElementById('tbody-fin-r2');
-  if(tbR2) {
-    const obrasR2 = state.obras.filter(o => o.tipo === 'R2' || o.tipo === 'obra' || !o.tipo);
-    tbR2.innerHTML = obrasR2.map(renderObraRow).join('') || '<tr><td colspan="6" style="color:var(--muted);padding:10px">Nenhum R2 (Obra) encontrado.</td></tr>';
-  }
 
   // Lançamentos — com paginação
   if(!state.fin.length){
