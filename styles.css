@@ -452,7 +452,7 @@ textarea{resize:vertical;min-height:70px}
 .hist-item-meta{font-size:11.5px;color:var(--muted);margin-top:4px;display:flex;gap:12px;flex-wrap:wrap}
 .cap-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700}
 
-@media print{.sidebar,.fab,.fab-menu,.modal-bg,.toast,.alert-banner,.hdr-actions,.no-print,.share-bar,.bottom-nav{display:none!important}.main{margin-left:0!important;padding:10px!important}.page{display:block!important}}
+@media print{.sidebar,.fab,.fab-menu,.modal-bg,.toast,.alert-banner,.hdr-actions,.no-print,.share-bar,.bottom-nav{display:none!important}.main{margin-left:0!important;padding:10px!important}.page.active{display:block!important}}
 
 /* ══ CAPTURA RÁPIDA ══════════════════════════════════════════════════ */
 .cap-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;border-left:4px solid var(--blue)}

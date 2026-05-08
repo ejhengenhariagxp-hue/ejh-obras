@@ -34,14 +34,14 @@ export function renderReport(state){
   document.getElementById('report-content').innerHTML=`
   <div style="font-family:'DM Sans',sans-serif;max-width:820px;margin:0 auto">
     <!-- Cabeçalho -->
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #0f2744">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #1c2126">
       <div>
         ${state.empresaLogo?`<img src="${state.empresaLogo}" style="height:48px;max-width:180px;object-fit:contain;margin-bottom:8px">`:''}
-        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#0f2744">${state.empresaNome || 'EJHV ENGENHARIA'}</div>
-        <div style="font-size:12px;color:#64748b">Engenharia Civil • Projetos • Obras</div>
-        <div style="font-size:13px;font-weight:600;color:#2563eb;margin-top:4px">${tituloRel}</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#1c2126">${state.empresaNome || 'EJH ENGENHARIA'}</div>
+        <div style="font-size:12px;color:#6b7068">Engenharia Civil • Projetos • Obras</div>
+        <div style="font-size:13px;font-weight:600;color:#2c657a;margin-top:4px">${tituloRel}</div>
       </div>
-      <div style="text-align:right;font-size:12.5px;color:#64748b">
+      <div style="text-align:right;font-size:12.5px;color:#6b7068">
         <div><strong>Emissão:</strong> ${hoje}</div>
         ${obraId?`<div><strong>Obra:</strong> ${obras[0]?.nome||''}</div>`:'<div><strong>Escopo:</strong> Todas as obras</div>'}
       </div>
@@ -50,40 +50,40 @@ export function renderReport(state){
     ${tipo !== 'diario' ? (rtMode ? `
     <!-- KPIs (modo RT) -->
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
-      <div style="background:#f0f9ff;border-radius:10px;padding:14px;text-align:center">
-        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">Obras (RT)</div>
-        <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#0f2744">${obras.length}</div>
+      <div style="background:#f0edea;border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:11px;font-weight:700;color:#6b7068;text-transform:uppercase">Obras (RT)</div>
+        <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#1c2126">${obras.length}</div>
       </div>
       <div style="background:#ccfbf1;border-radius:10px;padding:14px;text-align:center">
-        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">Visitas</div>
-        <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#0f766e">${visitasEscopo.length}</div>
+        <div style="font-size:11px;font-weight:700;color:#6b7068;text-transform:uppercase">Visitas</div>
+        <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#0d9488">${visitasEscopo.length}</div>
       </div>
-      <div style="background:#eff6ff;border-radius:10px;padding:14px;text-align:center">
-        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">Última visita</div>
-        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:#1d4ed8">${ultimaVisita ? fmtD(ultimaVisita) : '—'}</div>
+      <div style="background:#e8f4f8;border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:11px;font-weight:700;color:#6b7068;text-transform:uppercase">Última visita</div>
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:#2c657a">${ultimaVisita ? fmtD(ultimaVisita) : '—'}</div>
       </div>
       <div style="background:#fffbeb;border-radius:10px;padding:14px;text-align:center">
-        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">Etapas ativas</div>
-        <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#92400e">${state.cron.filter(c => obras.some(o => o.id === c.obraId) && c.conc > 0 && c.conc < 100).length}</div>
+        <div style="font-size:11px;font-weight:700;color:#6b7068;text-transform:uppercase">Etapas ativas</div>
+        <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#f59e0b">${state.cron.filter(c => obras.some(o => o.id === c.obraId) && c.conc > 0 && c.conc < 100).length}</div>
       </div>
     </div>` : `
     <!-- KPIs -->
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
-      <div style="background:#f0f9ff;border-radius:10px;padding:14px;text-align:center">
-        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">Obras</div>
-        <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#0f2744">${obras.length}</div>
+      <div style="background:#f0edea;border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:11px;font-weight:700;color:#6b7068;text-transform:uppercase">Obras</div>
+        <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#1c2126">${obras.length}</div>
       </div>
       <div style="background:#f0fdf4;border-radius:10px;padding:14px;text-align:center">
-        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">Orçamento</div>
-        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#065f46">${fmt(totalOrc)}</div>
+        <div style="font-size:11px;font-weight:700;color:#6b7068;text-transform:uppercase">Orçamento</div>
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#10b981">${fmt(totalOrc)}</div>
       </div>
       <div style="background:#fffbeb;border-radius:10px;padding:14px;text-align:center">
-        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">Realizado</div>
-        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#92400e">${fmt(totalReal)}</div>
+        <div style="font-size:11px;font-weight:700;color:#6b7068;text-transform:uppercase">Realizado</div>
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#f59e0b">${fmt(totalReal)}</div>
       </div>
       <div style="background:${(rec-des)>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center">
-        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">Saldo</div>
-        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:${(rec-des)>=0?'#065f46':'#991b1b'}">${fmt(rec-des)}</div>
+        <div style="font-size:11px;font-weight:700;color:#6b7068;text-transform:uppercase">Saldo</div>
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:${(rec-des)>=0?'#10b981':'#ef4444'}">${fmt(rec-des)}</div>
       </div>
     </div>`) : ''}
 
@@ -93,25 +93,25 @@ export function renderReport(state){
           const entries = state.diario.filter(d => d.obraId === o.id).sort((a,b) => b.data.localeCompare(a.data));
           return `
           <div style="margin-bottom:32px">
-            <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#0f2744;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-bottom:16px">${o.nome}</div>
+            <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#1c2126;border-bottom:2px solid #dbd9d4;padding-bottom:8px;margin-bottom:16px">${o.nome}</div>
             ${entries.length ? entries.map(e => `
-              <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:12px">
-                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #f1f5f9;padding-bottom:8px;margin-bottom:10px">
-                  <div style="font-weight:700;color:#0f2744">${fmtD(e.data)}</div>
-                  <div style="font-size:11.5px;color:#64748b">${e.clima} • Equipe: ${e.equipe}</div>
+              <div style="background:#faf9f7;border:1px solid #dbd9d4;border-radius:12px;padding:20px;margin-bottom:12px">
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #f0edea;padding-bottom:8px;margin-bottom:10px">
+                  <div style="font-weight:700;color:#1c2126">${fmtD(e.data)}</div>
+                  <div style="font-size:11.5px;color:#6b7068">${e.clima} • Equipe: ${e.equipe}</div>
                 </div>
-                <div style="font-size:13.5px;line-height:1.6;color:#1e293b;white-space:pre-wrap">${e.desc}</div>
+                <div style="font-size:13.5px;line-height:1.6;color:#1c1e1a;white-space:pre-wrap">${e.desc}</div>
                 ${e.ocorr && e.ocorr !== 'Sem ocorrências' ? `
-                  <div style="margin-top:10px;font-size:12.5px;color:#b91c1c;background:#fef2f2;padding:10px;border-radius:8px">
+                  <div style="margin-top:10px;font-size:12.5px;color:#ef4444;background:#fef2f2;padding:10px;border-radius:8px">
                     <strong>⚠️ Ocorrências/Observações:</strong><br>${e.ocorr}
                   </div>` : ''}
                 ${e.fotos && e.fotos.length ? `
                   <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));gap:10px;margin-top:14px">
-                    ${e.fotos.map(f => `<img src="${f.url||f.dataUrl||''}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0">`).join('')}
+                    ${e.fotos.map(f => `<img src="${f.url||f.dataUrl||''}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid #dbd9d4">`).join('')}
                   </div>
                 ` : ''}
               </div>
-            `).join('') : '<div style="color:#64748b;font-size:13px;padding:30px;text-align:center;border:1.5px dashed #e2e8f0;border-radius:12px;background:#f8faff">Nenhum registro de diário encontrado para esta obra.</div>'}
+            `).join('') : '<div style="color:#6b7068;font-size:13px;padding:30px;text-align:center;border:1.5px dashed #dbd9d4;border-radius:12px;background:#f0edea">Nenhum registro de diário encontrado para esta obra.</div>'}
           </div>`;
         }).join('')
       : obras.map(o=>{
@@ -125,42 +125,42 @@ export function renderReport(state){
           const diasRestantes=o.fim?Math.ceil((new Date(o.fim)-new Date())/86400000):null;
           const cor=avg>=80?'#10b981':avg>=40?'#f59e0b':'#ef4444';
           const statusIcon=avg>=80?'✅':avg>=40?'⚠️':'🔴';
-          const rtTag = isRT ? '<span style="background:#ccfbf1;color:#0f766e;font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:6px;margin-left:6px">🔍 RT</span>' : '';
+          const rtTag = isRT ? '<span style="background:#ccfbf1;color:#0d9488;font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:6px;margin-left:6px">🔍 RT</span>' : '';
           const visitasObra = state.diario.filter(d => d.obraId === o.id).sort((a,b)=>b.data.localeCompare(a.data));
           const ultimas3 = visitasObra.slice(0,3);
-          return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px;border-left:4px solid ${cor}">
+          return `<div style="background:#faf9f7;border:1px solid #dbd9d4;border-radius:12px;padding:20px;margin-bottom:16px;border-left:4px solid ${cor}">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
               <div>
-                <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#0f2744">${statusIcon} ${o.nome}${rtTag}</div>
-                <div style="font-size:12px;color:#64748b;margin-top:2px">👤 ${o.cliente} ${o.area?' • 📐 '+o.area+' m²':''} ${diasRestantes!==null?' • ⏱ '+(diasRestantes>0?diasRestantes+'d restantes':Math.abs(diasRestantes)+'d atrasada'):''}${isRT?' • 🗓 '+visitasObra.length+' visita(s)':''}</div>
+                <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#1c2126">${statusIcon} ${o.nome}${rtTag}</div>
+                <div style="font-size:12px;color:#6b7068;margin-top:2px">👤 ${o.cliente} ${o.area?' • 📐 '+o.area+' m²':''} ${diasRestantes!==null?' • ⏱ '+(diasRestantes>0?diasRestantes+'d restantes':Math.abs(diasRestantes)+'d atrasada'):''}${isRT?' • 🗓 '+visitasObra.length+' visita(s)':''}</div>
               </div>
               <div style="text-align:right">
                 <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:${cor}">${avg}%</div>
-                <div style="font-size:11px;color:#64748b">avanço</div>
+                <div style="font-size:11px;color:#6b7068">avanço</div>
               </div>
             </div>
             <!-- Barra de progresso -->
-            <div style="height:8px;background:#e2e8f0;border-radius:4px;margin-bottom:14px">
+            <div style="height:8px;background:#dbd9d4;border-radius:4px;margin-bottom:14px">
               <div style="height:100%;width:${avg}%;background:${cor};border-radius:4px;transition:width .6s"></div>
             </div>
             ${!isRT && orcObra>0?`<!-- Financeiro da obra -->
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:12px">
-              <div style="background:#f8faff;padding:8px;border-radius:7px;text-align:center">
-                <div style="color:#64748b">Orçado</div><div style="font-weight:700">${fmt(orcObra)}</div>
+              <div style="background:#f0edea;padding:8px;border-radius:7px;text-align:center">
+                <div style="color:#6b7068">Orçado</div><div style="font-weight:700">${fmt(orcObra)}</div>
               </div>
-              <div style="background:#f8faff;padding:8px;border-radius:7px;text-align:center">
-                <div style="color:#64748b">Realizado</div><div style="font-weight:700">${fmt(realObra)}</div>
+              <div style="background:#f0edea;padding:8px;border-radius:7px;text-align:center">
+                <div style="color:#6b7068">Realizado</div><div style="font-weight:700">${fmt(realObra)}</div>
               </div>
               <div style="background:${(recObra-desObra)>=0?'#f0fdf4':'#fef2f2'};padding:8px;border-radius:7px;text-align:center">
-                <div style="color:#64748b">Saldo</div><div style="font-weight:700;color:${(recObra-desObra)>=0?'#065f46':'#991b1b'}">${fmt(recObra-desObra)}</div>
+                <div style="color:#6b7068">Saldo</div><div style="font-weight:700;color:${(recObra-desObra)>=0?'#10b981':'#ef4444'}">${fmt(recObra-desObra)}</div>
               </div>
             </div>`:''}
-            ${etapas.filter(e=>e.conc>0&&e.conc<100).length?`<div style="margin-top:10px;font-size:12px;color:#64748b">
+            ${etapas.filter(e=>e.conc>0&&e.conc<100).length?`<div style="margin-top:10px;font-size:12px;color:#6b7068">
               🔨 Em execução: <strong>${etapas.filter(e=>e.conc>0&&e.conc<100).map(e=>e.etapa).join(' • ')}</strong>
             </div>`:''}
-            ${isRT && ultimas3.length?`<div style="margin-top:12px;padding-top:10px;border-top:1px solid #f1f5f9">
-              <div style="font-size:11.5px;font-weight:700;color:#0f766e;text-transform:uppercase;margin-bottom:6px">Últimas visitas técnicas</div>
-              ${ultimas3.map(v => `<div style="font-size:12.5px;color:#334155;margin-bottom:4px">
+            ${isRT && ultimas3.length?`<div style="margin-top:12px;padding-top:10px;border-top:1px solid #dbd9d4">
+              <div style="font-size:11.5px;font-weight:700;color:#0d9488;text-transform:uppercase;margin-bottom:6px">Últimas visitas técnicas</div>
+              ${ultimas3.map(v => `<div style="font-size:12.5px;color:#1c1e1a;margin-bottom:4px">
                 <strong>${fmtD(v.data)}</strong> — ${(v.desc||'').substring(0,140)}${(v.desc||'').length>140?'…':''}
               </div>`).join('')}
             </div>`:''}
@@ -168,7 +168,7 @@ export function renderReport(state){
         }).join('')}
 
     <!-- Rodapé -->
-    <div style="margin-top:24px;padding-top:14px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:11px;color:#94a3b8">
+    <div style="margin-top:24px;padding-top:14px;border-top:1px solid #dbd9d4;display:flex;justify-content:space-between;font-size:11px;color:#6b7068">
       <span>${state.relatorioRodape || 'EJHV Engenharia — Sistema de Gestão de Obras'}</span>
       <span>Emitido em ${hoje}</span>
     </div>
