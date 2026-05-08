@@ -10,7 +10,7 @@ import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
          getIaKey, setIaKey, hasIaKey } from './services.js?v=20260501g';
 import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260501g';
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260501g';
-import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt } from './modules/cronograma.js?v=20260501g';
+import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt, renderCronAtivo } from './modules/cronograma.js?v=20260508d';
 import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario, abrirDiarioObra, voltarDiarioObras } from './modules/diario.js?v=20260501g';
 import { addFin, delFin, openEditFin, openModalFin, openModalFinPessoal, isModalFinPessoal, renderFinanceiro, toggleHideRT, marcarFinPago,
          addCustoFixo, delCustoFixo, toggleCustoFixoAtivo, openEditCustoFixo, abrirModalCustoFixo,
@@ -80,7 +80,7 @@ const PAGE_RENDER_MAP = {
   'dashboard':  () => renderDashboard(),
   'obras':      () => renderObras(state),
   'orcamento':  () => renderOrc(state),
-  'cronograma': () => renderCron(state),
+  'cronograma': () => renderCronAtivo(state),
   'diario':     () => renderDiario(state),
   'financeiro': () => renderFinanceiro(state),
   'tabelas':    () => renderTabelas(state),
@@ -889,8 +889,10 @@ G.addCron = () => { if(addCron(state)) renderAtiva(); };
 G.delCron = id => { if(delCron(state,id)) renderAtiva(); };
 G.saveCronEdit = () => { if(saveCronEdit(state)) renderAtiva(); };
 G.openCronEdit = id => openCronEdit(state,id);
-G.setCronView = v => setCronView(v);
+G.setCronView = v => { setCronView(v); if(v==='gantt') renderGantt(state); else renderCron(state); };
 G.renderGantt = () => renderGantt(state);
+G.renderCron = () => renderCron(state);
+G.renderCronAtivo = () => renderCronAtivo(state);
 G.openModalDiario = () => openModalDiario(state);
 G.cancelarDiario = () => cancelarDiario();
 G.addDiario = () => { if(addDiario(state)) renderAtiva(); };

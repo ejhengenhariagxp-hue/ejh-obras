@@ -61,22 +61,39 @@ export function openCronEdit(state, id){
 export function setCronView(v){
   document.getElementById('cron-tabela-view').style.display=v==='tabela'?'block':'none';
   document.getElementById('cron-gantt-view').style.display=v==='gantt'?'block':'none';
-  document.getElementById('gantt-filter').style.display=v==='gantt'?'block':'none';
   document.getElementById('btn-tabela').classList.toggle('active',v==='tabela');
   document.getElementById('btn-gantt').classList.toggle('active',v==='gantt');
 }
 
+// Sincroniza o select de obra (usado por tabela e gantt) com state.obras
+function _syncCronObraSelect(state){
+  const sel=document.getElementById('cron-obra-sel');
+  if(!sel) return;
+  const valorAtual=sel.value;
+  sel.innerHTML='<option value="">Todas as obras</option>'+
+    state.obras.map(o=>`<option value="${o.id}">${o.nome}</option>`).join('');
+  if(valorAtual) sel.value=valorAtual;
+}
+
+export function renderCronAtivo(state){
+  renderCron(state);
+  renderGantt(state);
+}
+
 export function renderCron(state){
-  if(!state.cron.length){
+  _syncCronObraSelect(state);
+  const filterObraId=document.getElementById('cron-obra-sel')?.value||'';
+  const etapas=filterObraId?state.cron.filter(c=>c.obraId===filterObraId):state.cron;
+  if(!etapas.length){
     safeInner('tbody-cron', `<tr><td colspan="9" style="padding:36px;text-align:center;color:var(--muted)">
       <div style="font-size:32px;margin-bottom:8px">📅</div>
-      <div style="font-weight:600;color:var(--navy);font-size:14px;margin-bottom:4px">Nenhuma etapa cadastrada</div>
-      <div style="font-size:12.5px;margin-bottom:14px">Adicione etapas para acompanhar prazo e avanço físico</div>
+      <div style="font-weight:600;color:var(--navy);font-size:14px;margin-bottom:4px">${filterObraId?'Nenhuma etapa para esta obra':'Nenhuma etapa cadastrada'}</div>
+      <div style="font-size:12.5px;margin-bottom:14px">${filterObraId?'Selecione outra obra ou adicione etapas para esta':'Adicione etapas para acompanhar prazo e avanço físico'}</div>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-cron')">＋ Primeira Etapa</button>
     </td></tr>`);
     return;
   }
-  safeInner('tbody-cron', state.cron.map(x=>{
+  safeInner('tbody-cron', etapas.map(x=>{
     const col=x.conc>=100?'var(--green)':x.conc===0?'#94a3b8':'var(--blue)';
     const sit=x.conc>=100?'<span class="badge badge-green">✅ Concluída</span>':
               x.conc===0?'<span class="badge badge-amber">⏳ Aguardando</span>':
@@ -100,10 +117,9 @@ export function renderCron(state){
 }
 
 export function renderGantt(state){
-  const obraSelEl=document.getElementById('gantt-obra-sel');
+  _syncCronObraSelect(state);
+  const obraSelEl=document.getElementById('cron-obra-sel');
   if(!obraSelEl) return;
-  const obraOpts=state.obras.map(o=>`<option value="${o.id}">${o.nome}</option>`).join('');
-  obraSelEl.innerHTML='<option value="">Todas as obras</option>'+obraOpts;
 
   const filterObraId=obraSelEl.value;
   let etapas=filterObraId?state.cron.filter(c=>c.obraId===filterObraId):[...state.cron];
