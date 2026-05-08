@@ -1091,49 +1091,89 @@ export function preencherCustoFixoPadrao(desc, icon) {
 }
 
 // Gera lançamentos de despesa para todos os custos fixos ATIVOS no mês selecionado
+// Trava de execução: impede duplo clique disparar a função 2x simultaneamente
+let _gerandoLancCustosFixos = false;
+
 export function gerarLancamentosCustosFixos(state) {
+  if (_gerandoLancCustosFixos) {
+    showToast('⏳ Aguarde — geração em andamento.');
+    return false;
+  }
+  const btn = document.querySelector('button[onclick="gerarLancamentosCustosFixos()"]');
+
   const sel = document.getElementById('cf-mes-gerar');
   const mes = sel?.value; // formato 'YYYY-MM'
   if (!mes) { showToast('⚠️ Selecione o mês'); return false; }
   const ativos = (state.custosFixos || []).filter(c => c.ativo);
   if (!ativos.length) { showToast('⚠️ Nenhum custo fixo ativo'); return false; }
 
-  // Verifica duplicatas: se já existe lançamento desse custoFixoId nesse mês, pula
   const [ano, mm] = mes.split('-');
-  const jaExistentes = (state.fin || []).filter(f =>
-    f.custoFixoId && f.data?.startsWith(mes)
-  ).map(f => f.custoFixoId);
+  // 1) Dedup por custoFixoId (preciso, lançamentos gerados por esta função)
+  const idsPorRef = new Set(
+    (state.fin || [])
+      .filter(f => f.custoFixoId && f.data?.startsWith(mes))
+      .map(f => f.custoFixoId)
+  );
+  // 2) Dedup adicional por descrição + mês + valor (pega lançamentos manuais antigos)
+  const _norm = s => (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const finDoMes = (state.fin || []).filter(f => f.tipo === 'Despesa' && f.data?.startsWith(mes));
 
-  const novosIds = ativos.filter(c => !jaExistentes.includes(c.id));
-  if (!novosIds.length) {
-    showToast('ℹ️ Todos os custos fixos do mês já foram gerados.');
+  const novos = [];
+  const jaExistentes = [];
+  ativos.forEach(c => {
+    if (idsPorRef.has(c.id)) { jaExistentes.push(c); return; }
+    const descNorm = _norm(c.desc);
+    const conflito = finDoMes.find(f => _norm(f.desc).includes(descNorm) && Math.abs((f.valor||0) - (c.valor||0)) < 0.01);
+    if (conflito) { jaExistentes.push(c); return; }
+    novos.push(c);
+  });
+
+  if (!novos.length) {
+    showToast(`ℹ️ Todos os ${ativos.length} custos fixos de ${mes} já foram lançados.`);
     return false;
   }
 
-  if (!confirm(`Gerar ${novosIds.length} lançamento${novosIds.length>1?'s':''} de despesa para ${mes}?`)) return false;
+  // Confirmação detalhada — lista nominal do que será criado
+  const resumo = novos.map(c => `• ${c.desc} (${fmt(c.valor)})`).join('\n');
+  const aviso = jaExistentes.length
+    ? `\n\n⚠️ ${jaExistentes.length} já existe${jaExistentes.length>1?'m':''} (não será${jaExistentes.length>1?'ão':''} duplicado${jaExistentes.length>1?'s':''}):\n` +
+      jaExistentes.map(c => `• ${c.desc}`).join('\n')
+    : '';
+  if (!confirm(`Gerar ${novos.length} lançamento${novos.length>1?'s':''} para ${mes}?\n\n${resumo}${aviso}`)) return false;
 
-  if (!state.counters.fin) state.counters.fin = 1;
-  novosIds.forEach(c => {
-    const dia = String(c.diaVencimento).padStart(2,'0');
-    const data = `${ano}-${mm}-${dia}`;
-    const hojeStr = new Date().toISOString().split('T')[0];
-    const status = data < hojeStr ? 'pendente' : 'a_vencer';
-    state.fin.push({
-      id: 'FIN-' + pad(state.counters.fin),
-      tipo: 'Despesa',
-      obraId: '__empresa__', // identificador especial
-      data,
-      desc: `${c.icon || '💼'} ${c.desc} — ${mes}`,
-      cat: '🏢 Custo Fixo (Empresa)',
-      status,
-      valor: c.valor,
-      obs: 'Gerado automaticamente do custo fixo ' + c.id,
-      custoFixoId: c.id,
+  // Trava + feedback visual no botão
+  _gerandoLancCustosFixos = true;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Gerando...'; btn.style.opacity = '0.6'; }
+
+  try {
+    if (!state.counters.fin) state.counters.fin = 1;
+    novos.forEach(c => {
+      const dia = String(c.diaVencimento).padStart(2,'0');
+      const data = `${ano}-${mm}-${dia}`;
+      const hojeStr = new Date().toISOString().split('T')[0];
+      const status = data < hojeStr ? 'pendente' : 'a_vencer';
+      state.fin.push({
+        id: 'FIN-' + pad(state.counters.fin),
+        tipo: 'Despesa',
+        obraId: '__empresa__',
+        data,
+        desc: `${c.icon || '💼'} ${c.desc} — ${mes}`,
+        cat: '🏢 Custo Fixo (Empresa)',
+        status,
+        valor: c.valor,
+        obs: 'Gerado automaticamente do custo fixo ' + c.id,
+        custoFixoId: c.id,
+      });
+      state.counters.fin++;
     });
-    state.counters.fin++;
-  });
-  showToast(`✅ ${novosIds.length} lançamento${novosIds.length>1?'s':''} criado${novosIds.length>1?'s':''}!`);
-  return true;
+    const extra = jaExistentes.length ? ` (${jaExistentes.length} já existia${jaExistentes.length>1?'m':''})` : '';
+    showToast(`✅ ${novos.length} lançamento${novos.length>1?'s':''} criado${novos.length>1?'s':''}${extra}!`);
+    return true;
+  } finally {
+    _gerandoLancCustosFixos = false;
+    // Re-render a tela vai recriar o botão; mas se ficar, restauramos estado
+    if (btn) { btn.disabled = false; btn.textContent = '⚡ Gerar Lançamentos'; btn.style.opacity = ''; }
+  }
 }
 
 // Renderiza a seção "Custos Fixos da Empresa" na tela financeiro
