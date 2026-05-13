@@ -640,7 +640,14 @@ export function printProposta(state, id){
       <div style="font-size:12.5px;color:#1c2126;line-height:1.65;white-space:pre-line">${escapeHtml(p.metodologia)}</div>
     </div>` : '';
 
-  // ── Página 2 — Fotos + Entregas ───────────────────────────────────
+  // ── Bloco de assinaturas (reaproveitado: vai pra pág. 2 se houver fotos, senão pág. 1) ─
+  const assinaturasHtml = `
+      <div class="assinaturas">
+        <div class="ass-blk"><div style="height:46px"></div><div class="ass-line">EJH Engenharia<br>${escapeHtml(engNome)}</div></div>
+        <div class="ass-blk"><div style="height:46px"></div><div class="ass-line">${escapeHtml(p.cliente||'')}<br>Contratante</div></div>
+      </div>`;
+
+  // ── Página 2 — Fotos + Entregas + Assinaturas ────────────────────
   const fotosPage = fotos.length > 0 ? `
     <div style="page-break-before:always;padding:52px 48px 32px">
       <div style="text-align:center;margin-bottom:32px">
@@ -656,6 +663,7 @@ export function printProposta(state, id){
           </div>`).join('')}
       </div>
       ${_buildEntregasHtml(itens)}
+      ${assinaturasHtml}
       <div style="margin-top:32px;padding-top:12px;border-top:1px solid #dbd9d4;font-size:10px;color:#94a3b8;display:flex;justify-content:space-between">
         <span>${escapeHtml(rodape)}</span><span>${p.id} — Gerado em ${hoje}</span>
       </div>
@@ -735,10 +743,7 @@ export function printProposta(state, id){
       ${p.obs?`<div class="obs-box"><strong>Observações:</strong> ${escapeHtml(p.obs)}</div>`:''}
       ${p.validade?`<div class="val-box">⏰ Esta proposta tem validade de <strong>${p.validade} dias</strong> a partir da data de emissão.</div>`:''}
 
-      <div class="assinaturas">
-        <div class="ass-blk"><div style="height:46px"></div><div class="ass-line">EJH Engenharia<br>${escapeHtml(engNome)}</div></div>
-        <div class="ass-blk"><div style="height:46px"></div><div class="ass-line">${escapeHtml(p.cliente||'')}<br>Contratante</div></div>
-      </div>
+      ${fotos.length > 0 ? '' : assinaturasHtml}
 
       <div class="footer"><span>${escapeHtml(rodape)} — ${p.id}</span><span>Gerado em ${hoje}</span></div>
     </div>
