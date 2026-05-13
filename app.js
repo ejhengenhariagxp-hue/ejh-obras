@@ -1180,7 +1180,7 @@ G.gerarDiarioPDF = () => {
     <div class="hdr">
       <div>
         ${state.logoData ? `<img src="${state.logoData}" style="height:42px;max-width:160px;object-fit:contain;margin-bottom:6px">` : ''}
-        <div class="logo">${state.empNome || state.empresaNome || 'EJHV ENGENHARIA'}</div>
+        <div class="logo">${state.empNome || state.empresaNome || 'EJH ENGENHARIA'}</div>
         <div class="sub">Engenharia Civil • Projetos • Obras</div>
         <div class="titulo">Relatório do Diário de Obra</div>
       </div>
@@ -1191,7 +1191,7 @@ G.gerarDiarioPDF = () => {
     </div>
     ${corpo}
     <div class="footer">
-      <span>${state.relatorioRodape || 'EJHV Engenharia — Sistema de Gestão de Obras'}</span>
+      <span>${state.relatorioRodape || 'EJH Engenharia — Sistema de Gestão de Obras'}</span>
       <span>Emitido em ${hoje}</span>
     </div>
     <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script>
@@ -1206,7 +1206,7 @@ G.gerarDiarioWpp = async () => {
   const obras = obraId ? state.obras.filter(o => o.id === obraId) : state.obras;
   if (!obras.length) { showToast('⚠️ Nenhuma obra selecionada'); return; }
   const hoje = new Date().toLocaleDateString('pt-BR');
-  const empresa = state.empNome || state.empresaNome || 'EJHV Engenharia';
+  const empresa = state.empNome || state.empresaNome || 'EJH Engenharia';
 
   let msg = `*${empresa}*\n📋 *Diário de Obra* — ${hoje}\n\n`;
   for (const o of obras) {
@@ -1328,7 +1328,7 @@ G.gerarMedicaoPDF = () => {
     <div class="hdr">
       <div>
         ${state.logoData ? `<img src="${state.logoData}" style="height:42px;max-width:160px;object-fit:contain;margin-bottom:6px">` : ''}
-        <div class="logo">${state.empNome || state.empresaNome || 'EJHV ENGENHARIA'}</div>
+        <div class="logo">${state.empNome || state.empresaNome || 'EJH ENGENHARIA'}</div>
         <div class="sub">Engenharia Civil • Projetos • Obras</div>
         <div class="titulo">Relatório de Medições</div>
       </div>
@@ -1339,7 +1339,7 @@ G.gerarMedicaoPDF = () => {
     </div>
     ${corpo}
     <div class="footer">
-      <span>${state.relatorioRodape || 'EJHV Engenharia — Sistema de Gestão de Obras'}</span>
+      <span>${state.relatorioRodape || 'EJH Engenharia — Sistema de Gestão de Obras'}</span>
       <span>Emitido em ${hoje}</span>
     </div>
     <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script>

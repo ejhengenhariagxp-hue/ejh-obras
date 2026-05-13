@@ -169,7 +169,7 @@ export function renderReport(state){
 
     <!-- Rodapé -->
     <div style="margin-top:24px;padding-top:14px;border-top:1px solid #dbd9d4;display:flex;justify-content:space-between;font-size:11px;color:#6b7068">
-      <span>${state.relatorioRodape || 'EJHV Engenharia — Sistema de Gestão de Obras'}</span>
+      <span>${state.relatorioRodape || 'EJH Engenharia — Sistema de Gestão de Obras'}</span>
       <span>Emitido em ${hoje}</span>
     </div>
 
@@ -188,7 +188,7 @@ export function gerarTextoRelatorio(state, obraId, tipo){
 
   // Modo "Diário": texto focado no diário de obra (atividades por dia)
   if (tipo === 'diario') {
-    let msg = `*EJHV ENGENHARIA — Relatório do Diário de Obra*\n*Data:* ${hoje}\n\n`;
+    let msg = `*EJH ENGENHARIA — Relatório do Diário de Obra*\n*Data:* ${hoje}\n\n`;
     obras.forEach(o => {
       const entries = state.diario.filter(d => d.obraId === o.id).sort((a,b) => b.data.localeCompare(a.data));
       msg += `*${o.nome}*\n`;
@@ -205,11 +205,11 @@ export function gerarTextoRelatorio(state, obraId, tipo){
         });
       }
     });
-    msg += `_Gerado por ${state.engNome || 'EJHV Engenharia'} — Sistema de Gestão de Obras_`;
+    msg += `_Gerado por ${state.engNome || 'EJH Engenharia'} — Sistema de Gestão de Obras_`;
     return msg;
   }
 
-  let msg=`*EJHV ENGENHARIA — Relatório de Obras*
+  let msg=`*EJH ENGENHARIA — Relatório de Obras*
 *Data:* ${hoje}
 
 `;
@@ -242,7 +242,7 @@ export function gerarTextoRelatorio(state, obraId, tipo){
     }
     msg+='\n';
   });
-  msg+=`_Gerado por ${state.engNome || 'EJHV Engenharia'} — Sistema de Gestão de Obras_`;
+  msg+=`_Gerado por ${state.engNome || 'EJH Engenharia'} — Sistema de Gestão de Obras_`;
   return msg;
 }
 
@@ -307,7 +307,7 @@ export function gerarRelatorioEmail(state){
   const obraId=document.getElementById('rel-obra-sel')?.value||'';
   const tipo=document.getElementById('rel-tipo-sel')?.value||'gerencial';
   const msg=gerarTextoRelatorio(state, obraId, tipo);
-  const subject='Relatório de Obras — EJHV Engenharia — '+new Date().toLocaleDateString('pt-BR');
+  const subject='Relatório de Obras — EJH Engenharia — '+new Date().toLocaleDateString('pt-BR');
   // Convert markdown-like to plain text
   const body=msg.replace(/\*/g,'').replace(/_/g,'');
   window.open('mailto:?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body),'_blank');
