@@ -705,7 +705,7 @@ export function printProposta(state, id){
     <div class="pg1">
       <div class="hdr">
         <div>
-          <div class="hdr-logo">EJH<span>V</span> ENGENHARIA</div>
+          <div class="hdr-logo">EJH ENGENHARIA</div>
           <div class="hdr-sub">Engenharia Civil • Projetos • Obras<br>CREA/MG • Guaxupé/MG</div>
         </div>
         <div class="hdr-right">
