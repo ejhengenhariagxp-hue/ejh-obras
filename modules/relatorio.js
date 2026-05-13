@@ -1,5 +1,5 @@
 ﻿// modules/relatorio.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, sortObrasPorStatus } from '../utils.js?v=20260513f';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge } from '../utils.js?v=20260501a';
 
 
 export function renderReport(state){
@@ -8,12 +8,12 @@ export function renderReport(state){
   if(sel){
     const valorAtual=sel.value;
     sel.innerHTML='<option value="">Todas as obras</option>';
-    sortObrasPorStatus(state.obras).forEach(o=>{const opt=document.createElement('option');opt.value=o.id;opt.textContent=o.nome;sel.appendChild(opt);});
+    state.obras.forEach(o=>{const opt=document.createElement('option');opt.value=o.id;opt.textContent=o.nome;sel.appendChild(opt);});
     if(valorAtual) sel.value=valorAtual;
   }
   const obraId=sel?.value||'';
   const tipo=document.getElementById('rel-tipo-sel')?.value||'gerencial';
-  const obras=obraId?state.obras.filter(o=>o.id===obraId):sortObrasPorStatus(state.obras);
+  const obras=obraId?state.obras.filter(o=>o.id===obraId):state.obras;
   const hoje=new Date().toLocaleDateString('pt-BR');
 
   // Modo RT: quando todas as obras do escopo são de acompanhamento (RT)
@@ -183,7 +183,7 @@ export function renderReport(state){
 }
 
 export function gerarTextoRelatorio(state, obraId, tipo){
-  const obras=obraId?state.obras.filter(o=>o.id===obraId):sortObrasPorStatus(state.obras);
+  const obras=obraId?state.obras.filter(o=>o.id===obraId):state.obras;
   const hoje=new Date().toLocaleDateString('pt-BR');
 
   // Modo "Diário": texto focado no diário de obra (atividades por dia)
