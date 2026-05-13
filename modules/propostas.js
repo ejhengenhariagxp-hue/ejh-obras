@@ -45,6 +45,8 @@ const PRECO_PROJETOS = [
     {id:'VIS', nome:'Vistoria Técnica', un:'vb', preco:800.00, desc:'Vistoria pontual com emissão de relatório técnico fotográfico'},
     {id:'LAU', nome:'Laudo de Engenharia', un:'vb', preco:1400.00, desc:'Laudo pericial ou de patologia com diagnóstico e recomendações'},
     {id:'ASB', nome:'Consultoria Técnica', un:'hr', preco:280.00, desc:'Assessoria técnica especializada por hora consultada'},
+    {id:'PCI', nome:'PCI — Planilha Caixa Inicial', un:'vb', preco:1200.00, desc:'Planilha inicial para análise e liberação do financiamento na Caixa Econômica Federal'},
+    {id:'PLS', nome:'PLS — Planilha de Medição Caixa', un:'mês', preco:600.00, desc:'Planilha de medição mensal da Caixa, incluindo reprogramação caso necessário no decorrer da obra'},
 ];
 
 const ENTREGAS_PROJ = {
@@ -59,6 +61,8 @@ const ENTREGAS_PROJ = {
   'VIS': { titulo: 'Vistoria Técnica',              itens: ['Vistoria in loco', 'Relatório técnico fotográfico', 'Recomendações de intervenção'] },
   'TOP': { titulo: 'Topografia',                    itens: ['Levantamento planialtimétrico', 'Georreferenciamento', 'Locação de divisas', 'Relatório técnico', 'ART incluída'] },
   'AR2': { titulo: 'Regularização / Prefeitura',   itens: ['Processo administrativo completo', 'Projeto de regularização', 'Acompanhamento junto à Prefeitura', 'Obtenção de Habite-se'] },
+  'PCI': { titulo: 'PCI — Planilha Caixa Inicial',  itens: ['Preenchimento da PCI (planilha inicial Caixa)', 'Memorial descritivo conforme padrão Caixa', 'Cronograma físico-financeiro inicial', 'Orçamento detalhado para análise', 'Documentação para liberação do financiamento'] },
+  'PLS': { titulo: 'PLS — Planilha de Medição Caixa', itens: ['Planilha de medição mensal da Caixa', 'Relatório fotográfico de execução', 'Reprogramação do cronograma quando necessário', 'Atualização de quantitativos executados', 'Acompanhamento até liberação de cada parcela'] },
 };
 
 export function openPropProjeto(state){
