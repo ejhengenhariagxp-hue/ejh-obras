@@ -46,7 +46,7 @@ const PRECO_PROJETOS = [
     {id:'LAU', nome:'Laudo de Engenharia', un:'vb', preco:1400.00, desc:'Laudo pericial ou de patologia com diagnóstico e recomendações'},
     {id:'ASB', nome:'Consultoria Técnica', un:'hr', preco:280.00, desc:'Assessoria técnica especializada por hora consultada'},
     {id:'PCI', nome:'PCI — Planilha Caixa Inicial', un:'vb', preco:1200.00, desc:'Planilha inicial para análise e liberação do financiamento na Caixa Econômica Federal'},
-    {id:'PLS', nome:'PLS — Planilha de Medição Caixa', un:'mês', preco:600.00, desc:'Planilha de medição mensal da Caixa, incluindo reprogramação caso necessário no decorrer da obra'},
+    {id:'PLS', nome:'PLS — Planilha de Medição Caixa (inclui acompanhamento)', un:'mês', preco:600.00, desc:'Planilha de medição mensal da Caixa + visitas técnicas de acompanhamento (já inclusas), incluindo reprogramação caso necessário no decorrer da obra'},
 ];
 
 const ENTREGAS_PROJ = {
@@ -62,7 +62,7 @@ const ENTREGAS_PROJ = {
   'TOP': { titulo: 'Topografia',                    itens: ['Levantamento planialtimétrico', 'Georreferenciamento', 'Locação de divisas', 'Relatório técnico', 'ART incluída'] },
   'AR2': { titulo: 'Regularização / Prefeitura',   itens: ['Processo administrativo completo', 'Projeto de regularização', 'Acompanhamento junto à Prefeitura', 'Obtenção de Habite-se'] },
   'PCI': { titulo: 'PCI — Planilha Caixa Inicial',  itens: ['Preenchimento da PCI (planilha inicial Caixa)', 'Memorial descritivo conforme padrão Caixa', 'Cronograma físico-financeiro inicial', 'Orçamento detalhado para análise', 'Documentação para liberação do financiamento'] },
-  'PLS': { titulo: 'PLS — Planilha de Medição Caixa', itens: ['Planilha de medição mensal da Caixa', 'Relatório fotográfico de execução', 'Reprogramação do cronograma quando necessário', 'Atualização de quantitativos executados', 'Acompanhamento até liberação de cada parcela'] },
+  'PLS': { titulo: 'PLS — Planilha de Medição Caixa (com acompanhamento incluso)', itens: ['Visita técnica mensal à obra (acompanhamento técnico já incluso)', 'Planilha de medição mensal da Caixa', 'Relatório fotográfico de execução', 'Verificação de conformidade com projeto', 'Reprogramação do cronograma quando necessário', 'Atualização de quantitativos executados', 'Acompanhamento até liberação de cada parcela'] },
 };
 
 export function openPropProjeto(state){
@@ -134,6 +134,7 @@ export function calcPropProjeto(state){
   document.getElementById('f-pp-total').value=fmt(total);
   const inl=document.getElementById('pp-subtotal-inline');
   if(inl) inl.textContent=fmt(subtotal);
+  _checarSobreposicaoPLS();
   try{
     localStorage.setItem('rascunho_proposta', JSON.stringify({
       tipo:'projeto', projServicos: window.projServicos, projExtras: window.projExtras,
@@ -190,7 +191,7 @@ export function renderProjServicos(){
   </div>
   `+window.projServicos.map((s,i)=>`
     <div style="display:grid;grid-template-columns:28px 1fr 100px 90px 110px 120px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-      <input type="checkbox" ${s.incluso?'checked':''} onchange="projServicos[${i}].incluso=this.checked;calcPropProjeto()" style="width:16px;height:16px;cursor:pointer;accent-color:var(--blue)">
+      <input type="checkbox" ${s.incluso?'checked':''} onchange="projServicos[${i}].incluso=this.checked;if(this.checked&&!projServicos[${i}].qtd){projServicos[${i}].qtd=1;document.getElementById('pp-qtd-${i}').value=1;}calcPropProjeto()" style="width:16px;height:16px;cursor:pointer;accent-color:var(--blue)" title="Marque para incluir este serviço — se quantidade estiver zerada, será preenchida com 1 automaticamente">
       <div>
         <div style="font-size:13px;font-weight:600;color:var(--navy)">${s.nome}</div>
         <textarea oninput="projServicos[${i}].desc=this.value" 
@@ -219,8 +220,19 @@ export function renderProjServicos(){
     <span style="font-weight:700;color:var(--navy);font-size:13px">SUBTOTAL DOS SERVIÇOS PADRÃO</span>
     <span></span><span></span><span></span>
     <div id="pp-subtotal-inline" style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--navy);text-align:right">R$ 0,00</div>
+  </div>
+  <div id="pp-aviso-sobreposicao" style="display:none;background:#fffbeb;color:#92400e;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;font-size:12px;margin-top:6px">
+    ⚠️ <strong>PLS</strong> já inclui as visitas de <strong>Acompanhamento Técnico</strong>. Considere desmarcar ACO para evitar cobrança duplicada.
   </div>`;
-  setTimeout(()=>calcPropProjeto(window.state), 0);
+  setTimeout(()=>{ calcPropProjeto(window.state); _checarSobreposicaoPLS(); }, 0);
+}
+
+// Mostra aviso quando PLS e ACO estão marcados ao mesmo tempo
+function _checarSobreposicaoPLS() {
+  const pls = (window.projServicos || []).find(s => s.id === 'PLS' && s.incluso && s.qtd > 0);
+  const aco = (window.projServicos || []).find(s => s.id === 'ACO' && s.incluso && s.qtd > 0);
+  const aviso = document.getElementById('pp-aviso-sobreposicao');
+  if (aviso) aviso.style.display = (pls && aco) ? 'block' : 'none';
 }
 
 export function renderProjExtras(){
