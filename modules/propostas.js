@@ -645,7 +645,7 @@ export function printProposta(state, id){
     <div style="page-break-before:always;padding:52px 48px 32px">
       <div style="text-align:center;margin-bottom:32px">
         <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#1c2126;letter-spacing:-.8px">Nossos Projetos</div>
-        <div style="font-size:12px;color:#6b7068;margin-top:6px">Referências de projetos realizados pela EJHV Engenharia</div>
+        <div style="font-size:12px;color:#6b7068;margin-top:6px">Referências de projetos realizados pela EJH Engenharia</div>
         <div style="width:60px;height:3px;background:#10b981;border-radius:2px;margin:14px auto 0"></div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(${fotos.length>4?3:2},1fr);gap:14px;margin-bottom:32px">
@@ -736,7 +736,7 @@ export function printProposta(state, id){
       ${p.validade?`<div class="val-box">⏰ Esta proposta tem validade de <strong>${p.validade} dias</strong> a partir da data de emissão.</div>`:''}
 
       <div class="assinaturas">
-        <div class="ass-blk"><div style="height:46px"></div><div class="ass-line">EJHV Engenharia<br>${escapeHtml(engNome)}</div></div>
+        <div class="ass-blk"><div style="height:46px"></div><div class="ass-line">EJH Engenharia<br>${escapeHtml(engNome)}</div></div>
         <div class="ass-blk"><div style="height:46px"></div><div class="ass-line">${escapeHtml(p.cliente||'')}<br>Contratante</div></div>
       </div>
 
@@ -774,7 +774,7 @@ function _buildEntregasHtml(itens) {
 export function compartilharWhatsApp(state, id){
   const p=state.propostas.find(x=>x.id===id); if(!p) return;
   const tipo={projeto:'Elaboração de Projetos',obra:'Orçamento de Obra',completa:'Projeto + Obra'}[p.tipo]||'Proposta';
-  const msg=`*EJHV ENGENHARIA — ${tipo}*\n\n`+
+  const msg=`*EJH ENGENHARIA — ${tipo}*\n\n`+
     `*Cliente:* ${p.cliente||'—'}\n`+
     `*Empreendimento:* ${p.empreend||'—'}\n`+
     (p.area?`*Área:* ${p.area} m²\n`:'')+
@@ -784,7 +784,7 @@ export function compartilharWhatsApp(state, id){
     (p.validade?`_Proposta válida por ${p.validade} dias_\n\n`:'')+
     (p.parcela?`*Pagamento:* ${p.parcela}\n`:'')+
     `Para visualizar a proposta completa, solicite o PDF pelo retorno desta mensagem.\n\n`+
-    `*EJHV Engenharia* • Guaxupé/MG`;
+    `*EJH Engenharia* • Guaxupé/MG`;
   const url='https://api.whatsapp.com/send?text='+encodeURIComponent(msg);
   window.open(url,'_blank');
 }

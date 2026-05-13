@@ -1,5 +1,5 @@
 /* ============================================================
-   EJHV Brand Tokens
+   EJH Brand Tokens
    ============================================================ */
 :root {
   --ejhv-green-dk:   #0c3d2a;  /* EJH em fundo claro */
@@ -11,7 +11,7 @@
   --ejhv-surface:    #111916;
   --ejhv-border:     #253028;
 
-  /* Compatibilidade — aponta tokens antigos para a paleta EJHV */
+  /* Compatibilidade — aponta tokens antigos para a paleta EJH */
   --accent:           var(--ejhv-copper);
   --accent-secondary: var(--ejhv-green);
   --text-primary:     var(--ejhv-concrete);
@@ -488,7 +488,7 @@ textarea{resize:vertical;min-height:70px}
 
 
 /* ============================================================
-   KPIs do Dashboard com paleta EJHV
+   KPIs do Dashboard com paleta EJH
    ============================================================ */
 .kpi-dashboard-ejhv .kpi.blue  { border-top-color: var(--ejhv-green,    #1fbf90); }
 .kpi-dashboard-ejhv .kpi.amber { border-top-color: var(--ejhv-copper,   #b87333); }
@@ -496,7 +496,7 @@ textarea{resize:vertical;min-height:70px}
 /* teal mantém — saldo verde claro */
 
 /* ============================================================
-   EJHV Logo Component
+   EJH Logo Component
    ============================================================ */
 .ejhv-logo { display: flex; align-items: center; gap: 10px; }
 .ejhv-logo svg { flex-shrink: 0; }
