@@ -1,5 +1,5 @@
 // modules/diario.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName, escapeHtml, markDeleted } from '../utils.js?v=20260501a';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName, escapeHtml, markDeleted, sortObrasPorStatus } from '../utils.js?v=20260513f';
 import { iaCall } from '../services.js?v=20260501a';
 
 let _diarioLimit = 20;
@@ -262,7 +262,7 @@ function _renderDiarioObras(state) {
   if (hdrRight) hdrRight.innerHTML = `
     <button class="btn btn-primary" onclick="openModalDiario()">＋ Novo Registro</button>`;
 
-  const obras = state.obras || [];
+  const obras = sortObrasPorStatus(state.obras || []);
   if (!obras.length) {
     safeInner('dia-obras-list', `<div style="background:var(--card);border-radius:var(--radius);padding:36px 20px;text-align:center;border:1.5px dashed var(--border)">
       <div style="font-size:32px;margin-bottom:8px">🏗</div>
