@@ -50,6 +50,55 @@ export function addObra(state) {
   return true;
 }
 
+// Renumera todas as obras em ordem (OBR-001, OBR-002, ...) preservando a ordem atual de IDs.
+// Atualiza obraId em todas as coleções relacionadas e salva backup em localStorage antes.
+// Retorna { sucesso, obrasRenumeradas, referenciasAtualizadas, mapa, backupKey }.
+export function renumerarTodasObras(state) {
+  if (!state.obras || !state.obras.length) {
+    showToast('⚠️ Nenhuma obra para renumerar');
+    return { sucesso: false };
+  }
+
+  let backupKey = null;
+  try {
+    backupKey = 'ejh_backup_renumera_' + Date.now();
+    localStorage.setItem(backupKey, JSON.stringify(state));
+  } catch (e) {
+    console.warn('Backup pré-renumeração falhou:', e?.message);
+  }
+
+  const obrasOrdenadas = [...state.obras].sort((a, b) => (a.id || '').localeCompare(b.id || ''));
+
+  const mapa = {};
+  obrasOrdenadas.forEach((o, idx) => {
+    mapa[o.id] = 'OBR-' + pad(idx + 1);
+  });
+
+  state.obras.forEach(o => { if (mapa[o.id]) o.id = mapa[o.id]; });
+
+  const colecoes = ['orc','cron','diario','fin','medicoes','empreita','propostas','checklists','capturas','composicoes'];
+  let referenciasAtualizadas = 0;
+  colecoes.forEach(col => {
+    if (!Array.isArray(state[col])) return;
+    state[col].forEach(item => {
+      if (item.obraId && mapa[item.obraId]) {
+        item.obraId = mapa[item.obraId];
+        referenciasAtualizadas++;
+      }
+    });
+  });
+
+  state.counters.obra = state.obras.length + 1;
+
+  return {
+    sucesso: true,
+    obrasRenumeradas: state.obras.length,
+    referenciasAtualizadas,
+    mapa,
+    backupKey
+  };
+}
+
 // Abrir formulário para editar obra existente
 export function openEditObra(state, id) {
   const o = state.obras.find(x => x.id === id);

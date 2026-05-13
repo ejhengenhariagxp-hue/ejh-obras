@@ -1507,6 +1507,14 @@
       <label>Texto do Rodapé (Relatórios)</label>
       <textarea id="set-rel-rodape" placeholder="Sua empresa — Endereço — Contato"></textarea>
     </div>
+    <div class="divider full"></div>
+    <div class="form-group full">
+      <label style="color:#b87333">🛠 Manutenção de Dados</label>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.5">
+        Renumera todas as obras em ordem (OBR-001, OBR-002…) e atualiza as referências em cronograma, diário, financeiro, orçamento, medições e propostas. Útil quando existem buracos no sequenciamento por exclusões anteriores. Faz backup automático antes da operação.
+      </div>
+      <button type="button" class="btn btn-outline" onclick="renumerarObras()" style="color:#b87333;border-color:#b87333">🔢 Renumerar Obras em Ordem</button>
+    </div>
   </div>
   <div class="modal-actions">
     <button class="btn btn-outline" onclick="closeModal('modal-settings')">Fechar</button>

@@ -8,7 +8,7 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
          fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA,
          getIaKey, setIaKey, hasIaKey } from './services.js?v=20260501g';
-import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260501g';
+import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra, renumerarTodasObras } from './modules/obras.js?v=20260513e';
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260501g';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt, renderCronAtivo } from './modules/cronograma.js?v=20260508d';
 import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario, abrirDiarioObra, voltarDiarioObras } from './modules/diario.js?v=20260501g';
@@ -872,6 +872,18 @@ G.delObra = id => { if(delObra(state,id)) renderAtiva(); };
 G.openEditObra = id => openEditObra(state, id);
 G.salvarObra = () => { if(salvarObra(state)) renderAtiva(); };
 G.resetFormObra = () => resetFormObra();
+G.renumerarObras = () => {
+  const n = state.obras?.length || 0;
+  if (!n) { showToast('⚠️ Nenhuma obra para renumerar'); return; }
+  const msg1 = `Renumerar ${n} obra(s) em ordem (OBR-001, OBR-002…)?\n\nEsta ação reescreve o ID de cada obra e atualiza referências em cronograma, diário, financeiro, orçamento, medições, propostas e demais módulos.\n\nDocumentos PDF/propostas já emitidos com IDs antigos continuarão referenciando os números antigos.\n\nUm backup é salvo automaticamente no navegador antes da operação.`;
+  if (!confirm(msg1)) return;
+  if (!confirm('Confirmar definitivamente? Esta operação não pode ser desfeita pela interface (só restaurando o backup manualmente).')) return;
+  const r = renumerarTodasObras(state);
+  if (!r.sucesso) return;
+  renderAtiva();
+  showToast(`✅ ${r.obrasRenumeradas} obras renumeradas, ${r.referenciasAtualizadas} referências atualizadas`, 5000);
+  console.log('[Renumeração] Mapa idAntigo → idNovo:', r.mapa, '| Backup:', r.backupKey);
+};
 G.registrarMedicaoRapida = id => { if(registrarMedicaoRapida(state,id)) renderAtiva(); };
 G.addOrc = () => { if(addOrc(state)) renderAtiva(); };
 G.delOrc = id => { if(delOrc(state,id)) renderAtiva(); };
