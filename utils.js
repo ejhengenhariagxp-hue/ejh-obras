@@ -156,6 +156,17 @@ export function obraName(state, id) {
   return o ? o.nome : id || '—';
 }
 
+// Ordena obras priorizando "Em andamento" no topo; demais (planejada, paralisada, concluído)
+// ficam ao final. Empates mantêm ordem por ID.
+export function sortObrasPorStatus(obras) {
+  return [...(obras || [])].sort((a, b) => {
+    const pa = a.status === 'Em andamento' ? 0 : 1;
+    const pb = b.status === 'Em andamento' ? 0 : 1;
+    if (pa !== pb) return pa - pb;
+    return (a.id || '').localeCompare(b.id || '');
+  });
+}
+
 export function showSaveIndicator() {
   const el = document.getElementById('save-indicator');
   if (!el) return;
