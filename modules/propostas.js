@@ -528,7 +528,7 @@ export function printProposta(state, id){
   const engNome = state.engNome || 'Eng. Responsável';
   const rodape = state.relatorioRodape || 'RUA SEBASTIÃO VITOR, 325 – AGENOR DE LIMA – GUAXUPÉ/MG';
 
-  // ── Tabela de serviços ────────────────────────────────────────────
+  // ── Tabela de serviços (sem linha de TOTAL — hero virá separado) ────
   let itensHtml = '';
   if(p.tipo==='projeto'){
     itensHtml=`<table style="width:100%;border-collapse:collapse;font-size:12px">
@@ -552,15 +552,10 @@ export function printProposta(state, id){
           <td style="padding:10px 12px;text-align:right;font-weight:700;color:#1c2126">${fmt(qtd*preco)}</td>
         </tr>`;}).join('')}
       </tbody>
-      <tfoot>
-        ${desconto>0?`
+      ${desconto>0?`<tfoot>
         <tr style="background:#f5f3f0"><td colspan="4" style="padding:9px 12px;text-align:right;color:#6b7068;font-weight:600">Subtotal</td><td style="padding:9px 12px;text-align:right;font-weight:700">${fmt(subtotal)}</td></tr>
-        <tr style="background:#fef3c7"><td colspan="4" style="padding:9px 12px;text-align:right;color:#92400e;font-weight:600">Desconto (${desconto}%)</td><td style="padding:9px 12px;text-align:right;font-weight:700;color:#92400e">− ${fmt(subtotal*desconto/100)}</td></tr>`:''}
-        <tr style="background:#1c2126;color:#fff">
-          <td colspan="4" style="padding:11px 14px;text-align:right;font-weight:700;letter-spacing:.3px">TOTAL DA PROPOSTA</td>
-          <td style="padding:11px 12px;text-align:right;font-weight:800;font-size:15px;color:#b87333">${fmt(total)}</td>
-        </tr>
-      </tfoot>
+        <tr style="background:#fef3c7"><td colspan="4" style="padding:9px 12px;text-align:right;color:#92400e;font-weight:600">Desconto (${desconto}%)</td><td style="padding:9px 12px;text-align:right;font-weight:700;color:#92400e">− ${fmt(subtotal*desconto/100)}</td></tr>
+      </tfoot>`:''}
     </table>`;
   } else {
     itensHtml=`<table style="width:100%;border-collapse:collapse;font-size:12px">
@@ -585,12 +580,57 @@ export function printProposta(state, id){
         <tr style="background:#f5f3f0"><td colspan="4" style="padding:9px 12px;text-align:right;color:#6b7068;font-weight:600">Subtotal (sem BDI)</td><td style="padding:9px 12px;text-align:right;font-weight:700">${fmt(subtotal)}</td></tr>
         <tr style="background:#eef2f5"><td colspan="4" style="padding:9px 12px;text-align:right;color:#4b6880;font-weight:600">BDI (${bdi}%)</td><td style="padding:9px 12px;text-align:right;font-weight:700">+ ${fmt(subtotal*bdi/100)}</td></tr>
         ${desconto>0?`<tr style="background:#fef3c7"><td colspan="4" style="padding:9px 12px;text-align:right;color:#92400e;font-weight:600">Desconto (${desconto}%)</td><td style="padding:9px 12px;text-align:right;font-weight:700;color:#92400e">− ${fmt(subtotal*(1+bdi/100)*desconto/100)}</td></tr>`:''}
-        <tr style="background:#1c2126;color:#fff">
-          <td colspan="4" style="padding:11px 14px;text-align:right;font-weight:700">TOTAL GERAL</td>
-          <td style="padding:11px 12px;text-align:right;font-weight:800;font-size:15px;color:#b87333">${fmt(total)}</td>
-        </tr>
       </tfoot>
     </table>`;
+  }
+
+  // ── Hero "Investimento Total" — destaque premium centralizado ─────
+  const heroTotalHtml = `
+    <div style="margin:26px 0 18px;padding:28px 24px;background:linear-gradient(135deg,#1c2126 0%,#2a3138 100%);border-radius:14px;text-align:center;color:#fff;box-shadow:0 4px 18px rgba(28,33,38,.18)">
+      <div style="font-size:11px;font-weight:700;color:#b87333;letter-spacing:3px;text-transform:uppercase;margin-bottom:6px">Investimento Total</div>
+      <div style="font-family:'Syne',sans-serif;font-size:38px;font-weight:800;color:#fff;letter-spacing:-1.5px;line-height:1.05">${fmt(total)}</div>
+      ${desconto>0?`<div style="font-size:11px;color:#a8b0ba;margin-top:6px">Já com desconto de ${desconto}% aplicado</div>`:''}
+    </div>`;
+
+  // ── Pagamento inteligente: separa serviços únicos de mensais ─────
+  const _isMensal = un => /^(m[êe]s|mensal|semana|sem)$/i.test((un||'').trim());
+  const itensUnicos = itens.filter(s => !_isMensal(s.un));
+  const itensMensais = itens.filter(s => _isMensal(s.un));
+  const totalMensal = itensMensais.reduce((a,s) => a + (+(s.preco||s.vunit||0)) * (+(s.qtd||0)), 0);
+  const totalUnico = itensUnicos.reduce((a,s) => a + (+(s.preco||s.vunit||0)) * (+(s.qtd||0)), 0);
+  const valorMensalUnit = itensMensais.length ? itensMensais.reduce((a,s) => a + (+(s.preco||s.vunit||0)), 0) : 0;
+
+  let pagamentoHtml = '';
+  if (p.parcela) {
+    if (itensUnicos.length && itensMensais.length) {
+      // Mix: separa em dois blocos
+      pagamentoHtml = `
+        <div style="margin-top:16px;background:#f0f9f4;border:1.5px solid #a7f3d0;border-radius:10px;padding:16px 20px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <div style="font-size:22px">💳</div>
+            <div style="font-weight:800;color:#064e3b;font-size:13.5px;text-transform:uppercase;letter-spacing:.5px">Condições de Pagamento</div>
+          </div>
+          <div style="display:grid;gap:10px">
+            <div style="background:#fff;border-radius:8px;padding:10px 14px;border-left:3px solid #10b981">
+              <div style="font-size:10.5px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Serviços únicos · ${fmt(totalUnico)}</div>
+              <div style="font-size:12.5px;color:#1c2126">${escapeHtml(p.parcela)}</div>
+            </div>
+            <div style="background:#fff;border-radius:8px;padding:10px 14px;border-left:3px solid #0891b2">
+              <div style="font-size:10.5px;font-weight:700;color:#0c4a6e;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Serviços mensais · ${fmt(totalMensal)} ${valorMensalUnit?`(${fmt(valorMensalUnit)}/mês)`:''}</div>
+              <div style="font-size:12.5px;color:#1c2126">Pagamentos mensais conforme evolução da obra e liberação da Caixa.</div>
+            </div>
+          </div>
+        </div>`;
+    } else {
+      pagamentoHtml = `
+        <div style="margin-top:16px;background:#f0f9f4;border:1.5px solid #a7f3d0;border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:12px">
+          <div style="font-size:22px">💳</div>
+          <div style="flex:1">
+            <div style="font-weight:800;color:#064e3b;font-size:13px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Condições de Pagamento</div>
+            <div style="font-size:12.5px;color:#1c2126">${escapeHtml(p.parcela)}</div>
+          </div>
+        </div>`;
+    }
   }
 
   // ── Seção de metodologia ──────────────────────────────────────────
@@ -602,10 +642,11 @@ export function printProposta(state, id){
 
   // ── Página 2 — Fotos + Entregas ───────────────────────────────────
   const fotosPage = fotos.length > 0 ? `
-    <div style="page-break-before:always;padding:40px 40px 30px">
-      <div style="text-align:center;margin-bottom:28px;border-bottom:2px solid #1c2126;padding-bottom:16px">
-        <div style="font-size:20px;font-weight:800;color:#1c2126;letter-spacing:-.5px">Nossos Projetos</div>
-        <div style="font-size:12px;color:#6b7068;margin-top:4px">Referências de projetos realizados pela EJHV Engenharia</div>
+    <div style="page-break-before:always;padding:52px 48px 32px">
+      <div style="text-align:center;margin-bottom:32px">
+        <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#1c2126;letter-spacing:-.8px">Nossos Projetos</div>
+        <div style="font-size:12px;color:#6b7068;margin-top:6px">Referências de projetos realizados pela EJHV Engenharia</div>
+        <div style="width:60px;height:3px;background:#10b981;border-radius:2px;margin:14px auto 0"></div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(${fotos.length>4?3:2},1fr);gap:14px;margin-bottom:32px">
         ${fotos.map(f=>`
@@ -639,8 +680,8 @@ export function printProposta(state, id){
       <style>
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:'DM Sans',sans-serif;color:#1c2126;background:#fff;font-size:13px}
-        .pg1{padding:36px 40px 28px;max-width:840px;margin:0 auto}
-        .hdr{background:#1c2126;color:#fff;border-radius:10px;padding:18px 24px;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}
+        .pg1{padding:52px 48px 32px;max-width:840px;margin:0 auto}
+        .hdr{background:#1c2126;color:#fff;border-radius:14px;padding:26px 32px;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;box-shadow:0 4px 16px rgba(28,33,38,.12)}
         .hdr-logo{font-family:'Syne',sans-serif;font-size:21px;font-weight:800;letter-spacing:-.5px}
         .hdr-logo span{color:#b87333}
         .hdr-sub{font-size:11px;opacity:.6;margin-top:3px}
@@ -689,7 +730,8 @@ export function printProposta(state, id){
       ${p.escopo?`<div style="font-size:12.5px;color:#475569;padding:8px 0 6px;font-style:italic">${escapeHtml(p.escopo)}</div>`:''}
       <div style="margin-bottom:2px">${itensHtml}</div>
 
-      ${p.parcela?`<div class="pay-box"><div class="pay-icon">💳</div><div><div style="font-weight:700;color:#064e3b;font-size:13px">Condições de Pagamento</div><div style="margin-top:3px;color:#065f46">${escapeHtml(p.parcela)}</div></div></div>`:''}
+      ${heroTotalHtml}
+      ${pagamentoHtml}
       ${p.obs?`<div class="obs-box"><strong>Observações:</strong> ${escapeHtml(p.obs)}</div>`:''}
       ${p.validade?`<div class="val-box">⏰ Esta proposta tem validade de <strong>${p.validade} dias</strong> a partir da data de emissão.</div>`:''}
 
@@ -716,13 +758,14 @@ function _buildEntregasHtml(itens) {
   const relevantes = Object.entries(ENTREGAS_PROJ).filter(([k]) => ids.includes(k));
   if (!relevantes.length) return '';
   return `
-    <div style="border-top:1px solid #dbd9d4;padding-top:24px">
-      <div style="font-size:14px;font-weight:800;color:#1c2126;margin-bottom:14px;font-family:'Syne',sans-serif">O que está incluído na proposta</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">
+    <div style="border-top:2px solid #10b981;padding-top:26px;margin-top:8px">
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:#1c2126;margin-bottom:6px;letter-spacing:-.3px">O que está incluído na proposta</div>
+      <div style="width:60px;height:3px;background:#10b981;border-radius:2px;margin-bottom:18px"></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
         ${relevantes.map(([,e]) => `
-          <div style="background:#f5f3f0;border-radius:8px;padding:14px 16px">
-            <div style="font-weight:700;color:#1c2126;font-size:12.5px;margin-bottom:8px">${escapeHtml(e.titulo)}</div>
-            ${e.itens.map(it=>`<div style="display:flex;align-items:flex-start;gap:6px;font-size:11.5px;color:#3a3a38;margin-bottom:4px"><span style="color:#2c657a;font-weight:800;flex-shrink:0">✓</span>${escapeHtml(it)}</div>`).join('')}
+          <div style="background:#fff;border:1px solid #d1fae5;border-left:4px solid #10b981;border-radius:10px;padding:16px 18px;box-shadow:0 1px 3px rgba(16,185,129,.06)">
+            <div style="font-family:'Syne',sans-serif;font-weight:800;color:#064e3b;font-size:13px;margin-bottom:10px;letter-spacing:-.1px">${escapeHtml(e.titulo)}</div>
+            ${e.itens.map(it=>`<div style="display:flex;align-items:flex-start;gap:8px;font-size:11.5px;color:#1c2126;margin-bottom:6px;line-height:1.45"><span style="color:#10b981;font-weight:800;flex-shrink:0;font-size:13px;line-height:1">✓</span><span>${escapeHtml(it)}</span></div>`).join('')}
           </div>`).join('')}
       </div>
     </div>`;
