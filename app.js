@@ -136,9 +136,14 @@ export function renderAtiva() {
   popularSelectsObras(state);
   const hash = calcHash(state);
   if (hash !== _lastHash) {
-    _lastHash = hash;
-    saveStateLocal();
-    showSaveIndicator();
+    // Só atualiza _lastHash e mostra "salvo" se o save de fato ocorreu.
+    // Antes: _lastHash era setado ANTES do save → falhas silenciosas (quota
+    // cheia, JSON inválido) deixavam o sistema "esquecer" que precisa salvar
+    // e nunca tentar de novo. Agora retenta no próximo render.
+    if (saveStateLocal()) {
+      _lastHash = hash;
+      showSaveIndicator();
+    }
     if (window._fbUser) {
       clearTimeout(_fbSaveTimer);
       _fbSaveTimer = setTimeout(() => saveToCloud(), 800);
@@ -1529,6 +1534,10 @@ function compactStateParaLocal(s) {
   return { ...s, diario };
 }
 
+// Retorna true se o save local foi bem-sucedido; false se houve falha
+// (quota cheia, JSON inválido, etc.). Em caso de falha, exibe banner
+// PERSISTENTE no topo da página (não toast efêmero) que só some quando
+// o próximo save funcionar.
 function saveStateLocal() {
   try {
     const compact = compactStateParaLocal(state);
@@ -1536,12 +1545,32 @@ function saveStateLocal() {
     if (Array.isArray(state.propostas)) {
       localStorage.setItem('ejh_propostas_bak', JSON.stringify(state.propostas));
     }
+    hideSaveErrorBanner();
+    return true;
   } catch (e) {
     console.warn('saveStateLocal:', e?.message || e);
-    if (e?.name === 'QuotaExceededError' || /quota/i.test(e?.message || '')) {
-      showToast('⚠️ Armazenamento do navegador cheio. Migre fotos para Firebase Storage em Configurações.', 8000);
-    }
+    const isQuota = e?.name === 'QuotaExceededError' || /quota/i.test(e?.message || '');
+    showSaveErrorBanner(isQuota
+      ? '⚠️ Armazenamento do navegador cheio — alterações NÃO estão sendo salvas. Abra Configurações → ☁️ Migrar fotos do diário, ou use a página de recovery.'
+      : '⚠️ Falha ao salvar localmente: ' + (e?.message || 'erro desconhecido') + '. Suas alterações estão apenas em memória.');
+    return false;
   }
+}
+
+function showSaveErrorBanner(msg) {
+  let el = document.getElementById('save-error-banner');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'save-error-banner';
+    el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#ef4444;color:#fff;padding:10px 16px;text-align:center;font-weight:600;font-size:13px;z-index:99999;box-shadow:0 2px 8px rgba(0,0,0,.3)';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideSaveErrorBanner() {
+  const el = document.getElementById('save-error-banner');
+  if (el) el.style.display = 'none';
 }
 
 // Remove dataUrls grandes de qualquer item (recursivo, raso) para caber no
