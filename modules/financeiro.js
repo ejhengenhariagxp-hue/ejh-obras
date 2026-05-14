@@ -1,5 +1,5 @@
 // modules/financeiro.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted } from '../utils.js?v=20260501g';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted, escapeHtml } from '../utils.js?v=20260514b';
 
 let _finLimit = 20;
 // Filtra transferências internas: elas movem dinheiro entre contas, mas
@@ -1669,18 +1669,19 @@ export function renderFinanceiro(state){
     const sLabel = s==='pago' ? '✅ Pago' : s==='pendente' ? '⚠️ Pendente' : '📅 A vencer';
     const sBadge = `<span class="badge" style="background:${sBg};color:${sFg}">${sLabel}</span>`;
     const conta = (state.contas || []).find(c => c.id === f.contaId);
-    const contaTxt = conta ? `<span style="font-size:10px;color:var(--muted);display:block;margin-top:2px">🏦 ${conta.nome}</span>` : '';
+    const contaTxt = conta ? `<span style="font-size:10px;color:var(--muted);display:block;margin-top:2px">🏦 ${escapeHtml(conta.nome)}</span>` : '';
+    const idAttr = encodeURIComponent(f.id || '');
     return `<tr>
       <td>${fmtD(f.data)}</td>
-      <td><span class="badge ${f.tipo==='Receita'?'badge-green':'badge-red'}">${f.tipo}</span></td>
-      <td style="font-size:12px">${obraName(state, f.obraId)}</td>
-      <td style="font-weight:500">${f.desc}${contaTxt}</td>
-      <td><span class="badge badge-blue" style="font-size:10px">${f.cat}</span></td>
+      <td><span class="badge ${f.tipo==='Receita'?'badge-green':'badge-red'}">${escapeHtml(f.tipo || '')}</span></td>
+      <td style="font-size:12px">${escapeHtml(obraName(state, f.obraId))}</td>
+      <td style="font-weight:500">${escapeHtml(f.desc || '')}${contaTxt}</td>
+      <td><span class="badge badge-blue" style="font-size:10px">${escapeHtml(f.cat || '')}</span></td>
       <td>${sBadge}</td>
       <td style="font-weight:700;color:${f.tipo==='Receita'?'var(--green)':'var(--red)'}">${f.tipo==='Receita'?'+':'-'}${fmt(f.valor)}</td>
       <td style="white-space:nowrap">
-        <button class="btn btn-outline btn-xs" onclick="openEditFin('${f.id}')" style="color:var(--amber);border-color:var(--amber);margin-right:3px" title="Editar">✏️</button>
-        <button class="btn btn-outline btn-xs" onclick="delFin('${f.id}')" style="color:var(--red);border-color:var(--red)" title="Excluir">✕</button>
+        <button class="btn btn-outline btn-xs" onclick="openEditFin(decodeURIComponent('${idAttr}'))" style="color:var(--amber);border-color:var(--amber);margin-right:3px" title="Editar">✏️</button>
+        <button class="btn btn-outline btn-xs" onclick="delFin(decodeURIComponent('${idAttr}'))" style="color:var(--red);border-color:var(--red)" title="Excluir">✕</button>
       </td>
     </tr>`}).join('');
   
