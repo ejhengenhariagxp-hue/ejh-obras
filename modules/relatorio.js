@@ -36,8 +36,8 @@ export function renderReport(state){
     <!-- Cabeçalho -->
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #1c2126">
       <div>
-        ${state.empresaLogo?`<img src="${state.empresaLogo}" style="height:48px;max-width:180px;object-fit:contain;margin-bottom:8px">`:''}
-        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#1c2126">${state.empresaNome || 'EJH ENGENHARIA'}</div>
+        ${state.logoData?`<img src="${state.logoData}" style="height:48px;max-width:180px;object-fit:contain;margin-bottom:8px">`:''}
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#1c2126">${state.empNome || 'EJH ENGENHARIA'}</div>
         <div style="font-size:12px;color:#6b7068">Engenharia Civil • Projetos • Obras</div>
         <div style="font-size:13px;font-weight:600;color:#2c657a;margin-top:4px">${tituloRel}</div>
       </div>

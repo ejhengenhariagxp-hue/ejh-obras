@@ -56,7 +56,7 @@ export function addEmpreita(state){
   if(valor<=0){showToast('⚠️ O valor deve ser maior que zero');return false;}
   const { itens, customizado } = obterItensSelecionados();
   const sigs = obterAssinaturas();
-  state.empreitas.push({
+  state.empreita.push({
     id, obraId:document.getElementById('f-emp-obra').value,
     nome:document.getElementById('f-emp-nome').value||'Empreiteiro',
     tel:document.getElementById('f-emp-tel').value,
@@ -77,7 +77,7 @@ export function addEmpreita(state){
   closeModal('modal-empreita'); return true; showToast('✅ Contrato de empreita cadastrado!');
 }
 
-export function delEmpreita(state, id){if(confirm('Remover contrato?')){state.empreitas=state.empreitas.filter(x=>x.id!==id);markDeleted(state, 'empreita', id);return true;}}
+export function delEmpreita(state, id){if(confirm('Remover contrato?')){state.empreita=state.empreita.filter(x=>x.id!==id);markDeleted(state, 'empreita', id);return true;}}
 
 export function openEmpPag(state, id){
   document.getElementById('f-epag-id').value=id;
@@ -89,7 +89,7 @@ export function openEmpPag(state, id){
 
 export function addEmpPag(state){
   const id=document.getElementById('f-epag-id').value;
-  const emp=state.empreitas.find(x=>x.id===id); if(!emp) return;
+  const emp=state.empreita.find(x=>x.id===id); if(!emp) return;
   emp.pagamentos.push({
     valor:+document.getElementById('f-epag-valor').value||0,
     data:document.getElementById('f-epag-data').value,
@@ -99,7 +99,7 @@ export function addEmpPag(state){
 }
 
 export function renderEmpreita(state){
-  const data = state.empreitas || [];
+  const data = state.empreita || [];
   const total=data.reduce((a,x)=>a+x.valor,0);
   const pago=data.reduce((a,x)=>a+(x.pagamentos||[]).reduce((b,p)=>b+p.valor,0),0);
   document.getElementById('emp-kpi-total').textContent=data.length;

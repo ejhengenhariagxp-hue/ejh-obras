@@ -67,6 +67,14 @@ export let state = loadState(DEFAULT_STATE);
 window._state = state;
 
 function initFields() {
+  // Migração legada: empreitas (plural) → empreita (singular). O módulo
+  // antigo escrevia em state.empreitas mas o restante do app sempre leu de
+  // state.empreita, deixando contratos invisíveis ao sync. Faz move uma
+  // única vez se for o caso.
+  if (Array.isArray(state.empreitas) && state.empreitas.length && !state.empreita?.length) {
+    state.empreita = state.empreitas;
+    delete state.empreitas;
+  }
   ['obras','orc','cron','diario','fin','medicoes','empreita','propostas','checklists','capturas','composicoes','custosFixos','contas']
     .forEach(k => { if (!Array.isArray(state[k])) state[k] = []; });
   if (!state.counters) state.counters = { ...DEFAULT_STATE.counters };
@@ -128,9 +136,14 @@ export function renderAtiva() {
   popularSelectsObras(state);
   const hash = calcHash(state);
   if (hash !== _lastHash) {
-    _lastHash = hash;
-    saveStateLocal();
-    showSaveIndicator();
+    // Só atualiza _lastHash e mostra "salvo" se o save de fato ocorreu.
+    // Antes: _lastHash era setado ANTES do save → falhas silenciosas (quota
+    // cheia, JSON inválido) deixavam o sistema "esquecer" que precisa salvar
+    // e nunca tentar de novo. Agora retenta no próximo render.
+    if (saveStateLocal()) {
+      _lastHash = hash;
+      showSaveIndicator();
+    }
     if (window._fbUser) {
       clearTimeout(_fbSaveTimer);
       _fbSaveTimer = setTimeout(() => saveToCloud(), 800);
@@ -1521,6 +1534,10 @@ function compactStateParaLocal(s) {
   return { ...s, diario };
 }
 
+// Retorna true se o save local foi bem-sucedido; false se houve falha
+// (quota cheia, JSON inválido, etc.). Em caso de falha, exibe banner
+// PERSISTENTE no topo da página (não toast efêmero) que só some quando
+// o próximo save funcionar.
 function saveStateLocal() {
   try {
     const compact = compactStateParaLocal(state);
@@ -1528,12 +1545,32 @@ function saveStateLocal() {
     if (Array.isArray(state.propostas)) {
       localStorage.setItem('ejh_propostas_bak', JSON.stringify(state.propostas));
     }
+    hideSaveErrorBanner();
+    return true;
   } catch (e) {
     console.warn('saveStateLocal:', e?.message || e);
-    if (e?.name === 'QuotaExceededError' || /quota/i.test(e?.message || '')) {
-      showToast('⚠️ Armazenamento do navegador cheio. Migre fotos para Firebase Storage em Configurações.', 8000);
-    }
+    const isQuota = e?.name === 'QuotaExceededError' || /quota/i.test(e?.message || '');
+    showSaveErrorBanner(isQuota
+      ? '⚠️ Armazenamento do navegador cheio — alterações NÃO estão sendo salvas. Abra Configurações → ☁️ Migrar fotos do diário, ou use a página de recovery.'
+      : '⚠️ Falha ao salvar localmente: ' + (e?.message || 'erro desconhecido') + '. Suas alterações estão apenas em memória.');
+    return false;
   }
+}
+
+function showSaveErrorBanner(msg) {
+  let el = document.getElementById('save-error-banner');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'save-error-banner';
+    el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#ef4444;color:#fff;padding:10px 16px;text-align:center;font-weight:600;font-size:13px;z-index:99999;box-shadow:0 2px 8px rgba(0,0,0,.3)';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideSaveErrorBanner() {
+  const el = document.getElementById('save-error-banner');
+  if (el) el.style.display = 'none';
 }
 
 // Remove dataUrls grandes de qualquer item (recursivo, raso) para caber no
@@ -1635,21 +1672,47 @@ async function loadFromCloudV2() {
   delete main.updatedAt;
   const remoteDiarios = diaSnap.docs.map(d => d.data());
 
-  const mergeArr = (a, b) => {
-    if (!Array.isArray(b) || !b.length) return a || [];
-    if (!Array.isArray(a) || !a.length) return b;
-    const ids = new Set(b.map(x => x.id).filter(Boolean));
-    return [...b, ...a.filter(x => x.id && !ids.has(x.id))];
+  // Merge LOCAL-FIRST: em caso de conflito de ID, o LOCAL prevalece.
+  // Antes era cloud-first: o cloud sobrescrevia silenciosamente edições
+  // locais não-sincronizadas. Causa do incidente de IDs trocados desta
+  // sessão. Estratégia conservadora: prefere local a perder edição do
+  // usuário. Estratégia futura: comparar updatedAt por item.
+  const mergeArr = (local, cloud) => {
+    if (!Array.isArray(cloud) || !cloud.length) return local || [];
+    if (!Array.isArray(local) || !local.length) return cloud;
+    const localIds = new Set(local.map(x => x.id).filter(Boolean));
+    return [...local, ...cloud.filter(x => x.id && !localIds.has(x.id))];
   };
 
+  // Para faturamentoMensal (objeto, não array) faz merge por chave,
+  // preferindo local em colisão.
+  const mergeObj = (local, cloud) => {
+    if (!cloud || typeof cloud !== 'object') return local || {};
+    if (!local || typeof local !== 'object') return cloud;
+    return { ...cloud, ...local };
+  };
+
+  // Para escalares (logoData, engNome, etc.): só usa cloud se local for vazio.
+  // Evita que um cloud antigo apague configuração local nova.
+  const preferLocal = (l, c) => (l !== undefined && l !== null && l !== '') ? l : c;
+
   const m = { ...state, ...main };
-  ['obras','orc','cron','fin','medicoes','empreita','propostas','checklists','capturas','composicoes']
+  // Estendido para incluir custosFixos, contas, metas, dividas (antes ficavam
+  // fora do merge → cloud-replace puro, perdendo edições locais).
+  ['obras','orc','cron','fin','medicoes','empreita','propostas','checklists','capturas','composicoes','custosFixos','contas','metas','dividas']
     .forEach(k => { m[k] = mergeArr(state[k], main[k]); });
   // Sub-coleção é fonte da verdade do diário; mas se ainda estiver vazia,
   // cai pro main.diario (legado caminho A) pra dispositivo fresh recuperar
   // os registros antigos sem fotos.
   const cloudDiarios = remoteDiarios.length ? remoteDiarios : (main.diario || []);
   m.diario = mergeArr(state.diario, cloudDiarios);
+
+  // Faturamento mensal (objeto)
+  m.faturamentoMensal = mergeObj(state.faturamentoMensal, main.faturamentoMensal);
+
+  // Escalares: preserva local se houver
+  ['engNome','engRegistro','engSig','empNome','relatorioRodape','logoData']
+    .forEach(k => { m[k] = preferLocal(state[k], main[k]); });
 
   if (main.counters && state.counters) {
     m.counters = {};
