@@ -1574,6 +1574,39 @@ function hideSaveErrorBanner() {
   if (el) el.style.display = 'none';
 }
 
+// Estima o uso atual de localStorage como porcentagem da quota disponível
+// (típica 5MB no navegador). Útil antes de operações pesadas (importar,
+// migrar fotos, gerar lote) para avisar o usuário antes de estourar.
+// Retorna { bytes, pctEstimado, severidade: 'ok'|'alerta'|'critico' }.
+function avaliarQuotaLocalStorage() {
+  try {
+    const raw = localStorage.getItem('ejh_obras_v4') || '';
+    const bytes = new Blob([raw]).size;
+    const quotaAprox = 5 * 1024 * 1024; // 5MB conservador
+    const pct = Math.round((bytes / quotaAprox) * 100);
+    let sev = 'ok';
+    if (pct > 80) sev = 'critico';
+    else if (pct > 60) sev = 'alerta';
+    return { bytes, pctEstimado: pct, severidade: sev };
+  } catch (e) {
+    return { bytes: 0, pctEstimado: 0, severidade: 'ok' };
+  }
+}
+
+// Wrapper para operações pesadas: alerta + exige confirmação se quota
+// estiver alta. Retorna boolean indicando se pode prosseguir.
+function confirmarSeQuotaAlta(operacao) {
+  const q = avaliarQuotaLocalStorage();
+  if (q.severidade === 'critico') {
+    return confirm(`⚠️ Atenção: o armazenamento local está em ${q.pctEstimado}% (${Math.round(q.bytes/1024)} KB).\n\nAo executar "${operacao}", há risco de estourar a quota e a operação falhar parcialmente, deixando dados inconsistentes.\n\nRecomendado: migrar fotos para o Firebase Storage (Configurações → ☁️ Migrar fotos) antes.\n\nContinuar mesmo assim?`);
+  }
+  if (q.severidade === 'alerta') {
+    showToast(`⚠️ Armazenamento em ${q.pctEstimado}%. Considere migrar fotos para Storage em breve.`, 5000);
+  }
+  return true;
+}
+window.confirmarSeQuotaAlta = confirmarSeQuotaAlta; // disponível para módulos
+
 // Remove dataUrls grandes de qualquer item (recursivo, raso) para caber no
 // limite de 1MB do Firestore. Mantém URLs externas/Storage, metadados e
 // chaves WHITELIST (logo, assinaturas — usuário precisa que persistam).
