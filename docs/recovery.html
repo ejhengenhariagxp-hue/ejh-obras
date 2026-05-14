@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🆘 Recuperação — EJH Gestão de Obras</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   * { box-sizing: border-box; }
   body { font-family: -apple-system, system-ui, sans-serif; max-width: 760px; margin: 0 auto; padding: 24px 18px 48px; color: #1c2126; background: #faf9f7; line-height: 1.5; }
@@ -54,7 +55,20 @@
 <h2>🧹 Liberar espaço no localStorage</h2>
 <div class="card">
   <p style="font-size:13px;color:#6b7068">Se as fotos do diário estão estourando a quota do navegador, é possível removê-las preservando todo o resto (texto, datas, dados financeiros, obras).</p>
+  <p style="font-size:13px;color:#b87333;font-weight:700">⚠️ Antes de remover, use a seção "📸 Extrair fotos do diário" abaixo para salvar as fotos no PC.</p>
   <button class="outline" onclick="limparFotos()">🧹 Remover fotos do diário (preserva o resto)</button>
+</div>
+
+<h2>📸 Extrair fotos do diário (baixar como ZIP)</h2>
+<div class="card">
+  <p style="font-size:13px;color:#6b7068">Baixa todas as fotos de uma obra (ou de todas) como arquivo ZIP, preservando datas e nomes originais. Use isto para guardar as fotos no PC antes de limpá-las do app.</p>
+  <div style="margin:10px 0">
+    <strong>Fonte:</strong>
+    <button class="outline" onclick="carregarFotosOrigem('local')" style="margin-left:8px">📦 Usar dados deste navegador</button>
+    <button class="outline" onclick="document.getElementById('upFotos').click()">📁 Carregar arquivo JSON</button>
+    <input type="file" id="upFotos" accept=".json,application/json" style="display:none" onchange="carregarFotosArquivo(this.files[0])">
+  </div>
+  <div id="fotos-list">Selecione uma fonte acima para listar as obras com fotos.</div>
 </div>
 
 <h2>🔄 Backups automáticos de renumeração</h2>
@@ -198,6 +212,97 @@ function limparFotos() {
   } catch (e) {
     setMsg('acao-msg', '❌ Erro ao salvar: ' + e.message, 'err');
   }
+}
+
+// ───── Extração de fotos ─────
+let _stateFotos = null;
+
+function carregarFotosOrigem(tipo) {
+  if (tipo !== 'local') return;
+  const raw = localStorage.getItem(KEY);
+  if (!raw) { document.getElementById('fotos-list').innerHTML = '<span style="color:#ef4444">localStorage vazio</span>'; return; }
+  try { _stateFotos = JSON.parse(raw); } catch(e) { document.getElementById('fotos-list').innerHTML = '❌ JSON inválido'; return; }
+  renderListaFotos();
+}
+
+function carregarFotosArquivo(file) {
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try { _stateFotos = JSON.parse(r.result); renderListaFotos(); }
+    catch(e) { document.getElementById('fotos-list').innerHTML = '❌ JSON inválido: ' + e.message; }
+  };
+  r.readAsText(file);
+}
+
+function renderListaFotos() {
+  if (!_stateFotos) return;
+  const obras = _stateFotos.obras || [];
+  const diarios = _stateFotos.diario || [];
+  const grupos = {};
+  diarios.forEach(d => {
+    if (!Array.isArray(d.fotos) || !d.fotos.length) return;
+    if (!grupos[d.obraId]) grupos[d.obraId] = { obraId: d.obraId, total: 0, diarios: 0 };
+    grupos[d.obraId].total += d.fotos.length;
+    grupos[d.obraId].diarios += 1;
+  });
+  const items = Object.values(grupos);
+  if (!items.length) {
+    document.getElementById('fotos-list').innerHTML = '<span style="color:#6b7068">Nenhuma obra com fotos no diário.</span>';
+    return;
+  }
+  const totalGeral = items.reduce((a, x) => a + x.total, 0);
+  let html = `<div style="margin:12px 0 8px;font-size:13px;color:#0c3d2a"><strong>${totalGeral} foto(s)</strong> em ${items.length} obra(s):</div>`;
+  items.forEach(g => {
+    const o = obras.find(x => x.id === g.obraId);
+    const nome = o ? (o.nome || '?') : '(obra desconhecida)';
+    html += `<div style="border-bottom:1px solid #f0edea;padding:10px 0">
+      <strong>${g.obraId}</strong> · ${nome}<br>
+      <span style="font-size:12px;color:#6b7068">${g.total} foto(s) em ${g.diarios} diário(s)</span><br>
+      <button class="outline" style="margin-top:6px;font-size:12px;padding:6px 12px" onclick="baixarFotosObra('${g.obraId}')">📥 Baixar ZIP desta obra</button>
+    </div>`;
+  });
+  html += `<div style="margin-top:12px"><button class="green" onclick="baixarFotosObra(null)">📥 Baixar ZIP de TODAS as obras</button></div>`;
+  document.getElementById('fotos-list').innerHTML = html;
+}
+
+async function baixarFotosObra(obraId) {
+  if (!_stateFotos) return alert('Carregue a fonte primeiro');
+  if (typeof JSZip === 'undefined') return alert('JSZip não carregou. Recarregue a página.');
+  const zip = new JSZip();
+  const obras = _stateFotos.obras || [];
+  const diarios = _stateFotos.diario || [];
+  let totalAdicionadas = 0;
+  for (const d of diarios) {
+    if (obraId && d.obraId !== obraId) continue;
+    if (!Array.isArray(d.fotos) || !d.fotos.length) continue;
+    const obra = obras.find(o => o.id === d.obraId);
+    const nomeObra = (obra?.nome || d.obraId || 'obra').replace(/[\\\\/:*?"<>|]/g,'_').slice(0,40);
+    const pasta = obraId ? d.data : `${d.obraId}_${nomeObra}/${d.data}`;
+    for (let i = 0; i < d.fotos.length; i++) {
+      const f = d.fotos[i];
+      const url = f.dataUrl || f.url;
+      if (!url || !url.startsWith('data:')) continue;
+      const m = url.match(/^data:([^;]+);base64,(.+)$/);
+      if (!m) continue;
+      const ext = m[1].split('/')[1] || 'jpg';
+      const original = (f.name || `${d.data}_${i+1}.${ext}`).replace(/[\\\\/:*?"<>|]/g,'_');
+      const nomeArq = `${pasta}/${original}`;
+      zip.file(nomeArq, m[2], { base64: true });
+      totalAdicionadas++;
+    }
+  }
+  if (!totalAdicionadas) return alert('Nenhuma foto encontrada para essa obra.');
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const obra = obras.find(o => o.id === obraId);
+  const nomeZip = obraId
+    ? `fotos_${obraId}_${(obra?.nome || '').replace(/[^a-zA-Z0-9]/g,'_').slice(0,30)}_${new Date().toISOString().slice(0,10)}.zip`
+    : `fotos_todas_obras_${new Date().toISOString().slice(0,10)}.zip`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = nomeZip;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 carregar();
