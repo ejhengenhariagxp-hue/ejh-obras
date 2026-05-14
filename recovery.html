@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🆘 Recuperação — EJH Gestão de Obras</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, system-ui, sans-serif; max-width: 760px; margin: 0 auto; padding: 24px 18px 48px; color: #1c2126; background: #faf9f7; line-height: 1.5; }
+  h1 { color: #b87333; margin: 0 0 8px; font-size: 24px; }
+  h2 { color: #0c3d2a; font-size: 16px; margin: 20px 0 10px; }
+  p { margin: 0 0 12px; font-size: 14px; }
+  .card { background: #fff; border: 1px solid #dbd9d4; border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+  .lbl { font-size: 11px; font-weight: 700; color: #6b7068; text-transform: uppercase; letter-spacing: .5px; }
+  .val { font-size: 16px; font-weight: 700; color: #0c3d2a; margin-top: 4px; }
+  .num { font-size: 20px; color: #b87333; font-weight: 800; }
+  button { background: #b87333; color: #fff; border: 0; padding: 11px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; margin: 4px 6px 4px 0; font-family: inherit; }
+  button.outline { background: transparent; color: #b87333; border: 1.5px solid #b87333; }
+  button.danger { background: #ef4444; }
+  button.green { background: #10b981; }
+  pre { background: #f0edea; padding: 12px; border-radius: 8px; font-size: 11px; overflow: auto; max-height: 220px; margin: 8px 0 0; }
+  .warn { background: #fef9ec; border-left: 4px solid #f59e0b; padding: 12px 14px; border-radius: 6px; font-size: 13px; margin: 12px 0; }
+  .ok   { background: #ecfdf5; border-left: 4px solid #10b981; padding: 12px 14px; border-radius: 6px; font-size: 13px; margin: 12px 0; }
+  .err  { background: #fef2f2; border-left: 4px solid #ef4444; padding: 12px 14px; border-radius: 6px; font-size: 13px; margin: 12px 0; }
+  code { background: #f0edea; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 8px 0; }
+  .grid .item { background: #f8f7f4; border-radius: 8px; padding: 10px 12px; }
+  .item .k { font-size: 10.5px; color: #6b7068; text-transform: uppercase; }
+  .item .v { font-size: 17px; font-weight: 800; color: #0c3d2a; }
+</style>
+</head>
+<body>
+<h1>🆘 Recuperação de Dados</h1>
+<p>Ferramenta de emergência para inspecionar, baixar e restaurar o state do app sem precisar do Console.</p>
+
+<div class="warn">
+  <strong>⚠️ Antes de tudo:</strong> Clique em <strong>📥 Baixar backup do state atual</strong> para preservar o que está aqui agora. É um arquivo JSON pequeno que você pode guardar.
+</div>
+
+<h2>📦 Estado atual no localStorage</h2>
+<div class="card">
+  <div id="ls-status">Carregando…</div>
+  <div id="ls-grid" class="grid"></div>
+</div>
+
+<h2>💾 Ações principais</h2>
+<div class="card">
+  <button class="green" onclick="baixarBackup()">📥 Baixar backup do state atual</button>
+  <button class="outline" onclick="document.getElementById('up').click()">📤 Restaurar de arquivo JSON</button>
+  <input type="file" id="up" accept=".json,application/json" style="display:none" onchange="processarUpload(this.files[0])">
+  <div id="acao-msg" style="margin-top:10px"></div>
+</div>
+
+<h2>🧹 Liberar espaço no localStorage</h2>
+<div class="card">
+  <p style="font-size:13px;color:#6b7068">Se as fotos do diário estão estourando a quota do navegador, é possível removê-las preservando todo o resto (texto, datas, dados financeiros, obras).</p>
+  <button class="outline" onclick="limparFotos()">🧹 Remover fotos do diário (preserva o resto)</button>
+</div>
+
+<h2>🔄 Backups automáticos de renumeração</h2>
+<div class="card" id="bk-card">
+  <div id="bk-list">Verificando…</div>
+</div>
+
+<h2>👁 Pré-visualização do JSON (primeiros 2KB)</h2>
+<div class="card">
+  <pre id="preview">—</pre>
+</div>
+
+<p style="font-size:11.5px;color:#6b7068;margin-top:20px">
+  Esta página opera apenas no <code>localStorage</code> deste navegador. Não conecta com Firebase nem servidores externos. Para voltar ao app, clique em <a href="./" style="color:#b87333">↩️ ejh-obras</a>.
+</p>
+
+<script>
+const KEY = 'ejh_obras_v4';
+
+function setMsg(id, html, cls) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = cls ? `<div class="${cls}">${html}</div>` : html;
+}
+
+function carregar() {
+  const raw = localStorage.getItem(KEY)
+           || localStorage.getItem('ejh_obras_v3')
+           || localStorage.getItem('ejh_obras_v2');
+  if (!raw) {
+    setMsg('ls-status', '❌ <strong>Nenhum state encontrado neste navegador</strong> — tente em outro dispositivo onde o app já foi aberto.', 'err');
+    document.getElementById('ls-grid').innerHTML = '';
+    return null;
+  }
+  try {
+    const s = JSON.parse(raw);
+    const sz = new Blob([raw]).size;
+    setMsg('ls-status', `✅ Encontrado · <strong>${(sz/1024).toFixed(1)} KB</strong> em <code>${KEY}</code>`, 'ok');
+    document.getElementById('ls-grid').innerHTML = [
+      ['Obras', (s.obras || []).length],
+      ['Diários', (s.diario || []).length],
+      ['Medições', (s.medicoes || []).length],
+      ['Orçamento', (s.orc || []).length],
+      ['Cronograma', (s.cron || []).length],
+      ['Financeiro', (s.fin || []).length],
+      ['Propostas', (s.propostas || []).length],
+      ['Empreita', (s.empreita || []).length],
+    ].map(([k, v]) => `<div class="item"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+    let preview = JSON.stringify(s, null, 2);
+    if (preview.length > 2000) preview = preview.slice(0, 2000) + '\n…[truncado, ' + (preview.length - 2000) + ' caracteres restantes]';
+    document.getElementById('preview').textContent = preview;
+    return s;
+  } catch (e) {
+    setMsg('ls-status', '❌ JSON inválido: ' + e.message, 'err');
+    return null;
+  }
+}
+
+function listarBackups() {
+  const bks = Object.keys(localStorage).filter(k => k.startsWith('ejh_backup_renumera_')).sort();
+  const el = document.getElementById('bk-list');
+  if (!bks.length) {
+    el.innerHTML = '<span style="color:#6b7068">Nenhum backup automático encontrado. Isso pode ter ocorrido por <strong>quota cheia</strong> — o backup tenta ser criado mas falha silenciosamente. Não é problema: o state principal em <code>' + KEY + '</code> não foi sobrescrito por essa mesma razão.</span>';
+    return;
+  }
+  el.innerHTML = bks.map((k, i) => {
+    try {
+      const s = JSON.parse(localStorage.getItem(k));
+      const dt = new Date(+k.replace('ejh_backup_renumera_','')).toLocaleString('pt-BR');
+      return `<div style="border-bottom:1px solid #f0edea;padding:10px 0">
+        <strong>[${i}]</strong> ${dt}<br>
+        <span style="font-size:12px;color:#6b7068">Obras: ${(s.obras||[]).length} · Diários: ${(s.diario||[]).length} · Medições: ${(s.medicoes||[]).length}</span><br>
+        <button class="outline" style="margin-top:6px;font-size:12px;padding:6px 12px" onclick="restaurarBackup('${k}')">↩️ Restaurar este</button>
+        <button class="outline" style="margin-top:6px;font-size:12px;padding:6px 12px" onclick="baixarBackup('${k}')">📥 Baixar</button>
+      </div>`;
+    } catch (e) {
+      return `<div>[${i}] ${k} — JSON inválido</div>`;
+    }
+  }).join('');
+}
+
+function baixarBackup(key) {
+  const raw = localStorage.getItem(key || KEY);
+  if (!raw) return alert('Sem dados para baixar');
+  const blob = new Blob([raw], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (key || 'ejh_state') + '_' + new Date().toISOString().replace(/[:.]/g,'-') + '.json';
+  a.click();
+}
+
+function processarUpload(file) {
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const s = JSON.parse(r.result);
+      if (!confirm(`Restaurar ${(s.obras||[]).length} obras e ${(s.diario||[]).length} diários?\n\nO state atual será sobrescrito. Recomendado: baixe um backup do atual antes.`)) return;
+      try {
+        localStorage.setItem(KEY, r.result);
+        setMsg('acao-msg', '✅ Restaurado com sucesso. Volte para o app e atualize.', 'ok');
+        carregar();
+      } catch (e) {
+        setMsg('acao-msg', '❌ Quota exceeded ao salvar. Tente "Remover fotos do diário" antes para liberar espaço, ou edite o JSON manualmente.', 'err');
+      }
+    } catch (e) {
+      setMsg('acao-msg', '❌ JSON inválido: ' + e.message, 'err');
+    }
+  };
+  r.readAsText(file);
+}
+
+function restaurarBackup(key) {
+  const raw = localStorage.getItem(key);
+  if (!raw) return alert('Backup não encontrado');
+  let s;
+  try { s = JSON.parse(raw); } catch(e) { return alert('JSON inválido: ' + e.message); }
+  if (!confirm(`Restaurar ${(s.obras||[]).length} obras e ${(s.diario||[]).length} diários do backup "${key}"?`)) return;
+  try {
+    localStorage.setItem(KEY, raw);
+    setMsg('acao-msg', '✅ Restaurado de ' + key, 'ok');
+    carregar();
+  } catch (e) {
+    setMsg('acao-msg', '❌ Quota exceeded. Limpe fotos antes.', 'err');
+  }
+}
+
+function limparFotos() {
+  const raw = localStorage.getItem(KEY);
+  if (!raw) return alert('Sem state para processar');
+  let s;
+  try { s = JSON.parse(raw); } catch(e) { return alert('JSON inválido'); }
+  const totalFotos = (s.diario || []).reduce((a, d) => a + (Array.isArray(d.fotos) ? d.fotos.length : 0), 0);
+  if (!totalFotos) return alert('Não há fotos no diário para remover.');
+  if (!confirm(`Remover ${totalFotos} foto(s) do diário? O texto, datas e demais informações são preservados. Esta ação não pode ser desfeita sem um backup.`)) return;
+  (s.diario || []).forEach(d => { if (Array.isArray(d.fotos)) d.fotos = []; });
+  try {
+    localStorage.setItem(KEY, JSON.stringify(s));
+    setMsg('acao-msg', `✅ ${totalFotos} fotos removidas. Espaço liberado.`, 'ok');
+    carregar();
+  } catch (e) {
+    setMsg('acao-msg', '❌ Erro ao salvar: ' + e.message, 'err');
+  }
+}
+
+carregar();
+listarBackups();
+</script>
+</body>
+</html>
