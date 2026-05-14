@@ -25,6 +25,16 @@ export function addDiario(state){
     if (!obraId) { showToast('⚠️ Selecione uma obra'); return false; }
     if (!data) { showToast('⚠️ Selecione uma data'); return false; }
 
+    // Bloqueia save enquanto há foto ainda em upload pro Storage. Antes,
+    // o save passava com dataUrl preliminar; quando o upload completava
+    // em background, ph.url ficava setado em variável já descartada
+    // (_pendingFotos = []), gerando arquivo órfão no Storage sem
+    // referência no state.
+    if (_pendingFotos.some(f => f.uploading)) {
+      showToast('⚠️ Aguarde o upload das fotos terminar antes de salvar', 4000);
+      return false;
+    }
+
     state.counters = state.counters || {};
     state.counters.dia = state.counters.dia || 1;
     state.diario = state.diario || [];
