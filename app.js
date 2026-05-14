@@ -57,7 +57,7 @@ const DEFAULT_STATE = {
   medicoes:[], empreita:[], propostas:[], checklists:[], capturas:[], composicoes:[],
   custosFixos:[], contas:[],
   faturamentoMensal:{},
-  counters:{ obra:1, orc:1, cron:1, dia:1, fin:1, med:1, emp:1, prop:1, ck:1, comp:1, cf:1, cb:1 },
+  counters:{ obra:1, orc:1, cron:1, dia:1, fin:1, med:1, emp:1, prop:1, ck:1, comp:1, cf:1, cb:1, met:1, div:1, transf:1 },
   engNome:'', engRegistro:'', engCrea:'', engSig:'',
   relatorioRodape:'', logoData:'', sinapiMes:'',
   tabelaSource:'sinapi', sinapiCatFilter:'Todos',
