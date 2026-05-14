@@ -5,9 +5,9 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
          openModal, closeModal, statusBadge, tipoLabel,
          popularSelectsObras, modalidadeIcon, verificarAvisosObra,
          toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260501g';
-import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
-         fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA,
-         getIaKey, setIaKey, hasIaKey, fbMigrarFotosAntigas, fbSalvarSnapshot } from './services.js?v=20260514c';
+import { loadState, fbInit, fbLoginGoogle, fbLogout,
+         saveIaKey, getIaKey, setIaKey,
+         fbMigrarFotosAntigas, fbSalvarSnapshot } from './services.js?v=20260514d';
 import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260501g';
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260501g';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt, renderCronAtivo } from './modules/cronograma.js?v=20260508d';
@@ -131,7 +131,10 @@ export function renderAtiva() {
   const ativa = document.querySelector('.page.active');
   const id = ativa?.id?.replace('page-','') || 'dashboard';
   try { atualizarStatusVencimentos(state); } catch(e) {}
-  try { renderDashboard(); } catch(e) {}
+  // renderDashboard só roda se a página ativa for o dashboard — antes
+  // era chamado em qualquer ação (digitando no Financeiro, salvando no
+  // Diário, etc.), gastando ~10 filtros/reduces sobre o state pra renderizar
+  // HTML que nem está visível.
   try { const fn = PAGE_RENDER_MAP[id]; if (fn) fn(); } catch(e) { console.error('Render error', id, e); }
   popularSelectsObras(state);
   const hash = calcHash(state);
