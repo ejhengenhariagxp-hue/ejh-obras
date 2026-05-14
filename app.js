@@ -131,7 +131,10 @@ export function renderAtiva() {
   const ativa = document.querySelector('.page.active');
   const id = ativa?.id?.replace('page-','') || 'dashboard';
   try { atualizarStatusVencimentos(state); } catch(e) {}
-  try { renderDashboard(); } catch(e) {}
+  // renderDashboard só roda se a página ativa for o dashboard — antes
+  // era chamado em qualquer ação (digitando no Financeiro, salvando no
+  // Diário, etc.), gastando ~10 filtros/reduces sobre o state pra renderizar
+  // HTML que nem está visível.
   try { const fn = PAGE_RENDER_MAP[id]; if (fn) fn(); } catch(e) { console.error('Render error', id, e); }
   popularSelectsObras(state);
   const hash = calcHash(state);
