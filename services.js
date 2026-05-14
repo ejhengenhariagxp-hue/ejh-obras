@@ -16,7 +16,7 @@ const IA_KEY_STORAGE = 'anthropic_api_key';
 
 export let fbUser = null;
 export let fbConfigured = false;
-let fbAuth = null, fbDb = null;
+let fbAuth = null, fbDb = null, fbStorage = null;
 
 // ── Local persistence ────────────────────────────────────────────────
 export function saveState(state) {
@@ -54,6 +54,7 @@ export function fbInit(onUserChange) {
     catch(e) { if (e.code === 'app/duplicate-app') app = firebase.app(); else throw e; }
     fbAuth = firebase.auth();
     fbDb   = firebase.firestore();
+    try { fbStorage = firebase.storage(); } catch(e) { console.warn('storage init:', e.message); }
     fbConfigured = true;
     fbAuth.onAuthStateChanged(user => {
       fbUser = user;
@@ -71,6 +72,62 @@ export function fbLoginGoogle() {
   });
 }
 export function fbLogout() { fbAuth?.signOut(); }
+
+// ── Firebase Storage (fotos do diário) ───────────────────────────────
+// Sobe um Blob ou File pro Storage no path usuarios/{uid}/fotos_diario/.
+// Retorna { url, storagePath } pronto para gravar no state.fotos.
+export async function fbUploadFoto(blob, filename) {
+  if (!fbUser || !fbStorage) throw new Error('Não logado / Storage indisponível');
+  const safe = (filename || 'foto.jpg').replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
+  const ts = Date.now();
+  const rand = Math.floor(Math.random() * 1e6).toString(36);
+  const path = `usuarios/${fbUser.uid}/fotos_diario/${ts}_${rand}_${safe}`;
+  const ref = fbStorage.ref().child(path);
+  const snap = await ref.put(blob, { contentType: blob.type || 'image/jpeg' });
+  const url = await snap.ref.getDownloadURL();
+  return { url, storagePath: path };
+}
+
+// Apaga uma foto do Storage pelo path absoluto (usuarios/.../fotos_diario/...).
+// Silencioso em caso de erro — pode ser por já estar apagada ou regra de segurança.
+export async function fbDeleteFoto(storagePath) {
+  if (!fbStorage || !storagePath) return;
+  try {
+    await fbStorage.ref().child(storagePath).delete();
+  } catch (e) {
+    console.warn('fbDeleteFoto:', storagePath, e?.message);
+  }
+}
+
+// Migra fotos antigas (com dataUrl em base64) para o Storage.
+// Itera por todos os diários, faz upload da dataUrl como blob, atualiza
+// o registro in-place com { url, storagePath }. Retorna estatísticas.
+export async function fbMigrarFotosAntigas(state, onProgress) {
+  if (!fbUser || !fbStorage) throw new Error('Faça login no Google primeiro');
+  let total = 0, migradas = 0, falhas = 0, jaTinha = 0;
+  for (const d of (state.diario || [])) {
+    for (const f of (d.fotos || [])) {
+      total++;
+      if (f.url || f.storagePath) { jaTinha++; continue; }
+      const du = f.dataUrl;
+      if (!du || !du.startsWith('data:')) { falhas++; continue; }
+      try {
+        const resp = await fetch(du);
+        const blob = await resp.blob();
+        const { url, storagePath } = await fbUploadFoto(blob, f.name);
+        f.url = url;
+        f.storagePath = storagePath;
+        f.dataUrl = ''; // libera memória/localStorage
+        migradas++;
+        if (onProgress) onProgress({ total, migradas, falhas, jaTinha, cur: f.name });
+      } catch (e) {
+        console.warn('migrar foto falhou:', f.name, e?.message);
+        falhas++;
+      }
+    }
+  }
+  return { total, migradas, falhas, jaTinha };
+}
 
 export async function fbSaveData(state) {
   if (!fbUser || !fbDb) return;

@@ -7,7 +7,7 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
          toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260501g';
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
          fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA,
-         getIaKey, setIaKey, hasIaKey } from './services.js?v=20260501g';
+         getIaKey, setIaKey, hasIaKey, fbMigrarFotosAntigas } from './services.js?v=20260514a';
 import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260501g';
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260501g';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt, renderCronAtivo } from './modules/cronograma.js?v=20260508d';
@@ -872,6 +872,24 @@ G.delObra = id => { if(delObra(state,id)) renderAtiva(); };
 G.openEditObra = id => openEditObra(state, id);
 G.salvarObra = () => { if(salvarObra(state)) renderAtiva(); };
 G.resetFormObra = () => resetFormObra();
+G.migrarFotosStorage = async () => {
+  if (!window._fbUser) { showToast('⚠️ Faça login no Google primeiro (sync ativa)'); return; }
+  const totalDataUrl = (state.diario || []).reduce((a, d) =>
+    a + (d.fotos || []).filter(f => !f.url && f.dataUrl).length, 0);
+  if (!totalDataUrl) { showToast('✅ Não há fotos antigas para migrar'); return; }
+  if (!confirm(`Migrar ${totalDataUrl} foto(s) do diário para o Firebase Storage?\n\nIsso reduz drasticamente o tamanho do seu state e libera espaço no navegador. As fotos continuam acessíveis (passam a ser URLs).\n\nA operação pode demorar alguns minutos dependendo da quantidade.`)) return;
+  showToast('🔄 Migrando fotos… aguarde', 60000);
+  try {
+    const r = await fbMigrarFotosAntigas(state, p => {
+      console.log(`[Migração] ${p.migradas}/${p.total} — ${p.cur}`);
+    });
+    renderAtiva();
+    showToast(`✅ ${r.migradas} foto(s) migradas, ${r.falhas} falha(s), ${r.jaTinha} já estavam`, 8000);
+    console.log('[Migração] Resultado:', r);
+  } catch (e) {
+    showToast('❌ Erro: ' + (e?.message || 'desconhecido'), 8000);
+  }
+};
 G.registrarMedicaoRapida = id => { if(registrarMedicaoRapida(state,id)) renderAtiva(); };
 G.addOrc = () => { if(addOrc(state)) renderAtiva(); };
 G.delOrc = id => { if(delOrc(state,id)) renderAtiva(); };
@@ -1486,16 +1504,34 @@ function syncFromCloud(silent) {
 }
 
 // Save local PRESERVANDO fotos do diário (saveState do services.js zera fotos)
+// Compacta o state antes de gravar no localStorage: para fotos que já foram
+// migradas pro Firebase Storage (têm url + storagePath), descarta o dataUrl
+// — economiza até 95% de espaço sem perder dado nenhum.
+function compactStateParaLocal(s) {
+  const diario = (s.diario || []).map(d => {
+    const fotos = (d.fotos || []).map(f => {
+      if (f && f.url && f.storagePath && f.dataUrl) {
+        const { dataUrl, ...resto } = f;
+        return resto;
+      }
+      return f;
+    });
+    return { ...d, fotos };
+  });
+  return { ...s, diario };
+}
+
 function saveStateLocal() {
   try {
-    localStorage.setItem('ejh_obras_v4', JSON.stringify(state));
+    const compact = compactStateParaLocal(state);
+    localStorage.setItem('ejh_obras_v4', JSON.stringify(compact));
     if (Array.isArray(state.propostas)) {
       localStorage.setItem('ejh_propostas_bak', JSON.stringify(state.propostas));
     }
   } catch (e) {
     console.warn('saveStateLocal:', e?.message || e);
     if (e?.name === 'QuotaExceededError' || /quota/i.test(e?.message || '')) {
-      showToast('⚠️ Armazenamento do navegador cheio. Apague registros antigos com fotos.', 8000);
+      showToast('⚠️ Armazenamento do navegador cheio. Migre fotos para Firebase Storage em Configurações.', 8000);
     }
   }
 }
