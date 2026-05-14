@@ -1672,21 +1672,47 @@ async function loadFromCloudV2() {
   delete main.updatedAt;
   const remoteDiarios = diaSnap.docs.map(d => d.data());
 
-  const mergeArr = (a, b) => {
-    if (!Array.isArray(b) || !b.length) return a || [];
-    if (!Array.isArray(a) || !a.length) return b;
-    const ids = new Set(b.map(x => x.id).filter(Boolean));
-    return [...b, ...a.filter(x => x.id && !ids.has(x.id))];
+  // Merge LOCAL-FIRST: em caso de conflito de ID, o LOCAL prevalece.
+  // Antes era cloud-first: o cloud sobrescrevia silenciosamente edições
+  // locais não-sincronizadas. Causa do incidente de IDs trocados desta
+  // sessão. Estratégia conservadora: prefere local a perder edição do
+  // usuário. Estratégia futura: comparar updatedAt por item.
+  const mergeArr = (local, cloud) => {
+    if (!Array.isArray(cloud) || !cloud.length) return local || [];
+    if (!Array.isArray(local) || !local.length) return cloud;
+    const localIds = new Set(local.map(x => x.id).filter(Boolean));
+    return [...local, ...cloud.filter(x => x.id && !localIds.has(x.id))];
   };
 
+  // Para faturamentoMensal (objeto, não array) faz merge por chave,
+  // preferindo local em colisão.
+  const mergeObj = (local, cloud) => {
+    if (!cloud || typeof cloud !== 'object') return local || {};
+    if (!local || typeof local !== 'object') return cloud;
+    return { ...cloud, ...local };
+  };
+
+  // Para escalares (logoData, engNome, etc.): só usa cloud se local for vazio.
+  // Evita que um cloud antigo apague configuração local nova.
+  const preferLocal = (l, c) => (l !== undefined && l !== null && l !== '') ? l : c;
+
   const m = { ...state, ...main };
-  ['obras','orc','cron','fin','medicoes','empreita','propostas','checklists','capturas','composicoes']
+  // Estendido para incluir custosFixos, contas, metas, dividas (antes ficavam
+  // fora do merge → cloud-replace puro, perdendo edições locais).
+  ['obras','orc','cron','fin','medicoes','empreita','propostas','checklists','capturas','composicoes','custosFixos','contas','metas','dividas']
     .forEach(k => { m[k] = mergeArr(state[k], main[k]); });
   // Sub-coleção é fonte da verdade do diário; mas se ainda estiver vazia,
   // cai pro main.diario (legado caminho A) pra dispositivo fresh recuperar
   // os registros antigos sem fotos.
   const cloudDiarios = remoteDiarios.length ? remoteDiarios : (main.diario || []);
   m.diario = mergeArr(state.diario, cloudDiarios);
+
+  // Faturamento mensal (objeto)
+  m.faturamentoMensal = mergeObj(state.faturamentoMensal, main.faturamentoMensal);
+
+  // Escalares: preserva local se houver
+  ['engNome','engRegistro','engSig','empNome','relatorioRodape','logoData']
+    .forEach(k => { m[k] = preferLocal(state[k], main[k]); });
 
   if (main.counters && state.counters) {
     m.counters = {};
