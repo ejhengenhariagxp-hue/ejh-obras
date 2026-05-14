@@ -67,6 +67,14 @@ export let state = loadState(DEFAULT_STATE);
 window._state = state;
 
 function initFields() {
+  // Migração legada: empreitas (plural) → empreita (singular). O módulo
+  // antigo escrevia em state.empreitas mas o restante do app sempre leu de
+  // state.empreita, deixando contratos invisíveis ao sync. Faz move uma
+  // única vez se for o caso.
+  if (Array.isArray(state.empreitas) && state.empreitas.length && !state.empreita?.length) {
+    state.empreita = state.empreitas;
+    delete state.empreitas;
+  }
   ['obras','orc','cron','diario','fin','medicoes','empreita','propostas','checklists','capturas','composicoes','custosFixos','contas']
     .forEach(k => { if (!Array.isArray(state[k])) state[k] = []; });
   if (!state.counters) state.counters = { ...DEFAULT_STATE.counters };
