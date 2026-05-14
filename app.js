@@ -7,7 +7,7 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
          toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260501g';
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
          fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA,
-         getIaKey, setIaKey, hasIaKey, fbMigrarFotosAntigas } from './services.js?v=20260514a';
+         getIaKey, setIaKey, hasIaKey, fbMigrarFotosAntigas, fbSalvarSnapshot } from './services.js?v=20260514c';
 import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260501g';
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260501g';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt, renderCronAtivo } from './modules/cronograma.js?v=20260508d';
@@ -1574,6 +1574,23 @@ function hideSaveErrorBanner() {
   if (el) el.style.display = 'none';
 }
 
+// Snapshot diário no Storage para recovery facilitado em incidentes
+// (ver causa do incidente desta sessão). Roda no máximo 1 vez por dia
+// — usa flag em localStorage 'ejh_ultimo_snapshot' com YYYY-MM-DD.
+async function tentarSnapshotDiario() {
+  if (!window._fbUser) return;
+  try {
+    const hoje = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem('ejh_ultimo_snapshot') === hoje) return;
+    const r = await fbSalvarSnapshot(state);
+    localStorage.setItem('ejh_ultimo_snapshot', hoje);
+    console.log('[snapshot diário]', r);
+  } catch (e) {
+    console.warn('snapshot diário falhou:', e?.message);
+  }
+}
+window.fazerSnapshotAgora = tentarSnapshotDiario; // permite chamar manualmente
+
 // Estima o uso atual de localStorage como porcentagem da quota disponível
 // (típica 5MB no navegador). Útil antes de operações pesadas (importar,
 // migrar fotos, gerar lote) para avisar o usuário antes de estourar.
@@ -1836,6 +1853,9 @@ window.addEventListener('load', () => {
         renderAtiva();
         if (window._fbUser) saveToCloud();
         showToast('☁️ Sincronizado!', 2000);
+        // Snapshot diário automático no Firebase Storage. Idempotente:
+        // se já houver snapshot do dia, sobrescreve. Não bloqueia UX.
+        tentarSnapshotDiario();
       }).catch(e => {
         console.error('Login load:', e);
         setSyncStatus('❌', 'Erro ao carregar: ' + (e.message || ''));
