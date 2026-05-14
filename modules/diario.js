@@ -1,6 +1,6 @@
 // modules/diario.js
 import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, popularSelectsObras, obraName, escapeHtml, markDeleted } from '../utils.js?v=20260501a';
-import { iaCall } from '../services.js?v=20260501a';
+import { iaCall, fbUploadFoto, fbDeleteFoto } from '../services.js?v=20260514a';
 
 let _diarioLimit = 20;
 let _pendingFotos = [];
@@ -30,11 +30,19 @@ export function addDiario(state){
     state.diario = state.diario || [];
 
     const editId = document.getElementById('f-dia-id')?.value;
-    // Caminho B (Firestore puro): foto fica como dataUrl no sub-doc do registro
-    const fotosFinais = _pendingFotos.map(f => ({
-      dataUrl: f.dataUrl,
-      name: f.name
-    })).filter(f => f.dataUrl);
+    // Fotos: se foram para o Storage (têm url/storagePath), grava só esses
+    // metadados — sem dataUrl pesando o state. Senão (fallback offline/sem
+    // login), grava o dataUrl como antes.
+    const fotosFinais = _pendingFotos.map(f => {
+      const base = { name: f.name };
+      if (f.url) {
+        base.url = f.url;
+        if (f.storagePath) base.storagePath = f.storagePath;
+        return base;
+      }
+      if (f.dataUrl) { base.dataUrl = f.dataUrl; return base; }
+      return null;
+    }).filter(Boolean);
     const sig = window._diarioGetSig?.() || null;
     const equipeList = window._diarioGetEquipe?.() || [];
     const dadosForm = {
@@ -100,6 +108,11 @@ export function openEditDiario(state, id) {
 
 export function delDiario(state, id){
   if(confirm('Excluir este registro?')){
+    const d = state.diario.find(x => x.id === id);
+    // Apaga fotos correspondentes do Storage em background — não bloqueia o delete local
+    if (d && Array.isArray(d.fotos)) {
+      d.fotos.forEach(f => { if (f.storagePath) fbDeleteFoto(f.storagePath); });
+    }
     state.diario=state.diario.filter(x=>x.id!==id);
     markDeleted(state, 'diario', id);
     _diarioLimit=20;
@@ -149,8 +162,22 @@ export async function handleFotos(state, input){
         r.onerror = rej;
         r.readAsDataURL(file);
       });
-      const { dataUrl: compressed } = await compressImage(dataUrl);
-      ph.dataUrl = compressed;
+      const { dataUrl: compressed, blob } = await compressImage(dataUrl);
+      // Tenta subir para Firebase Storage — se logado e Storage disponível.
+      // Em caso de falha (sem login, sem regra, offline), mantém dataUrl como fallback.
+      if (window._fbUser && blob) {
+        try {
+          const { url, storagePath } = await fbUploadFoto(blob, file.name);
+          ph.url = url;
+          ph.storagePath = storagePath;
+          ph.dataUrl = compressed; // preview local enquanto está aberto o modal
+        } catch (e) {
+          console.warn('upload storage falhou, fallback dataUrl:', e?.message);
+          ph.dataUrl = compressed;
+        }
+      } else {
+        ph.dataUrl = compressed;
+      }
       ph.uploading = false;
       renderFotoPreview();
     } catch (e) {

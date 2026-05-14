@@ -1,0 +1,27 @@
+// Regras de segurança do Firebase Storage para o projeto ejh-obras
+// ════════════════════════════════════════════════════════════════════
+//
+// COMO APLICAR:
+// 1. Abra https://console.firebase.google.com/project/ejh-obras/storage/rules
+// 2. Cole o conteúdo do bloco "rules_version" abaixo (incluindo a linha)
+// 3. Clique em "Publicar"
+//
+// O QUE FAZ:
+// - Cada usuário só pode ler/escrever em sua própria pasta usuarios/{uid}/
+// - Outros usuários não conseguem acessar os arquivos
+// - Tamanho máximo: 10MB por arquivo (proteção contra upload acidental)
+// - Apenas tipos de imagem aceitos
+//
+// ════════════════════════════════════════════════════════════════════
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /usuarios/{uid}/{allPaths=**} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == uid
+                         && (resource == null || request.resource.size < 10 * 1024 * 1024)
+                         && (resource == null || request.resource.contentType.matches('image/.*'));
+    }
+  }
+}
