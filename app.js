@@ -7,7 +7,7 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
          toggleFab, closeFab, openLightbox, closeLightbox, showSaveIndicator } from './utils.js?v=20260501g';
 import { saveState, loadState, fbInit, fbLoginGoogle, fbLogout,
          fbSaveData, fbLoadData, saveIaKey, iaCall, gerarOrcamentoIA, gerarEscopoIA, gerarRelatorioIA,
-         getIaKey, setIaKey, hasIaKey, fbMigrarFotosAntigas } from './services.js?v=20260514a';
+         getIaKey, setIaKey, hasIaKey, fbMigrarFotosAntigas, fbSalvarSnapshot } from './services.js?v=20260514c';
 import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260501g';
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260501g';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt, renderCronAtivo } from './modules/cronograma.js?v=20260508d';
@@ -27,7 +27,7 @@ import { addFin, delFin, openEditFin, openModalFin, openModalFinPessoal, isModal
          addDivida, delDivida, openModalDivida, openEditDivida, pagarParcelaDivida,
          atualizarTotalPagamentoDivida, confirmarPagamentoDivida,
          importarAbril2026Planilha, importarMesPlanilha,
-         renderEjhLife, setEjhLifeFiltro, limparEjhLifeFiltros } from './modules/financeiro.js?v=20260508j';
+         renderEjhLife, setEjhLifeFiltro, limparEjhLifeFiltros, aumentarFinLimit } from './modules/financeiro.js?v=20260514c';
 import { addMedicao, updateMedVal, loadMedItems, printMedicao, colherAssinatura, renderMedicoes, openModalMedicao, openEditMedicao, delMedicao } from './modules/medicoes.js?v=20260505i';
 import { addEmpreita, delEmpreita, openEmpPag, addEmpPag, renderEmpreita, initSignaturePads, limparAssinatura, obterItensSelecionados, resetFormEmpreita } from './modules/empreita.js?v=20260501g';
 import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
@@ -57,7 +57,7 @@ const DEFAULT_STATE = {
   medicoes:[], empreita:[], propostas:[], checklists:[], capturas:[], composicoes:[],
   custosFixos:[], contas:[],
   faturamentoMensal:{},
-  counters:{ obra:1, orc:1, cron:1, dia:1, fin:1, med:1, emp:1, prop:1, ck:1, comp:1, cf:1, cb:1 },
+  counters:{ obra:1, orc:1, cron:1, dia:1, fin:1, med:1, emp:1, prop:1, ck:1, comp:1, cf:1, cb:1, met:1, div:1, transf:1 },
   engNome:'', engRegistro:'', engCrea:'', engSig:'',
   relatorioRodape:'', logoData:'', sinapiMes:'',
   tabelaSource:'sinapi', sinapiCatFilter:'Todos',
@@ -988,6 +988,7 @@ G.confirmarPagamentoDivida = () => {
     renderAtiva();
   }
 };
+G.aumentarFinLimit = aumentarFinLimit;
 G.addFin = () => { if(addFin(state)) renderAtiva(); };
 G.delFin = id => { if(delFin(state,id)) renderAtiva(); };
 G.openEditFin = id => openEditFin(state, id);
@@ -1573,6 +1574,56 @@ function hideSaveErrorBanner() {
   if (el) el.style.display = 'none';
 }
 
+// Snapshot diário no Storage para recovery facilitado em incidentes
+// (ver causa do incidente desta sessão). Roda no máximo 1 vez por dia
+// — usa flag em localStorage 'ejh_ultimo_snapshot' com YYYY-MM-DD.
+async function tentarSnapshotDiario() {
+  if (!window._fbUser) return;
+  try {
+    const hoje = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem('ejh_ultimo_snapshot') === hoje) return;
+    const r = await fbSalvarSnapshot(state);
+    localStorage.setItem('ejh_ultimo_snapshot', hoje);
+    console.log('[snapshot diário]', r);
+  } catch (e) {
+    console.warn('snapshot diário falhou:', e?.message);
+  }
+}
+window.fazerSnapshotAgora = tentarSnapshotDiario; // permite chamar manualmente
+
+// Estima o uso atual de localStorage como porcentagem da quota disponível
+// (típica 5MB no navegador). Útil antes de operações pesadas (importar,
+// migrar fotos, gerar lote) para avisar o usuário antes de estourar.
+// Retorna { bytes, pctEstimado, severidade: 'ok'|'alerta'|'critico' }.
+function avaliarQuotaLocalStorage() {
+  try {
+    const raw = localStorage.getItem('ejh_obras_v4') || '';
+    const bytes = new Blob([raw]).size;
+    const quotaAprox = 5 * 1024 * 1024; // 5MB conservador
+    const pct = Math.round((bytes / quotaAprox) * 100);
+    let sev = 'ok';
+    if (pct > 80) sev = 'critico';
+    else if (pct > 60) sev = 'alerta';
+    return { bytes, pctEstimado: pct, severidade: sev };
+  } catch (e) {
+    return { bytes: 0, pctEstimado: 0, severidade: 'ok' };
+  }
+}
+
+// Wrapper para operações pesadas: alerta + exige confirmação se quota
+// estiver alta. Retorna boolean indicando se pode prosseguir.
+function confirmarSeQuotaAlta(operacao) {
+  const q = avaliarQuotaLocalStorage();
+  if (q.severidade === 'critico') {
+    return confirm(`⚠️ Atenção: o armazenamento local está em ${q.pctEstimado}% (${Math.round(q.bytes/1024)} KB).\n\nAo executar "${operacao}", há risco de estourar a quota e a operação falhar parcialmente, deixando dados inconsistentes.\n\nRecomendado: migrar fotos para o Firebase Storage (Configurações → ☁️ Migrar fotos) antes.\n\nContinuar mesmo assim?`);
+  }
+  if (q.severidade === 'alerta') {
+    showToast(`⚠️ Armazenamento em ${q.pctEstimado}%. Considere migrar fotos para Storage em breve.`, 5000);
+  }
+  return true;
+}
+window.confirmarSeQuotaAlta = confirmarSeQuotaAlta; // disponível para módulos
+
 // Remove dataUrls grandes de qualquer item (recursivo, raso) para caber no
 // limite de 1MB do Firestore. Mantém URLs externas/Storage, metadados e
 // chaves WHITELIST (logo, assinaturas — usuário precisa que persistam).
@@ -1802,6 +1853,9 @@ window.addEventListener('load', () => {
         renderAtiva();
         if (window._fbUser) saveToCloud();
         showToast('☁️ Sincronizado!', 2000);
+        // Snapshot diário automático no Firebase Storage. Idempotente:
+        // se já houver snapshot do dia, sobrescreve. Não bloqueia UX.
+        tentarSnapshotDiario();
       }).catch(e => {
         console.error('Login load:', e);
         setSyncStatus('❌', 'Erro ao carregar: ' + (e.message || ''));

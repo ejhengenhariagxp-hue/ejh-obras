@@ -1,5 +1,5 @@
 ﻿// modules/relatorio.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge } from '../utils.js?v=20260501a';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, escapeHtml } from '../utils.js?v=20260514c';
 
 
 export function renderReport(state){
@@ -93,17 +93,17 @@ export function renderReport(state){
           const entries = state.diario.filter(d => d.obraId === o.id).sort((a,b) => b.data.localeCompare(a.data));
           return `
           <div style="margin-bottom:32px">
-            <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#1c2126;border-bottom:2px solid #dbd9d4;padding-bottom:8px;margin-bottom:16px">${o.nome}</div>
+            <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#1c2126;border-bottom:2px solid #dbd9d4;padding-bottom:8px;margin-bottom:16px">${escapeHtml(o.nome)}</div>
             ${entries.length ? entries.map(e => `
               <div style="background:#faf9f7;border:1px solid #dbd9d4;border-radius:12px;padding:20px;margin-bottom:12px">
                 <div style="display:flex;justify-content:space-between;border-bottom:1px solid #f0edea;padding-bottom:8px;margin-bottom:10px">
                   <div style="font-weight:700;color:#1c2126">${fmtD(e.data)}</div>
-                  <div style="font-size:11.5px;color:#6b7068">${e.clima} • Equipe: ${e.equipe}</div>
+                  <div style="font-size:11.5px;color:#6b7068">${escapeHtml(e.clima || '')} • Equipe: ${escapeHtml(e.equipe || '')}</div>
                 </div>
-                <div style="font-size:13.5px;line-height:1.6;color:#1c1e1a;white-space:pre-wrap">${e.desc}</div>
+                <div style="font-size:13.5px;line-height:1.6;color:#1c1e1a;white-space:pre-wrap">${escapeHtml(e.desc || '')}</div>
                 ${e.ocorr && e.ocorr !== 'Sem ocorrências' ? `
                   <div style="margin-top:10px;font-size:12.5px;color:#ef4444;background:#fef2f2;padding:10px;border-radius:8px">
-                    <strong>⚠️ Ocorrências/Observações:</strong><br>${e.ocorr}
+                    <strong>⚠️ Ocorrências/Observações:</strong><br>${escapeHtml(e.ocorr)}
                   </div>` : ''}
                 ${e.fotos && e.fotos.length ? `
                   <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));gap:10px;margin-top:14px">

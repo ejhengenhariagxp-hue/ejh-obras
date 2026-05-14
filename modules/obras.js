@@ -3,6 +3,7 @@
 // ══════════════════════════════════════════════════════════════════════
 
 import { fmt, fmtD, pad, safeInner, showToast, statusBadge, tipoLabel, openModal, closeModal, modalidadeIcon, verificarAvisosObra, escapeHtml, markDeleted } from '../utils.js?v=20260501a';
+import { fbDeleteFoto } from '../services.js?v=20260514a';
 
 const val = id => document.getElementById(id)?.value?.trim() || '';
 const num = id => +document.getElementById(id)?.value || 0;
@@ -124,24 +125,50 @@ export function resetFormObra() {
 // Excluir obra
 export function delObra(state, id) {
   if (!confirm('Excluir esta obra e todos os dados associados?')) return false;
-  // Captura ids relacionados ANTES de filtrar, para gerar tombstones
+
+  // Apaga fotos do Storage vinculadas aos diários desta obra
+  // (background, não bloqueia o delete local).
+  (state.diario || []).filter(d => d.obraId === id).forEach(d => {
+    (d.fotos || []).forEach(f => { if (f.storagePath) fbDeleteFoto(f.storagePath); });
+  });
+
+  // Captura ids relacionados ANTES de filtrar, para gerar tombstones em
+  // TODAS as coleções (não só as 5 antigas — antes empreita/propostas/
+  // checklists/capturas/composicoes ficavam órfãs).
   const orcIds  = state.orc.filter(x=>x.obraId===id).map(x=>x.id);
   const cronIds = state.cron.filter(x=>x.obraId===id).map(x=>x.id);
   const diaIds  = state.diario.filter(x=>x.obraId===id).map(x=>x.id);
   const finIds  = state.fin.filter(x=>x.obraId===id).map(x=>x.id);
   const medIds  = state.medicoes.filter(x=>x.obraId===id).map(x=>x.id);
-  state.obras    = state.obras.filter(x=>x.id!==id);
-  state.orc      = state.orc.filter(x=>x.obraId!==id);
-  state.cron     = state.cron.filter(x=>x.obraId!==id);
-  state.diario   = state.diario.filter(x=>x.obraId!==id);
-  state.fin      = state.fin.filter(x=>x.obraId!==id);
-  state.medicoes = state.medicoes.filter(x=>x.obraId!==id);
+  const empIds  = (state.empreita || []).filter(x=>x.obraId===id).map(x=>x.id);
+  const propIds = (state.propostas || []).filter(x=>x.obraId===id).map(x=>x.id);
+  const ckIds   = (state.checklists || []).filter(x=>x.obraId===id).map(x=>x.id);
+  const capIds  = (state.capturas || []).filter(x=>x.obraId===id).map(x=>x.id);
+  const compIds = (state.composicoes || []).filter(x=>x.obraId===id).map(x=>x.id);
+
+  state.obras       = state.obras.filter(x=>x.id!==id);
+  state.orc         = state.orc.filter(x=>x.obraId!==id);
+  state.cron        = state.cron.filter(x=>x.obraId!==id);
+  state.diario      = state.diario.filter(x=>x.obraId!==id);
+  state.fin         = state.fin.filter(x=>x.obraId!==id);
+  state.medicoes    = state.medicoes.filter(x=>x.obraId!==id);
+  state.empreita    = (state.empreita || []).filter(x=>x.obraId!==id);
+  state.propostas   = (state.propostas || []).filter(x=>x.obraId!==id);
+  state.checklists  = (state.checklists || []).filter(x=>x.obraId!==id);
+  state.capturas    = (state.capturas || []).filter(x=>x.obraId!==id);
+  state.composicoes = (state.composicoes || []).filter(x=>x.obraId!==id);
+
   markDeleted(state, 'obras', id);
   orcIds.forEach(i => markDeleted(state, 'orc', i));
   cronIds.forEach(i => markDeleted(state, 'cron', i));
   diaIds.forEach(i => markDeleted(state, 'diario', i));
   finIds.forEach(i => markDeleted(state, 'fin', i));
   medIds.forEach(i => markDeleted(state, 'medicoes', i));
+  empIds.forEach(i => markDeleted(state, 'empreita', i));
+  propIds.forEach(i => markDeleted(state, 'propostas', i));
+  ckIds.forEach(i => markDeleted(state, 'checklists', i));
+  capIds.forEach(i => markDeleted(state, 'capturas', i));
+  compIds.forEach(i => markDeleted(state, 'composicoes', i));
   return true;
 }
 

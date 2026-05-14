@@ -1,5 +1,5 @@
 // modules/checklist.js — Checklist de Qualidade (templates NBR)
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal } from '../utils.js?v=20260501a';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, escapeHtml } from '../utils.js?v=20260514c';
 
 export const CK_TEMPLATES = {
   'Fundações':['Locação conforme projeto aprovado','Profundidade da escavação atingida',
@@ -187,12 +187,12 @@ export function abrirChecklistDetalhe(state, id) {
     .footer{margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:40px}
     .ass{border-top:1.5px solid #0f2744;padding-top:6px;font-size:12px;text-align:center;margin-top:10px}
     @media print{.no-print{display:none}}</style></head><body>
-    <h1>✅ Checklist — ${ck.etapa}</h1>
+    <h1>✅ Checklist — ${escapeHtml(ck.etapa)}</h1>
     <div class="meta">
-      <div><b>Obra:</b> ${obra?.nome||ck.obraId}</div>
+      <div><b>Obra:</b> ${escapeHtml(obra?.nome||ck.obraId)}</div>
       <div><b>Data:</b> ${fmtD(ck.data)}</div>
-      <div><b>Inspetor:</b> ${ck.inspetor}</div>
-      <div><b>ID:</b> ${ck.id}</div>
+      <div><b>Inspetor:</b> ${escapeHtml(ck.inspetor)}</div>
+      <div><b>ID:</b> ${escapeHtml(ck.id)}</div>
     </div>
     ${ck.itens.map((it,i)=>`<div class="item" id="item-${i}" style="background:${corStatus[it.status]||'#f8faff'}">
       <select onchange="updateStatus(${i},this.value)" class="no-print">
@@ -201,11 +201,11 @@ export function abrirChecklistDetalhe(state, id) {
         <option value="reprovado" ${it.status==='reprovado'?'selected':''}>❌ Reprovado</option>
         <option value="na" ${it.status==='na'?'selected':''}>— N/A</option>
       </select>
-      <span>${it.texto}</span>
+      <span>${escapeHtml(it.texto)}</span>
     </div>`).join('')}
     <div class="footer">
-      <div><div style="height:50px"></div><div class="ass">${ck.inspetor||'Responsável Técnico'}<br>Engenheiro / Fiscal</div></div>
-      <div><div style="height:50px"></div><div class="ass">${obra?.cliente||'Contratante'}</div></div>
+      <div><div style="height:50px"></div><div class="ass">${escapeHtml(ck.inspetor||'Responsável Técnico')}<br>Engenheiro / Fiscal</div></div>
+      <div><div style="height:50px"></div><div class="ass">${escapeHtml(obra?.cliente||'Contratante')}</div></div>
     </div>
     <div class="no-print" style="margin-top:20px;display:flex;gap:10px">
       <button onclick="window.print()" style="padding:8px 16px;background:#0f2744;color:#fff;border:none;border-radius:8px;cursor:pointer">🖨 Imprimir</button>

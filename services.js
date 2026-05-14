@@ -99,6 +99,57 @@ export async function fbDeleteFoto(storagePath) {
   }
 }
 
+// Salva snapshot diário do state em Firebase Storage
+// (usuarios/{uid}/snapshots/YYYY-MM-DD.json). Idempotente: se já houver
+// snapshot do dia, sobrescreve com o estado mais recente.
+// Mantém retenção: últimos 7 dias + um por semana das 4 últimas + um por
+// mês dos 6 últimos meses (limpeza opcional via fbLimparSnapshotsAntigos).
+export async function fbSalvarSnapshot(state) {
+  if (!fbUser || !fbStorage) throw new Error('Não logado / Storage indisponível');
+  const hoje = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const path = `usuarios/${fbUser.uid}/snapshots/${hoje}.json`;
+  // Strip de dataUrls pesados pra reduzir tamanho do snapshot
+  const compact = JSON.parse(JSON.stringify(state, (k, v) => {
+    if (typeof v === 'string' && v.startsWith('data:') && v.length > 8000) {
+      // Mantém só os que são pequenos (logo, assinatura). dataUrls de fotos
+      // grandes não vão pro snapshot (já estão no Storage com URL).
+      return '[stripped]';
+    }
+    return v;
+  }));
+  const blob = new Blob([JSON.stringify(compact)], { type: 'application/json' });
+  const ref = fbStorage.ref().child(path);
+  await ref.put(blob, { contentType: 'application/json' });
+  return { path, hoje, bytes: blob.size };
+}
+
+// Lista snapshots existentes (mais novos primeiro).
+export async function fbListarSnapshots() {
+  if (!fbUser || !fbStorage) return [];
+  const ref = fbStorage.ref().child(`usuarios/${fbUser.uid}/snapshots`);
+  try {
+    const res = await ref.listAll();
+    return res.items.map(item => ({
+      name: item.name,
+      path: item.fullPath,
+      date: item.name.replace('.json', '')
+    })).sort((a, b) => b.date.localeCompare(a.date));
+  } catch (e) {
+    console.warn('fbListarSnapshots:', e?.message);
+    return [];
+  }
+}
+
+// Baixa um snapshot específico (devolve o state parseado).
+export async function fbBaixarSnapshot(path) {
+  if (!fbStorage) throw new Error('Storage indisponível');
+  const ref = fbStorage.ref().child(path);
+  const url = await ref.getDownloadURL();
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error('Falha ao baixar snapshot: ' + resp.status);
+  return await resp.json();
+}
+
 // Migra fotos antigas (com dataUrl em base64) para o Storage.
 // Itera por todos os diários, faz upload da dataUrl como blob, atualiza
 // o registro in-place com { url, storagePath }. Retorna estatísticas.

@@ -70,6 +70,16 @@ export function addDiario(state){
     if (editId) {
       const idx = state.diario.findIndex(d => d.id === editId);
       if (idx < 0) { showToast('⚠️ Registro não encontrado'); return false; }
+      // Apaga do Storage as fotos que foram removidas neste edit
+      // (presentes antes, ausentes agora). Sem isso, ficavam órfãs
+      // consumindo quota de Storage para sempre.
+      const fotosAntes = state.diario[idx].fotos || [];
+      const pathsAgora = new Set(fotosFinais.map(f => f.storagePath).filter(Boolean));
+      fotosAntes.forEach(f => {
+        if (f.storagePath && !pathsAgora.has(f.storagePath)) {
+          fbDeleteFoto(f.storagePath); // background, não bloqueia
+        }
+      });
       state.diario[idx] = { ...state.diario[idx], ...dadosForm };
     } else {
       state.diario.push({ id: 'DIA-'+pad(state.counters.dia), ...dadosForm });

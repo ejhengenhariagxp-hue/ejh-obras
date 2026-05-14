@@ -2,6 +2,12 @@
 import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, popularSelectsObras, obraName, markDeleted, escapeHtml } from '../utils.js?v=20260514b';
 
 let _finLimit = 20;
+
+// Permite que o botão "Ver mais" em renderFinanceiro aumente o limite.
+// Antes o onclick fazia `window._state.finLimit += 20` — mas _finLimit é
+// variável module-scope privada, então a propriedade era criada no state
+// sem efeito. Resultado: botão não funcionava.
+export function aumentarFinLimit(n = 20) { _finLimit += n; }
 // Filtra transferências internas: elas movem dinheiro entre contas, mas
 // não devem contar como faturamento, despesa real ou saldo líquido.
 // (Continuam contando no saldo de cada conta bancária — o dinheiro
@@ -1689,7 +1695,7 @@ export function renderFinanceiro(state){
   
   const verMaisWrap = document.getElementById('fin-ver-mais-wrap');
   if(totalFin > _finLimit && verMaisWrap){
-    verMaisWrap.innerHTML = `<button class="btn btn-outline btn-sm" onclick="window._state.finLimit+=20; renderAtiva()">Ver mais (${totalFin-_finLimit} restantes)</button>`;
+    verMaisWrap.innerHTML = `<button class="btn btn-outline btn-sm" onclick="aumentarFinLimit(20); renderAtiva()">Ver mais (${totalFin-_finLimit} restantes)</button>`;
   } else if (verMaisWrap) {
     verMaisWrap.innerHTML = '';
   }

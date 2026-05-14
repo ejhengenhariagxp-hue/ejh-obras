@@ -1,5 +1,5 @@
 // modules/medicoes.js
-import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName, popularSelectsObras, markDeleted } from '../utils.js?v=20260501a';
+import { fmt, fmtD, pad, safeInner, safeText, showToast, openModal, closeModal, statusBadge, obraName, popularSelectsObras, markDeleted, escapeHtml } from '../utils.js?v=20260514c';
 
 export function addMedicao(state){
   const obraId=document.getElementById('f-med-obra')?.value;
@@ -168,20 +168,20 @@ export function printMedicao(state, id){
     <div class="hdr">
       <div>
         ${state.logoData?`<img src="${state.logoData}" class="logo-img">`:''}
-        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#0f2744">${state.empNome || 'EJH ENGENHARIA'}</div>
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#0f2744">${escapeHtml(state.empNome || 'EJH ENGENHARIA')}</div>
         <div style="font-size:12px;color:#64748b;margin-top:2px">Boletim de Medição</div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:13px"><strong>Obra:</strong> ${obraName(state, m.obraId)}</div>
-        <div style="font-size:13px"><strong>Medição nº:</strong> ${m.num}</div>
-        <div style="font-size:13px"><strong>Período:</strong> ${m.periodo}</div>
+        <div style="font-size:13px"><strong>Obra:</strong> ${escapeHtml(obraName(state, m.obraId))}</div>
+        <div style="font-size:13px"><strong>Medição nº:</strong> ${escapeHtml(String(m.num || ''))}</div>
+        <div style="font-size:13px"><strong>Período:</strong> ${escapeHtml(m.periodo || '')}</div>
         <div style="font-size:13px"><strong>Emissão:</strong> ${fmtD(m.data)}</div>
       </div>
     </div>
     <table>
       <thead><tr><th>Item</th><th>Un.</th><th>Qtd Contrat.</th><th>V. Unitário</th><th>Qtd. Medida</th><th>Valor</th></tr></thead>
       <tbody>${m.itens.map((it)=>`<tr>
-        <td>${it.item}</td><td style="text-align:center">${it.un}</td>
+        <td>${escapeHtml(it.item || '')}</td><td style="text-align:center">${escapeHtml(it.un || '')}</td>
         <td style="text-align:center">${it.qtd}</td>
         <td style="text-align:right">${fmt(it.vunit)}</td>
         <td style="text-align:center;font-weight:700">${it.qtdMed}</td>
@@ -195,12 +195,12 @@ export function printMedicao(state, id){
     <div style="margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:24px">
       <div style="border-top:2px solid #0f2744;padding-top:8px;text-align:center;font-size:12px">
         ${engSig?`<img src="${engSig}" style="height:64px;margin-bottom:4px;display:block;margin-left:auto;margin-right:auto" alt="Assinatura">`:'<div style="height:64px"></div>'}
-        <div>${m.resp || state.engNome || 'Responsável Técnico'}</div>
-        <div style="color:#64748b">${state.engRegistro || ''} — ${new Date().toLocaleDateString('pt-BR')}</div>
+        <div>${escapeHtml(m.resp || state.engNome || 'Responsável Técnico')}</div>
+        <div style="color:#64748b">${escapeHtml(state.engRegistro || '')} — ${new Date().toLocaleDateString('pt-BR')}</div>
       </div>
       <div style="border-top:2px solid #0f2744;padding-top:8px;text-align:center;font-size:12px">
         ${m.assinatura?.dataUrl?`<img src="${m.assinatura.dataUrl}" style="height:64px;margin-bottom:4px;display:block;margin-left:auto;margin-right:auto" alt="Assinatura contratante">`:'<div style="height:64px"></div>'}
-        <div>${m.assinatura?.nome||'Representante do Contratante'}</div>
+        <div>${escapeHtml(m.assinatura?.nome||'Representante do Contratante')}</div>
         <div style="color:#64748b">Aprovação${m.assinatura?.data?' — '+m.assinatura.data:''}</div>
       </div>
     </div>
