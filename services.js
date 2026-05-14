@@ -19,15 +19,9 @@ export let fbConfigured = false;
 let fbAuth = null, fbDb = null, fbStorage = null;
 
 // ── Local persistence ────────────────────────────────────────────────
-export function saveState(state) {
-  try {
-    const s = { ...state, diario: state.diario.map(d=>({...d,fotos:[]})) };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-    if (Array.isArray(state.propostas)) {
-      localStorage.setItem(PROPS_BAK, JSON.stringify(state.propostas));
-    }
-  } catch(e) { console.warn('saveState:', e.message); }
-}
+// NOTA: saveState/fbSaveData/fbLoadData foram substituídos por
+// saveStateLocal/saveToCloud/loadFromCloudV2 em app.js (Caminho B com
+// sub-coleções). Removidos do bundle pra evitar confusão futura.
 
 export function loadState(defaults) {
   try {
@@ -180,38 +174,6 @@ export async function fbMigrarFotosAntigas(state, onProgress) {
   return { total, migradas, falhas, jaTinha };
 }
 
-export async function fbSaveData(state) {
-  if (!fbUser || !fbDb) return;
-  try {
-    const s = { ...state, diario: state.diario.map(d=>({...d,fotos:[]})),
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
-    await fbDb.collection('usuarios').doc(fbUser.uid).set(s);
-  } catch(e) { console.warn('fbSave:', e.message); }
-}
-
-export async function fbLoadData(cur) {
-  if (!fbUser || !fbDb) return cur;
-  try {
-    const doc = await fbDb.collection('usuarios').doc(fbUser.uid).get();
-    if (!doc.exists) { await fbSaveData(cur); return cur; }
-    const rem = doc.data(); delete rem.updatedAt;
-    const merge = (a,b) => {
-      if (!Array.isArray(b)||!b.length) return a||[];
-      if (!Array.isArray(a)||!a.length) return b;
-      const ids = new Set(b.map(x=>x.id).filter(Boolean));
-      return [...b, ...a.filter(x=>x.id&&!ids.has(x.id))];
-    };
-    const m = { ...cur, ...rem };
-    ['obras','orc','cron','diario','fin','medicoes','empreita','propostas','checklists','capturas']
-      .forEach(k => { m[k] = merge(cur[k], rem[k]); });
-    if (rem.counters && cur.counters) {
-      m.counters = {};
-      Object.keys({...cur.counters,...rem.counters}).forEach(k =>
-        m.counters[k] = Math.max(cur.counters[k]||1, rem.counters[k]||1));
-    }
-    return m;
-  } catch(e) { console.warn('fbLoad:', e.message); return cur; }
-}
 
 // ── Anthropic IA ─────────────────────────────────────────────────────
 // Sanitiza chave: remove qualquer caractere fora do ASCII imprimível
@@ -269,27 +231,6 @@ export async function iaCall(system, userContent, maxTokens=1500) {
   return d.content?.map(c => c.text || '').join('') || '';
 }
 
-export async function gerarOrcamentoIA(descricao) {
-  const raw = await iaCall(
-    'Orçamentista de obras experiente no Brasil (Minas Gerais). Retorne APENAS JSON: {"itens":[{"item":"","sinapi":"","un":"","qtd":0,"vunit":0,"etapa":""}],"totalEstimado":0,"observacoes":""}',
-    'Gerar orçamento para: ' + descricao, 2000);
-  return JSON.parse(raw.replace(/```json|```/g, '').trim());
-}
-
-export async function gerarEscopoIA(dados) {
-  return await iaCall(
-    'Engenheiro civil sênior redator de contratos. Gere texto de escopo técnico. Máx 200 palavras. Texto corrido.',
-    `Obra: ${dados.empreend || ''} | Cliente: ${dados.cliente || ''} | Área: ${dados.area || ''}m² | Itens: ${dados.itens || ''}`,
-    500);
-}
-
-export async function gerarRelatorioIA(dadosObras, contexto = '') {
-  return await iaCall(
-    'Engenheiro civil consultor sênior. Relatório gerencial executivo: resumo executivo, situação das obras, análise financeira, recomendações. Máx 400 palavras. Sem markdown.',
-    `Contexto: ${contexto}\n\n${dadosObras}\n\nData: ${new Date().toLocaleDateString('pt-BR')}`,
-    1000);
-}
-
 export function getIaKey() {
   return localStorage.getItem(IA_KEY_STORAGE) || '';
 }
@@ -297,5 +238,4 @@ export function setIaKey(k) {
   if (k) localStorage.setItem(IA_KEY_STORAGE, sanitizeKey(k));
   else   localStorage.removeItem(IA_KEY_STORAGE);
 }
-export function hasIaKey() { return !!getIaKey(); }
 
