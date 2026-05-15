@@ -1578,13 +1578,29 @@ function saveStateLocal() {
       } catch (_) {}
     }
     console.warn('saveStateLocal:', e?.message || e);
-    showSaveErrorBanner(isQuota
-      ? '⚠️ Armazenamento do navegador cheio — alterações NÃO estão sendo salvas. Abra Configurações → ☁️ Migrar fotos do diário, ou use a página de recovery.'
-      : '⚠️ Falha ao salvar localmente: ' + (e?.message || 'erro desconhecido') + '. Suas alterações estão apenas em memória.');
+    if (isQuota) {
+      showQuotaBanner();
+    } else {
+      showSaveErrorBanner('⚠️ Falha ao salvar localmente: ' + (e?.message || 'erro desconhecido') + '. Suas alterações estão apenas em memória.');
+    }
     return false;
   }
 }
 
+function showQuotaBanner() {
+  let el = document.getElementById('save-error-banner');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'save-error-banner';
+    el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#ef4444;color:#fff;padding:10px 16px;text-align:center;font-weight:600;font-size:13px;z-index:99999;box-shadow:0 2px 8px rgba(0,0,0,.3)';
+    document.body.appendChild(el);
+  }
+  const logado = !!window._fbUser;
+  el.innerHTML = logado
+    ? '⚠️ Armazenamento cheio — <button onclick="migrarFotosStorage()" style="background:#fff;color:#ef4444;border:none;border-radius:6px;padding:3px 10px;font-weight:700;cursor:pointer;margin:0 6px">☁️ Migrar fotos agora</button> para liberar espaço'
+    : '⚠️ Armazenamento cheio — <button onclick="fbLoginGoogle()" style="background:#fff;color:#ef4444;border:none;border-radius:6px;padding:3px 10px;font-weight:700;cursor:pointer;margin:0 6px">Entrar com Google</button> para sincronizar e liberar espaço';
+  el.style.display = 'block';
+}
 function showSaveErrorBanner(msg) {
   let el = document.getElementById('save-error-banner');
   if (!el) {
@@ -1883,6 +1899,22 @@ window.addEventListener('load', () => {
         // Snapshot diário automático no Firebase Storage. Idempotente:
         // se já houver snapshot do dia, sobrescreve. Não bloqueia UX.
         tentarSnapshotDiario();
+        // Migração automática: se há fotos em base64 no dispositivo e o
+        // usuário acabou de logar, sobe silenciosamente para o Storage.
+        const fotosPendentes = (state.diario || []).reduce((a, d) =>
+          a + (d.fotos || []).filter(f => !f.url && f.dataUrl).length, 0);
+        if (fotosPendentes > 0) {
+          showToast(`☁️ Enviando ${fotosPendentes} foto(s) para a nuvem…`, 8000);
+          fbMigrarFotosAntigas(state, () => {}).then(r => {
+            if (r.migradas > 0) {
+              try { localStorage.removeItem('ejh_obras_v4'); } catch (_) {}
+              _lastHash = '';
+              saveStateLocal();
+              saveToCloud();
+              showToast(`✅ ${r.migradas} foto(s) enviada(s) para a nuvem`, 4000);
+            }
+          }).catch(() => {});
+        }
       }).catch(e => {
         console.error('Login load:', e);
         setSyncStatus('❌', 'Erro ao carregar: ' + (e.message || ''));
