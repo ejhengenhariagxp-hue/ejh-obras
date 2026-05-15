@@ -3,7 +3,7 @@
 // ══════════════════════════════════════════════════════════════════════
 
 import { fmt, fmtD, pad, safeInner, showToast, statusBadge, tipoLabel, openModal, closeModal, modalidadeIcon, verificarAvisosObra, escapeHtml, markDeleted } from '../utils.js?v=20260501a';
-import { fbDeleteFoto } from '../services.js?v=20260514a';
+import { fbDeleteFoto } from '../services.js?v=20260515a';
 
 const val = id => document.getElementById(id)?.value?.trim() || '';
 const num = id => +document.getElementById(id)?.value || 0;
