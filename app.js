@@ -1521,11 +1521,17 @@ function syncFromCloud(silent) {
     restoreLocalFotos(merged, fotosSnap);
     const before = _lastHash;
     Object.assign(state, merged); window._state = state;
-    _lastHash = calcHash(state);
+    const after = calcHash(state);
+    // Persiste o estado mesclado (incluindo fotos vindas do celular) no
+    // localStorage ANTES de atualizar _lastHash — garante que o próximo
+    // saveToCloud use a versão correta e não sobreescreva o Firestore com
+    // dados antigos (sem fotos) na próxima ação do usuário.
+    if (after !== before) saveStateLocal();
+    _lastHash = after;
     renderAtiva();
     if (window._fbUser) { clearTimeout(_fbSaveTimer); saveToCloud(); }
     setSyncStatus('☁✓', 'Sincronizado ' + new Date().toLocaleTimeString('pt-BR'));
-    if (!silent && _lastHash !== before) showToast('☁️ Atualizado!', 2000);
+    if (!silent && after !== before) showToast('☁️ Atualizado!', 2000);
   }).catch(e => {
     console.error('syncFromCloud falhou:', e);
     setSyncStatus('❌', 'Erro no sync: ' + (e.message || ''));
@@ -1713,17 +1719,32 @@ async function saveToCloud() {
     }
     await db.collection('usuarios').doc(uid).set(main);
 
-    // 2) Diários: cada um vira sub-doc; fotos como dataUrl
+    // 2) Diários: cada um vira sub-doc.
+    // Antes de gravar, lê o Firestore para não sobrescrever fotos adicionadas
+    // em outro dispositivo (ex: celular) com uma versão local sem fotos.
     const oversized = [];
     const writes = (state.diario || []).map(async d => {
-      const docKB = Math.round(JSON.stringify(d).length / 1024);
       const ref = db.doc(`usuarios/${uid}/diario/${d.id}`);
+      const nLocal = (d.fotos || []).filter(f => f.url || f.dataUrl).length;
+      // Se local não tem fotos, verifica se o cloud tem antes de sobrescrever
+      let dParaSalvar = d;
+      if (nLocal === 0) {
+        try {
+          const snap = await ref.get();
+          if (snap.exists) {
+            const cloudFotos = (snap.data().fotos || []).filter(f => f.url || f.dataUrl);
+            if (cloudFotos.length > 0) {
+              dParaSalvar = { ...d, fotos: cloudFotos };
+            }
+          }
+        } catch (_) {}
+      }
+      const docKB = Math.round(JSON.stringify(dParaSalvar).length / 1024);
       if (docKB > 950) {
         oversized.push(`${d.id}(${docKB}KB)`);
-        // Salva sem fotos pra preservar texto/data; fotos ficam só no aparelho
-        await ref.set({ ...d, fotos: [] });
+        await ref.set({ ...dParaSalvar, fotos: [] });
       } else {
-        await ref.set(d);
+        await ref.set(dParaSalvar);
       }
     });
 
@@ -1909,8 +1930,11 @@ window.addEventListener('load', () => {
       loadFromCloudV2().then(merged => {
         applyTombstones(merged, localTombs);
         restoreLocalFotos(merged, fotosSnap);
+        const beforeLogin = _lastHash;
         Object.assign(state, merged); window._state = state;
-        _lastHash = calcHash(state);
+        const afterLogin = calcHash(state);
+        if (afterLogin !== beforeLogin) saveStateLocal();
+        _lastHash = afterLogin;
         renderAtiva();
         if (window._fbUser) saveToCloud();
         showToast('☁️ Sincronizado!', 2000);
