@@ -1766,16 +1766,34 @@ async function loadFromCloudV2() {
   delete main.updatedAt;
   const remoteDiarios = diaSnap.docs.map(d => d.data());
 
-  // Merge LOCAL-FIRST: em caso de conflito de ID, o LOCAL prevalece.
-  // Antes era cloud-first: o cloud sobrescrevia silenciosamente edições
-  // locais não-sincronizadas. Causa do incidente de IDs trocados desta
-  // sessão. Estratégia conservadora: prefere local a perder edição do
-  // usuário. Estratégia futura: comparar updatedAt por item.
+  // Merge LOCAL-FIRST para arrays genéricos (obras, fin, etc.).
+  // Para o diário usa mergeDiario (abaixo) que compara fotos.
   const mergeArr = (local, cloud) => {
     if (!Array.isArray(cloud) || !cloud.length) return local || [];
     if (!Array.isArray(local) || !local.length) return cloud;
     const localIds = new Set(local.map(x => x.id).filter(Boolean));
     return [...local, ...cloud.filter(x => x.id && !localIds.has(x.id))];
+  };
+
+  // Merge do diário: em conflito de ID, prefere a versão com MAIS fotos.
+  // Se a contagem for igual, prefere local (preserva edições locais de texto).
+  // Isso garante que fotos adicionadas no celular apareçam no notebook.
+  const mergeDiario = (local, cloud) => {
+    if (!Array.isArray(cloud) || !cloud.length) return local || [];
+    if (!Array.isArray(local) || !local.length) return cloud;
+    const cloudMap = new Map(cloud.filter(x => x.id).map(x => [x.id, x]));
+    const merged = local.map(l => {
+      const c = cloudMap.get(l.id);
+      if (!c) return l;
+      cloudMap.delete(l.id);
+      const nLocal = (l.fotos || []).length;
+      const nCloud = (c.fotos || []).filter(f => f.url || f.dataUrl).length;
+      // Usa cloud se tiver mais fotos; caso igual prefere local (mais recente)
+      return nCloud > nLocal ? { ...l, fotos: c.fotos } : l;
+    });
+    // Entradas que existem só no cloud (novo dispositivo)
+    cloudMap.forEach(c => merged.push(c));
+    return merged;
   };
 
   // Para faturamentoMensal (objeto, não array) faz merge por chave,
@@ -1799,7 +1817,7 @@ async function loadFromCloudV2() {
   // cai pro main.diario (legado caminho A) pra dispositivo fresh recuperar
   // os registros antigos sem fotos.
   const cloudDiarios = remoteDiarios.length ? remoteDiarios : (main.diario || []);
-  m.diario = mergeArr(state.diario, cloudDiarios);
+  m.diario = mergeDiario(state.diario, cloudDiarios);
 
   // Faturamento mensal (objeto)
   m.faturamentoMensal = mergeObj(state.faturamentoMensal, main.faturamentoMensal);
