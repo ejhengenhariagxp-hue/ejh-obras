@@ -431,14 +431,33 @@ export function renderFotoPreview(){
   if(!el) return;
   el.innerHTML = _pendingFotos.map((f,i)=>{
     const src = f.url || f.dataUrl || '';
-    const overlay = f.uploading ? '<div style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;border-radius:7px">⏳</div>' :
-                    f.error ? '<div style="position:absolute;inset:0;background:rgba(220,38,38,.55);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;border-radius:7px" title="'+(f.error||'')+'">❌</div>' : '';
+    const overlay = f.uploading
+      ? '<div style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;border-radius:7px">⏳ Enviando…</div>'
+      : f.error
+        ? '<div style="position:absolute;inset:0;background:rgba(220,38,38,.55);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;border-radius:7px" title="'+(f.error||'')+'">❌</div>'
+        : !f.url
+          ? '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(217,119,6,.85);color:#fff;font-size:9px;text-align:center;padding:2px 4px;border-radius:0 0 7px 7px;line-height:1.3">⚠️ Só neste aparelho<br>Faça login Google</div>'
+          : '';
     return `<div class="foto-preview-item" style="position:relative">
       <img src="${src}" alt="${f.name||''}">
       ${overlay}
       <button class="foto-preview-del" onclick="removePendingFoto(${i})">✕</button>
     </div>`;
   }).join('');
+  // Aviso geral abaixo das fotos quando alguma ficou só local
+  const semSync = _pendingFotos.filter(f => !f.uploading && !f.url && f.dataUrl).length;
+  let aviso = document.getElementById('foto-preview-aviso');
+  if (!aviso) {
+    aviso = document.createElement('div');
+    aviso.id = 'foto-preview-aviso';
+    el.parentNode.insertBefore(aviso, el.nextSibling);
+  }
+  aviso.innerHTML = semSync > 0
+    ? `<div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;padding:8px 12px;margin-top:6px;font-size:12px;color:#92400e;line-height:1.5">
+        ⚠️ <strong>${semSync} foto(s) salva(s) só neste dispositivo</strong> — sem login Google elas não sincronizam com outros aparelhos.<br>
+        <span style="opacity:.8">Entre com Google antes de salvar para enviar automaticamente.</span>
+       </div>`
+    : '';
 }
 
 export async function gerarDiarioComFoto(state) {
