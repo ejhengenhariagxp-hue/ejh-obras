@@ -1504,11 +1504,11 @@
       <label>Texto do Rodapé (Relatórios)</label>
       <textarea id="set-rel-rodape" placeholder="Sua empresa — Endereço — Contato"></textarea>
     </div>
-    <div class="divider full"></div>
-    <div class="form-group full">
+    <div class="divider full" id="set-migrar-divider" style="display:none"></div>
+    <div class="form-group full" id="set-migrar-section" style="display:none">
       <label style="color:#0891b2">☁️ Migrar fotos para Firebase Storage</label>
       <div style="font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.5">
-        Move as fotos do diário (hoje em base64 dentro do state) para o Firebase Storage. Reduz o tamanho do state em até 95%, evita estourar quota do navegador e do Firestore. Precisa estar logado no Google.
+        Há <strong id="set-migrar-count">0</strong> foto(s) ainda em base64 no dispositivo. Migrar para o Firebase Storage libera espaço no navegador e evita o aviso de armazenamento cheio.
       </div>
       <button type="button" class="btn btn-outline" onclick="migrarFotosStorage()" style="color:#0891b2;border-color:#0891b2">☁️ Migrar fotos do diário</button>
     </div>

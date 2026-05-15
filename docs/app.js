@@ -425,6 +425,14 @@ function openSettings() {
   document.getElementById('set-emp-nome').value  = state.empNome || '';
   document.getElementById('set-rel-rodape').value = state.relatorioRodape || '';
   atualizarPreviewLogo();
+  const pendentes = (state.diario || []).reduce((a, d) =>
+    a + (d.fotos || []).filter(f => !f.url && f.dataUrl).length, 0);
+  const sec = document.getElementById('set-migrar-section');
+  const div = document.getElementById('set-migrar-divider');
+  const cnt = document.getElementById('set-migrar-count');
+  if (sec) sec.style.display = pendentes > 0 ? '' : 'none';
+  if (div) div.style.display = pendentes > 0 ? '' : 'none';
+  if (cnt) cnt.textContent = pendentes;
   openModal('modal-settings');
 }
 function saveSettings() {
