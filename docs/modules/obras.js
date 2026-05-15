@@ -8,6 +8,26 @@ import { fbDeleteFoto } from '../services.js?v=20260515b';
 const val = id => document.getElementById(id)?.value?.trim() || '';
 const num = id => +document.getElementById(id)?.value || 0;
 
+let _filtrosObras = { busca: '', tipo: '', status: '', unidade: '' };
+
+export function filtrarObras() {
+  _filtrosObras.busca   = document.getElementById('fil-obras-busca')?.value?.toLowerCase() || '';
+  _filtrosObras.tipo    = document.getElementById('fil-obras-tipo')?.value || '';
+  _filtrosObras.status  = document.getElementById('fil-obras-status')?.value || '';
+  _filtrosObras.unidade = document.getElementById('fil-obras-unidade')?.value || '';
+  // Re-render without changing state — use stored state from last renderObras call
+  if (window._obrasState) renderObras(window._obrasState);
+}
+
+export function limparFiltrosObras() {
+  _filtrosObras = { busca: '', tipo: '', status: '', unidade: '' };
+  ['fil-obras-busca','fil-obras-tipo','fil-obras-status','fil-obras-unidade'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  if (window._obrasState) renderObras(window._obrasState);
+}
+
 function lerFormObra() {
   let tipo = val('f-obra-tipo') || 'obra';
   if (tipo === '__custom__') {
@@ -301,9 +321,27 @@ function renderObrasStats(state) {
 
 // Renderizar tabela de obras
 export function renderObras(state) {
+  window._obrasState = state;
   renderObrasStats(state);
+
+  // Apply filters
+  const obras = (state.obras || []).filter(o => {
+    if (_filtrosObras.busca && !(
+      (o.nome||'').toLowerCase().includes(_filtrosObras.busca) ||
+      (o.cliente||'').toLowerCase().includes(_filtrosObras.busca) ||
+      (o.id||'').toLowerCase().includes(_filtrosObras.busca)
+    )) return false;
+    if (_filtrosObras.tipo && o.tipo !== _filtrosObras.tipo) return false;
+    if (_filtrosObras.status && o.status !== _filtrosObras.status) return false;
+    if (_filtrosObras.unidade) {
+      const u = o.unidadeArea || 'm2';
+      if (_filtrosObras.unidade !== u) return false;
+    }
+    return true;
+  });
+
   // Tabela (desktop) ──────────────────────────────────────────────
-  safeInner('tbody-obras', state.obras.map(o => {
+  safeInner('tbody-obras', obras.map(o => {
     const aviso = verificarAvisosObra(o);
     const avisoHtml = aviso
       ? `<span style="margin-left:6px;font-size:10px;padding:2px 6px;border-radius:8px;font-weight:700;background:${aviso.tipo==='vencida'?'#fee2e2':'#fef3c7'};color:${aviso.tipo==='vencida'?'#991b1b':'#92400e'}">
@@ -330,7 +368,7 @@ export function renderObras(state) {
   }).join(''));
 
   // Cards (mobile/tablet) ─────────────────────────────────────────
-  safeInner('cards-obras-mobile', state.obras.length ? state.obras.map(o => {
+  safeInner('cards-obras-mobile', obras.length ? obras.map(o => {
     const aviso = verificarAvisosObra(o);
     const avisoHtml = aviso
       ? `<span style="font-size:10.5px;padding:2px 7px;border-radius:8px;font-weight:700;background:${aviso.tipo==='vencida'?'#fee2e2':'#fef3c7'};color:${aviso.tipo==='vencida'?'#991b1b':'#92400e'}">
@@ -365,6 +403,13 @@ export function renderObras(state) {
     <div style="font-weight:600;color:var(--navy);font-size:14px;margin-bottom:4px">Nenhuma obra cadastrada</div>
     <button class="btn btn-primary btn-sm" onclick="resetFormObra();openModal('modal-obra')">＋ Cadastrar primeira obra</button>
   </div>`);
+
+  const countEl = document.getElementById('obras-count-info');
+  if (countEl) {
+    const filtered = obras.length < (state.obras||[]).length;
+    countEl.style.display = filtered ? 'block' : 'none';
+    countEl.textContent = `Exibindo ${obras.length} de ${(state.obras||[]).length} obras`;
+  }
 }
 
 

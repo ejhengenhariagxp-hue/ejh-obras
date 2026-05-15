@@ -8,7 +8,7 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
 import { loadState, fbInit, fbLoginGoogle, fbLogout,
          saveIaKey, getIaKey, setIaKey,
          fbMigrarFotosAntigas, fbSalvarSnapshot } from './services.js?v=20260515b';
-import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra } from './modules/obras.js?v=20260515c';
+import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra, filtrarObras, limparFiltrosObras } from './modules/obras.js?v=20260515d';
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260501g';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt, renderCronAtivo } from './modules/cronograma.js?v=20260508d';
 import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario, abrirDiarioObra, voltarDiarioObras } from './modules/diario.js?v=20260501g';
@@ -332,6 +332,68 @@ function renderDashboard() {
   const sEl = document.getElementById('kpi-saldo');
   if (sEl) sEl.style.color = (rec-des) >= 0 ? 'var(--green)' : 'var(--red)';
 
+  // Mini painel de produção (m² e ton)
+  const obrasCivil = state.obras.filter(o => !o.unidadeArea || o.unidadeArea === 'm2');
+  const obrasMetalAndamento = state.obras.filter(o => (o.unidadeArea === 'ton' || o.unidadeArea === 'kg') && o.status !== 'Concluída');
+  const obrasMetalConcluida = state.obras.filter(o => (o.unidadeArea === 'ton' || o.unidadeArea === 'kg') && o.status === 'Concluída');
+  const m2Total   = obrasCivil.reduce((a,o) => a + (o.area||0), 0);
+  const m2And     = obrasCivil.filter(o=>o.status!=='Concluída').reduce((a,o)=>a+(o.area||0),0);
+  const m2Conc    = obrasCivil.filter(o=>o.status==='Concluída').reduce((a,o)=>a+(o.area||0),0);
+  const toTon     = o => o.unidadeArea === 'kg' ? (o.area||0)/1000 : (o.area||0);
+  const tonAnd    = obrasMetalAndamento.reduce((a,o)=>a+toTon(o),0);
+  const tonConc   = obrasMetalConcluida.reduce((a,o)=>a+toTon(o),0);
+  const tonTotal  = tonAnd + tonConc;
+  const fmtN = n => n.toLocaleString('pt-BR',{maximumFractionDigits:1});
+  safeInner('dash-producao-stats', `
+    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:10px;letter-spacing:.5px">📐 PRODUÇÃO</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:80px">
+        <div style="font-size:10px;color:var(--muted);font-weight:600">CIVIL (m²)</div>
+        <div style="font-size:20px;font-weight:800;color:var(--navy)">${fmtN(m2Total)}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">
+          <span style="color:#2563eb">▶ ${fmtN(m2And)} exec.</span> &nbsp;
+          <span style="color:#059669">✓ ${fmtN(m2Conc)} conc.</span>
+        </div>
+      </div>
+      ${tonTotal > 0 ? `<div style="flex:1;min-width:80px">
+        <div style="font-size:10px;color:var(--muted);font-weight:600">METÁLICA (ton)</div>
+        <div style="font-size:20px;font-weight:800;color:var(--navy)">${fmtN(tonTotal)}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">
+          <span style="color:#d97706">▶ ${fmtN(tonAnd)} exec.</span> &nbsp;
+          <span style="color:#059669">✓ ${fmtN(tonConc)} conc.</span>
+        </div>
+      </div>` : ''}
+    </div>
+  `);
+
+  // Mini painel de propostas
+  const props = Array.isArray(state.propostas) ? state.propostas : [];
+  const pTotal   = props.length;
+  const pFechado = props.filter(p=>p.status==='fechado').length;
+  const pAberto  = props.filter(p=>p.status==='em_negociacao'||p.status==='em_revisao').length;
+  const pPerdeu  = props.filter(p=>p.status==='nao_fechou').length;
+  const pPct     = pTotal ? Math.round(pFechado/pTotal*100) : 0;
+  const valAberto= props.filter(p=>p.status==='em_negociacao'||p.status==='em_revisao').reduce((a,p)=>a+(p.total||0),0);
+  safeInner('dash-propostas-stats', `
+    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:10px;letter-spacing:.5px">📝 PROPOSTAS</div>
+    ${pTotal === 0 ? '<div style="font-size:12px;color:var(--muted)">Nenhuma proposta ainda</div>' : `
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="position:relative;width:56px;height:56px;flex-shrink:0">
+        <svg width="56" height="56" viewBox="0 0 56 56">
+          <circle r="22" cx="28" cy="28" fill="none" stroke="#f1f5f9" stroke-width="10"/>
+          <circle r="22" cx="28" cy="28" fill="none" stroke="#6ee7b7" stroke-width="10"
+            stroke-dasharray="${138.2*pPct/100} ${138.2}" stroke-dashoffset="34.6" transform="rotate(-90 28 28)"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--navy)">${pPct}%</div>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:10px;color:var(--muted);font-weight:600">TOTAL · ${pTotal}</div>
+        <div style="font-size:11px;margin-top:3px"><span style="color:#065f46;font-weight:700">✅ ${pFechado}</span> &nbsp; <span style="color:#1d4ed8;font-weight:700">🤝 ${pAberto}</span> &nbsp; <span style="color:#991b1b;font-weight:700">❌ ${pPerdeu}</span></div>
+        ${valAberto>0?`<div style="font-size:10px;color:var(--muted);margin-top:2px">Em aberto: <strong>${fmt(valAberto)}</strong></div>`:''}
+      </div>
+    </div>`}
+  `);
+
   // Empty state: zero obras cadastradas
   if (state.obras.length === 0) {
     safeInner('dash-obras', `
@@ -387,7 +449,7 @@ function renderDashboard() {
         <div class="obra-card-title">${rtBadge}${o.nome}</div>
         <span class="status-pill status-pill-${st.cor}" title="${st.label}">${st.icon} ${st.label}</span>
       </div>
-      <div class="obra-card-meta"><span>👤 ${o.cliente}</span><span>📐 ${o.area} m²</span></div>
+      <div class="obra-card-meta"><span>👤 ${o.cliente}</span><span>📐 ${(o.area||0).toLocaleString('pt-BR')} ${o.unidadeArea==='ton'?'ton':o.unidadeArea==='kg'?'kg':'m²'}</span></div>
       <div style="margin-top:10px">
         <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px"><span style="color:var(--muted)">Avanço</span><strong>${st.avg}%</strong></div>
         <div class="prog-obra"><div class="prog-obra-fill" style="width:${st.avg}%"></div></div>
@@ -896,6 +958,8 @@ G.delObra = id => { if(delObra(state,id)) renderAtiva(); };
 G.openEditObra = id => openEditObra(state, id);
 G.salvarObra = () => { if(salvarObra(state)) renderAtiva(); };
 G.resetFormObra = () => resetFormObra();
+G.filtrarObras = filtrarObras;
+G.limparFiltrosObras = limparFiltrosObras;
 G.migrarFotosStorage = async () => {
   if (!window._fbUser) { showToast('⚠️ Faça login no Google primeiro (sync ativa)'); return; }
   const totalDataUrl = (state.diario || []).reduce((a, d) =>

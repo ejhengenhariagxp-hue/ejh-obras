@@ -23,7 +23,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260515e"></script>
+<script type="module" src="./app.js?v=20260515f"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Lucide icons (modern SVG icon library) -->
@@ -130,6 +130,12 @@
     <div class="kpi teal"><div class="kpi-label">Saldo Financeiro</div><div class="kpi-value" id="kpi-saldo">R$0</div><div class="kpi-sub">receitas − despesas</div></div>
   </div>
 
+  <!-- 3b. Mini stats: Produção e Propostas -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+    <div id="dash-producao-stats" style="background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px"></div>
+    <div id="dash-propostas-stats" style="background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px"></div>
+  </div>
+
   <!-- 4. Atalhos rápidos (4 ações principais) -->
   <div class="quick-shortcuts">
     <button class="quick-card" onclick="openModalDiario()">
@@ -171,6 +177,33 @@
 <div id="page-obras" class="page">
   <div class="page-hdr"><div><div class="page-title">Obras e Projetos</div><div class="page-sub">Gestão de Projetos e Obras</div></div><button class="btn btn-primary" onclick="resetFormObra();openModal('modal-obra')">＋ Novo Projeto / Obra</button></div>
   <div id="obras-stats-panel"></div>
+  <!-- Filtros -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
+    <input id="fil-obras-busca" type="search" placeholder="🔍 Buscar obra ou cliente…"
+      oninput="filtrarObras()" style="flex:1;min-width:160px;padding:7px 11px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+    <select id="fil-obras-tipo" onchange="filtrarObras()" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+      <option value="">Todos os tipos</option>
+      <option value="projeto">📐 Projeto</option>
+      <option value="obra">🏗 Obra</option>
+      <option value="acompanhamento">🔍 Acompanhamento</option>
+      <option value="consultoria">💼 Consultoria</option>
+    </select>
+    <select id="fil-obras-status" onchange="filtrarObras()" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+      <option value="">Todos os status</option>
+      <option value="Em andamento">Em andamento</option>
+      <option value="Concluída">Concluída</option>
+      <option value="Paralisada">Paralisada</option>
+      <option value="Cancelada">Cancelada</option>
+    </select>
+    <select id="fil-obras-unidade" onchange="filtrarObras()" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+      <option value="">Todas as unidades</option>
+      <option value="m2">m² (Civil)</option>
+      <option value="ton">ton (Metálica)</option>
+      <option value="kg">kg (Metálica)</option>
+    </select>
+    <button onclick="limparFiltrosObras()" class="btn btn-outline btn-sm" style="white-space:nowrap">✕ Limpar</button>
+  </div>
+  <div id="obras-count-info" style="display:none;font-size:12px;color:var(--muted);margin-bottom:8px"></div>
   <!-- Tabela (desktop) -->
   <div class="table-wrap only-desktop"><table><thead><tr><th>Tipo</th><th>ID</th><th>Nome</th><th>Cliente</th><th>Área</th><th>Início</th><th>Fim</th><th>Status</th><th></th></tr></thead><tbody id="tbody-obras"></tbody></table></div>
   <!-- Cards (mobile/tablet) -->
