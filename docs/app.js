@@ -35,7 +35,7 @@ import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
          colherAssinaturaProposta, importFromOrcamento, addObraItem,
          addProjServico, addProjExtra, toggleModoGlobal, renderPropostas,
          atualizarStatusProposta, gerarObraDeProposta,
-         addPropFoto, removePropFoto, renderPropFotos } from './modules/propostas.js?v=20260513d';
+         addPropFoto, removePropFoto, renderPropFotos } from './modules/propostas.js?v=20260515a';
 import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260501g';
 import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260508c';
 import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260501g';

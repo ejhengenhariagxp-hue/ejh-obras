@@ -851,10 +851,104 @@ export function toggleModoGlobal(state){
   showToast(window.modoGlobalProjeto?'💰 Modo Valor Global — defina o preço total de cada serviço':'📐 Modo Por Unidade — quantidade × preço unitário');
 }
 
+function renderPropStats(state){
+  const el = document.getElementById('prop-stats-panel');
+  if(!el) return;
+  const ps = Array.isArray(state.propostas) ? state.propostas : [];
+  if(!ps.length){ el.innerHTML=''; return; }
+
+  const total     = ps.length;
+  const fechadas  = ps.filter(p=>p.status==='fechado').length;
+  const perdidas  = ps.filter(p=>p.status==='nao_fechou').length;
+  const negoc     = ps.filter(p=>p.status==='em_negociacao').length;
+  const revisao   = ps.filter(p=>p.status==='em_revisao').length;
+  const pctFecha  = total ? Math.round(fechadas/total*100) : 0;
+  const pctPerdeu = total ? Math.round(perdidas/total*100) : 0;
+  const pctAberto = 100 - pctFecha - pctPerdeu;
+
+  const valorTotal    = ps.reduce((a,p)=>a+(p.total||0),0);
+  const valorFechado  = ps.filter(p=>p.status==='fechado').reduce((a,p)=>a+(p.total||0),0);
+  const valorAberto   = ps.filter(p=>p.status==='em_negociacao'||p.status==='em_revisao').reduce((a,p)=>a+(p.total||0),0);
+
+  // SVG donut — raio 40, circunferência 251.2
+  const R=40, C=2*Math.PI*R;
+  function slice(pct,offset,cor){
+    const len=C*pct/100;
+    return `<circle r="${R}" cx="50" cy="50" fill="none" stroke="${cor}" stroke-width="16"
+      stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-offset}" transform="rotate(-90 50 50)"/>`;
+  }
+  const offFecha  = 0;
+  const offPerdeu = C*pctFecha/100;
+  const offAberto = offPerdeu + C*pctPerdeu/100;
+  const donut =
+    slice(pctAberto,offAberto,'#93c5fd')+
+    slice(pctPerdeu,offPerdeu,'#fca5a5')+
+    slice(pctFecha, offFecha, '#6ee7b7');
+
+  el.innerHTML=`
+  <div style="background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 20px;margin-bottom:16px;display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+    <!-- Donut -->
+    <div style="position:relative;flex-shrink:0">
+      <svg width="100" height="100" viewBox="0 0 100 100">
+        <circle r="${R}" cx="50" cy="50" fill="none" stroke="#f1f5f9" stroke-width="16"/>
+        ${donut}
+      </svg>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1">
+        <span style="font-size:20px;font-weight:800;color:var(--navy)">${pctFecha}%</span>
+        <span style="font-size:9px;color:var(--muted);font-weight:600">FECHADAS</span>
+      </div>
+    </div>
+    <!-- Métricas -->
+    <div style="flex:1;min-width:180px;display:grid;grid-template-columns:1fr 1fr;gap:8px 20px">
+      <div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:2px">TOTAL</div>
+        <div style="font-size:18px;font-weight:800;color:var(--navy)">${total}</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:2px">VALOR TOTAL</div>
+        <div style="font-size:15px;font-weight:800;color:var(--navy)">${fmt(valorTotal)}</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#065f46;font-weight:600;margin-bottom:2px">✅ FECHADAS</div>
+        <div style="font-size:15px;font-weight:800;color:#065f46">${fechadas} <span style="font-size:11px;font-weight:600;opacity:.7">(${fmt(valorFechado)})</span></div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#991b1b;font-weight:600;margin-bottom:2px">❌ NÃO FECHOU</div>
+        <div style="font-size:15px;font-weight:800;color:#991b1b">${perdidas} <span style="font-size:11px;font-weight:600;opacity:.7">${pctPerdeu}%</span></div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#1d4ed8;font-weight:600;margin-bottom:2px">🤝 EM NEGOCIAÇÃO</div>
+        <div style="font-size:15px;font-weight:800;color:#1d4ed8">${negoc+revisao} <span style="font-size:11px;font-weight:600;opacity:.7">(${fmt(valorAberto)})</span></div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:2px">💰 TICKET MÉDIO</div>
+        <div style="font-size:14px;font-weight:800;color:var(--navy)">${fmt(total?valorTotal/total:0)}</div>
+      </div>
+    </div>
+    <!-- Barra de conversão -->
+    <div style="flex:1;min-width:160px">
+      <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px">TAXA DE CONVERSÃO</div>
+      <div style="background:#f1f5f9;border-radius:8px;height:12px;overflow:hidden;margin-bottom:10px">
+        <div style="height:100%;background:linear-gradient(90deg,#6ee7b7,#10b981);border-radius:8px;width:${pctFecha}%;transition:width .4s"></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px">EM ABERTO vs PERDIDAS</div>
+      <div style="background:#f1f5f9;border-radius:8px;height:12px;overflow:hidden">
+        <div style="height:100%;background:linear-gradient(90deg,#93c5fd,#3b82f6);border-radius:8px;width:${pctAberto}%;transition:width .4s"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap">
+        <span style="font-size:10px;color:#6b7280;display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:50%;background:#6ee7b7;display:inline-block"></span>Fechadas ${pctFecha}%</span>
+        <span style="font-size:10px;color:#6b7280;display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:50%;background:#93c5fd;display:inline-block"></span>Em aberto ${pctAberto}%</span>
+        <span style="font-size:10px;color:#6b7280;display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:50%;background:#fca5a5;display:inline-block"></span>Perdidas ${pctPerdeu}%</span>
+      </div>
+    </div>
+  </div>`;
+}
+
 export function renderPropostas(state){
   const lista=document.getElementById('list-propostas');
   if(!lista) return;
   if(!Array.isArray(state.propostas)) state.propostas=[];
+  renderPropStats(state);
   if(!state.propostas.length){
     lista.innerHTML=`<div style="background:var(--card);border-radius:var(--radius);padding:40px;text-align:center;box-shadow:var(--shadow)">
       <div style="font-size:48px;margin-bottom:12px">📝</div>
