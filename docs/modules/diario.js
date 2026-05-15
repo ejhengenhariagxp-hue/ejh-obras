@@ -5,6 +5,12 @@ import { iaCall, fbUploadFoto, fbDeleteFoto } from '../services.js?v=20260515b';
 let _diarioLimit = 20;
 let _pendingFotos = [];
 let _diarObraAtiva = null; // null = lista de obras | obraId = ver registros da obra
+let _diarioBusca = '';
+
+export function filtrarDiario() {
+  _diarioBusca = (document.getElementById('fil-diario-busca')?.value || '').toLowerCase().trim();
+  if (window._diarioState) _renderDiarioObras(window._diarioState);
+}
 
 export function abrirDiarioObra(obraId) {
   _diarObraAtiva = obraId;
@@ -300,6 +306,7 @@ export function renderDiario(state) {
 
 // NÍVEL 1 — cards de obras
 function _renderDiarioObras(state) {
+  window._diarioState = state;
   // Header: título geral
   const hdrLeft = document.getElementById('dia-page-hdr-left');
   const hdrRight = document.getElementById('dia-page-hdr-right');
@@ -319,7 +326,13 @@ function _renderDiarioObras(state) {
     return;
   }
 
-  const html = obras.map(o => {
+  const busca = _diarioBusca;
+  const filtradas = obras.filter(o => {
+    if (!busca) return true;
+    return (o.nome||'').toLowerCase().includes(busca) || (o.cliente||'').toLowerCase().includes(busca);
+  });
+
+  const cards = filtradas.map(o => {
     const registros = (state.diario || []).filter(d => d.obraId === o.id);
     const total = registros.length;
     const ultimo = total
@@ -328,29 +341,39 @@ function _renderDiarioObras(state) {
     const fotos = registros.reduce((acc, d) => acc + (d.fotos?.length || 0), 0);
     const statusCor = o.status === 'Em andamento' ? '#22c55e' : o.status === 'Concluído' ? '#64748b' : '#f59e0b';
 
-    return `<div class="card" style="cursor:pointer;border-left:4px solid ${statusCor};transition:box-shadow .15s"
+    return `<div class="card" style="cursor:pointer;border-left:4px solid ${statusCor};transition:box-shadow .15s;padding:14px 16px"
         onclick="abrirDiarioObra('${o.id}')"
         onmouseover="this.style.boxShadow='0 4px 18px rgba(0,0,0,.1)'"
         onmouseout="this.style.boxShadow=''">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
         <div style="flex:1;min-width:0">
-          <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--navy);font-size:15px;margin-bottom:3px">${escapeHtml(o.nome)}</div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:8px">${escapeHtml(o.cliente||'')}${o.tipo ? ` · ${o.tipo}` : ''}</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            ${total ? `<span class="badge badge-blue">📋 ${total} registro${total!==1?'s':''}</span>` : `<span class="badge" style="background:#f1f5f9;color:var(--muted)">Sem registros</span>`}
-            ${fotos ? `<span class="badge badge-purple">📷 ${fotos} foto${fotos!==1?'s':''}</span>` : ''}
-            ${ultimo ? `<span class="badge" style="background:#f0fdf4;color:var(--green)">Último: ${fmtD(ultimo.data)}</span>` : ''}
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+            <span class="badge" style="background:${statusCor}22;color:${statusCor};font-weight:700;font-size:10px;padding:2px 7px">${o.status||'Ativo'}</span>
+          </div>
+          <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--navy);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(o.nome)}</div>
+          <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(o.cliente||'')}${o.tipo ? ` · ${o.tipo}` : ''}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${total ? `<span class="badge badge-blue" style="font-size:11px">📋 ${total}</span>` : `<span class="badge" style="background:#f1f5f9;color:var(--muted);font-size:11px">Sem reg.</span>`}
+            ${fotos ? `<span class="badge badge-purple" style="font-size:11px">📷 ${fotos}</span>` : ''}
+            ${ultimo ? `<span class="badge" style="background:#f0fdf4;color:var(--green);font-size:11px">${fmtD(ultimo.data)}</span>` : ''}
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-          <span class="badge" style="background:${statusCor}22;color:${statusCor};font-weight:700">${o.status||'Ativo'}</span>
-          <span style="font-size:22px;color:${statusCor};opacity:.7">›</span>
-        </div>
+        <span style="font-size:20px;color:${statusCor};opacity:.6;align-self:center">›</span>
       </div>
     </div>`;
   }).join('');
 
-  safeInner('dia-obras-list', `<div style="display:flex;flex-direction:column;gap:10px">${html}</div>`);
+  const filtroHtml = `<div style="margin-bottom:12px">
+    <input id="fil-diario-busca" type="search" placeholder="🔍 Buscar obra ou cliente…"
+      oninput="filtrarDiario()" value="${escapeHtml(busca)}"
+      style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;box-sizing:border-box">
+  </div>`;
+
+  const grid = filtradas.length
+    ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">${cards}</div>`
+    : `<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">Nenhuma obra encontrada</div>`;
+
+  safeInner('dia-obras-list', filtroHtml + grid);
   safeInner('list-diario', '');
   const vmw = document.getElementById('dia-ver-mais-wrap');
   if (vmw) vmw.innerHTML = '';

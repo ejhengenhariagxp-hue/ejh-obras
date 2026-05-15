@@ -11,7 +11,7 @@ import { loadState, fbInit, fbLoginGoogle, fbLogout,
 import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra, filtrarObras, limparFiltrosObras } from './modules/obras.js?v=20260515d';
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260501g';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt, renderCronAtivo } from './modules/cronograma.js?v=20260508d';
-import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario, abrirDiarioObra, voltarDiarioObras } from './modules/diario.js?v=20260501g';
+import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario, abrirDiarioObra, voltarDiarioObras, filtrarDiario } from './modules/diario.js?v=20260515e';
 import { addFin, delFin, openEditFin, openModalFin, openModalFinPessoal, isModalFinPessoal, renderFinanceiro, toggleHideRT, marcarFinPago,
          addCustoFixo, delCustoFixo, toggleCustoFixoAtivo, openEditCustoFixo, abrirModalCustoFixo,
          preencherCustoFixoPadrao, gerarLancamentosCustosFixos,
@@ -960,6 +960,7 @@ G.salvarObra = () => { if(salvarObra(state)) renderAtiva(); };
 G.resetFormObra = () => resetFormObra();
 G.filtrarObras = filtrarObras;
 G.limparFiltrosObras = limparFiltrosObras;
+G.filtrarDiario = filtrarDiario;
 G.migrarFotosStorage = async () => {
   if (!window._fbUser) { showToast('⚠️ Faça login no Google primeiro (sync ativa)'); return; }
   const totalDataUrl = (state.diario || []).reduce((a, d) =>
