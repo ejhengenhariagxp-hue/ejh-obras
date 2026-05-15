@@ -23,7 +23,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260515d"></script>
+<script type="module" src="./app.js?v=20260515e"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Lucide icons (modern SVG icon library) -->
@@ -170,6 +170,7 @@
 <!-- OBRAS -->
 <div id="page-obras" class="page">
   <div class="page-hdr"><div><div class="page-title">Obras e Projetos</div><div class="page-sub">Gestão de Projetos e Obras</div></div><button class="btn btn-primary" onclick="resetFormObra();openModal('modal-obra')">＋ Novo Projeto / Obra</button></div>
+  <div id="obras-stats-panel"></div>
   <!-- Tabela (desktop) -->
   <div class="table-wrap only-desktop"><table><thead><tr><th>Tipo</th><th>ID</th><th>Nome</th><th>Cliente</th><th>Área</th><th>Início</th><th>Fim</th><th>Status</th><th></th></tr></thead><tbody id="tbody-obras"></tbody></table></div>
   <!-- Cards (mobile/tablet) -->
@@ -613,7 +614,17 @@
     <div class="form-group"><label>Telefone do cliente</label><input id="f-obra-cli-tel" placeholder="(35) 9 ____-____"></div>
     <div class="form-group"><label>Email do cliente</label><input id="f-obra-cli-email" type="email" placeholder="cliente@email.com"></div>
     <div class="form-group"><label>CPF/CNPJ</label><input id="f-obra-cli-doc" placeholder="000.000.000-00"></div>
-    <div class="form-group"><label>Área (m²)</label><input id="f-obra-area" type="number" placeholder="250"></div>
+    <div class="form-group">
+  <label>Área / Quantidade</label>
+  <div style="display:flex;gap:8px">
+    <input id="f-obra-area" type="number" placeholder="250" style="flex:1">
+    <select id="f-obra-unidade" style="width:90px">
+      <option value="m2">m²</option>
+      <option value="ton">ton</option>
+      <option value="kg">kg</option>
+    </select>
+  </div>
+</div>
     <div class="form-group full"><label>Endereço</label><input id="f-obra-end" placeholder="Rua, nº — Cidade/UF"></div>
     <div class="form-group"><label>Responsável Técnico (RT)</label><input id="f-obra-rt" placeholder="Nome do engenheiro"></div>
     <div class="form-group"><label>CREA / CAU</label><input id="f-obra-crea" placeholder="CREA-MG 000000"></div>

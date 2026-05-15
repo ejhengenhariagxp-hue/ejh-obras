@@ -22,6 +22,7 @@ function lerFormObra() {
     cliEmail:      val('f-obra-cli-email'),
     cliDoc:        val('f-obra-cli-doc'),
     area:          num('f-obra-area'),
+    unidadeArea:   val('f-obra-unidade') || 'm2',
     endereco:      val('f-obra-end'),
     rt:            val('f-obra-rt'),
     crea:          val('f-obra-crea'),
@@ -77,6 +78,7 @@ export function openEditObra(state, id) {
   set('f-obra-cli-email', o.cliEmail);
   set('f-obra-cli-doc', o.cliDoc);
   set('f-obra-area', o.area);
+  set('f-obra-unidade', o.unidadeArea || 'm2');
   set('f-obra-end', o.endereco);
   set('f-obra-rt', o.rt);
   set('f-obra-crea', o.crea);
@@ -111,10 +113,12 @@ export function salvarObra(state) {
 // Reset do form para novo cadastro (limpa id oculto e título)
 export function resetFormObra() {
   const ids = ['f-obra-id','f-obra-nome','f-obra-cliente','f-obra-cli-tel','f-obra-cli-email',
-    'f-obra-cli-doc','f-obra-area','f-obra-end','f-obra-rt','f-obra-crea','f-obra-inicio',
+    'f-obra-cli-doc','f-obra-area','f-obra-unidade','f-obra-end','f-obra-rt','f-obra-crea','f-obra-inicio',
     'f-obra-fim','f-obra-contrato','f-obra-numcontrato','f-obra-diamed','f-obra-obscontrato',
     'f-obra-tipo-custom'];
   ids.forEach(k => { const el = document.getElementById(k); if (el) el.value = ''; });
+  const unidSel = document.getElementById('f-obra-unidade');
+  if (unidSel) unidSel.value = 'm2';
   const tipoSel = document.getElementById('f-obra-tipo');
   if (tipoSel) tipoSel.value = 'obra';
   if (typeof window.toggleObraTipoCustom === 'function') window.toggleObraTipoCustom();
@@ -189,8 +193,115 @@ export function registrarMedicaoRapida(state, obraId) {
   return true;
 }
 
+// Painel de métricas de produção
+function renderObrasStats(state) {
+  const panel = document.getElementById('obras-stats-panel');
+  if (!panel) return;
+  const obras = state.obras || [];
+  if (!obras.length) { panel.innerHTML = ''; return; }
+
+  // Acumula m² (civil)
+  let m2exec = 0, m2emex = 0;
+  // Acumula ton (metálica: ton direto + kg/1000)
+  let tonExec = 0, tonEmex = 0;
+
+  obras.forEach(o => {
+    const area = o.area || 0;
+    const u = o.unidadeArea || 'm2';
+    const concluida = o.status === 'Concluída';
+    if (u === 'm2') {
+      if (concluida) m2exec += area; else m2emex += area;
+    } else if (u === 'ton') {
+      if (concluida) tonExec += area; else tonEmex += area;
+    } else if (u === 'kg') {
+      if (concluida) tonExec += area / 1000; else tonEmex += area / 1000;
+    }
+  });
+
+  const totalM2  = m2exec + m2emex;
+  const totalTon = tonExec + tonEmex;
+
+  const fmtN = n => n.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+
+  // Bar helper: returns width percentages for [exec, emex]
+  const barWidths = (exec, emex) => {
+    const total = exec + emex;
+    if (!total) return [0, 0];
+    return [Math.round(exec / total * 100), Math.round(emex / total * 100)];
+  };
+
+  const [m2pw, m2ew] = barWidths(m2exec, m2emex);
+  const [tpw, tew]   = barWidths(tonExec, tonEmex);
+
+  const barM2 = totalM2 > 0 ? `
+    <div style="height:10px;border-radius:5px;overflow:hidden;background:#e2e8f0;margin:8px 0 4px">
+      ${m2ew > 0 ? `<div style="display:inline-block;width:${m2ew}%;height:100%;background:#3b82f6;vertical-align:top"></div>` : ''}
+      ${m2pw > 0 ? `<div style="display:inline-block;width:${m2pw}%;height:100%;background:#22c55e;vertical-align:top"></div>` : ''}
+    </div>` : '';
+
+  const barTon = totalTon > 0 ? `
+    <div style="height:10px;border-radius:5px;overflow:hidden;background:#e2e8f0;margin:8px 0 4px">
+      ${tew > 0 ? `<div style="display:inline-block;width:${tew}%;height:100%;background:#f59e0b;vertical-align:top"></div>` : ''}
+      ${tpw > 0 ? `<div style="display:inline-block;width:${tpw}%;height:100%;background:#d97706;vertical-align:top"></div>` : ''}
+    </div>` : '';
+
+  panel.innerHTML = `<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px">
+    <div style="flex:1;min-width:220px;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 20px">
+      <div style="font-size:11px;font-weight:700;color:var(--navy);letter-spacing:.05em;margin-bottom:8px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-right:4px"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        OBRA CIVIL — m²
+      </div>
+      <div style="display:flex;gap:16px;align-items:flex-end">
+        <div>
+          <div style="font-size:22px;font-weight:800;color:#3b82f6;line-height:1">${totalM2 > 0 ? fmtN(m2emex) : '—'}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">Em execução</div>
+        </div>
+        <div>
+          <div style="font-size:22px;font-weight:800;color:#22c55e;line-height:1">${totalM2 > 0 ? fmtN(m2exec) : '—'}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">Executado</div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div style="font-size:13px;font-weight:700;color:var(--navy)">${fmtN(totalM2)} m²</div>
+          <div style="font-size:10px;color:var(--muted)">Total</div>
+        </div>
+      </div>
+      ${barM2}
+      <div style="display:flex;gap:10px;font-size:10px;color:var(--muted)">
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#3b82f6;margin-right:3px"></span>Em andamento</span>
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#22c55e;margin-right:3px"></span>Concluída</span>
+      </div>
+    </div>
+    <div style="flex:1;min-width:220px;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 20px">
+      <div style="font-size:11px;font-weight:700;color:var(--navy);letter-spacing:.05em;margin-bottom:8px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-right:4px"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        ESTRUTURA METÁLICA — ton
+      </div>
+      <div style="display:flex;gap:16px;align-items:flex-end">
+        <div>
+          <div style="font-size:22px;font-weight:800;color:#f59e0b;line-height:1">${totalTon > 0 ? fmtN(tonEmex) : '—'}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">Em execução</div>
+        </div>
+        <div>
+          <div style="font-size:22px;font-weight:800;color:#d97706;line-height:1">${totalTon > 0 ? fmtN(tonExec) : '—'}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">Executado</div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div style="font-size:13px;font-weight:700;color:var(--navy)">${fmtN(totalTon)} ton</div>
+          <div style="font-size:10px;color:var(--muted)">Total</div>
+        </div>
+      </div>
+      ${barTon}
+      <div style="display:flex;gap:10px;font-size:10px;color:var(--muted)">
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#f59e0b;margin-right:3px"></span>Em andamento</span>
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#d97706;margin-right:3px"></span>Concluída</span>
+      </div>
+    </div>
+  </div>`;
+}
+
 // Renderizar tabela de obras
 export function renderObras(state) {
+  renderObrasStats(state);
   // Tabela (desktop) ──────────────────────────────────────────────
   safeInner('tbody-obras', state.obras.map(o => {
     const aviso = verificarAvisosObra(o);
@@ -206,7 +317,7 @@ export function renderObras(state) {
       <td class="td-id">${o.id}</td>
       <td style="font-weight:600">${escapeHtml(o.nome)}${avisoHtml}</td>
       <td>${escapeHtml(o.cliente||'—')}</td>
-      <td>${(o.area||0).toLocaleString('pt-BR')} m²</td>
+      <td>${(o.area||0).toLocaleString('pt-BR')} ${o.unidadeArea==='ton'?'ton':o.unidadeArea==='kg'?'kg':'m²'}</td>
       <td>${modalidadeIcon(o.modalidade||'privada')}</td>
       <td>${fmtD(o.inicio)}</td><td>${fmtD(o.fim)}</td>
       <td>${statusBadge(o.status)}</td>
@@ -238,7 +349,7 @@ export function renderObras(state) {
       </div>
       <div class="obra-mobile-tags">
         <span class="badge ${tipoBadgeClass}">${tipoBadgeIcon}${tipoLabel(o.tipo)}</span>
-        <span class="badge badge-blue">${(o.area||0).toLocaleString('pt-BR')} m²</span>
+        <span class="badge badge-blue">${(o.area||0).toLocaleString('pt-BR')} ${o.unidadeArea==='ton'?'ton':o.unidadeArea==='kg'?'kg':'m²'}</span>
         <span class="badge badge-amber">${o.id}</span>
         ${avisoHtml}
       </div>
