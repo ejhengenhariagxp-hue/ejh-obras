@@ -355,6 +355,17 @@ export function renderObras(state) {
     const tipoBadgeClass = o.tipo==='acompanhamento' ? 'badge-teal'
                          : (o.tipo==='projeto' || o.tipo==='R1' ? 'badge-purple' : 'badge-blue');
     const tipoBadgeIcon  = o.tipo==='acompanhamento' ? '🔍 ' : '';
+    const etapas = (state.cron||[]).filter(c=>c.obraId===o.id);
+    const avg = etapas.length ? Math.round(etapas.reduce((a,x)=>a+(x.conc||0),0)/etapas.length) : null;
+    const avgCol = avg===null?'var(--muted)':avg>=100?'var(--green)':avg>0?'var(--blue)':'var(--muted)';
+    const avgHtml = avg===null
+      ? `<span style="font-size:11px;color:var(--muted)">—</span>`
+      : `<div style="display:flex;align-items:center;gap:6px;min-width:80px">
+          <div style="flex:1;height:5px;background:#e2e8f0;border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${avg}%;background:${avgCol};border-radius:4px"></div>
+          </div>
+          <span style="font-size:11px;font-weight:700;color:${avgCol};min-width:28px">${avg}%</span>
+        </div>`;
     return `<tr>
       <td><span class="badge ${tipoBadgeClass}">${tipoBadgeIcon}${tipoLabel(o.tipo)}</span></td>
       <td class="td-id">${o.id}</td>
@@ -364,7 +375,9 @@ export function renderObras(state) {
       <td>${modalidadeIcon(o.modalidade||'privada')}</td>
       <td>${fmtD(o.inicio)}</td><td>${fmtD(o.fim)}</td>
       <td>${statusBadge(o.status)}</td>
+      <td>${avgHtml}</td>
       <td style="white-space:nowrap">
+        <button onclick="G.abrirDiarioObra('${o.id}')" class="btn btn-outline btn-xs" style="color:var(--green);border-color:var(--green);margin-right:3px" title="Abrir diário desta obra">📷</button>
         <button onclick="registrarMedicaoRapida('${o.id}')" class="btn btn-outline btn-xs" style="color:var(--blue);border-color:var(--blue);margin-right:3px" title="Registrar medição">📏</button>
         <button onclick="openEditObra('${o.id}')" class="btn btn-outline btn-xs" style="color:var(--amber);border-color:var(--amber);margin-right:3px" title="Editar obra">✏️</button>
         <button onclick="delObra('${o.id}')" class="btn btn-outline btn-xs" style="color:var(--red);border-color:var(--red)">✕</button>
@@ -382,6 +395,9 @@ export function renderObras(state) {
     const tipoBadgeClass = o.tipo==='acompanhamento' ? 'badge-teal'
                          : (o.tipo==='projeto' || o.tipo==='R1' ? 'badge-purple' : 'badge-blue');
     const tipoBadgeIcon  = o.tipo==='acompanhamento' ? '🔍 ' : '';
+    const etapas = (state.cron||[]).filter(c=>c.obraId===o.id);
+    const avg = etapas.length ? Math.round(etapas.reduce((a,x)=>a+(x.conc||0),0)/etapas.length) : null;
+    const avgCol = avg===null?'var(--muted)':avg>=100?'var(--green)':avg>0?'var(--blue)':'var(--muted)';
     return `<div class="obra-mobile-card">
       <div class="obra-mobile-hdr">
         <div style="flex:1;min-width:0">
@@ -397,9 +413,16 @@ export function renderObras(state) {
         ${avisoHtml}
       </div>
       ${o.inicio||o.fim?`<div class="obra-mobile-datas">📅 ${fmtD(o.inicio)} → ${fmtD(o.fim)}</div>`:''}
+      ${avg!==null?`<div style="display:flex;align-items:center;gap:8px;margin:8px 0 4px">
+        <div style="flex:1;height:6px;background:#e2e8f0;border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${avg}%;background:${avgCol};border-radius:4px;transition:width .3s"></div>
+        </div>
+        <span style="font-size:12px;font-weight:700;color:${avgCol};min-width:34px">${avg}%</span>
+      </div>`:''}
       <div class="obra-mobile-acoes">
-        <button onclick="registrarMedicaoRapida('${o.id}')" class="btn btn-outline btn-sm" style="color:var(--blue);border-color:var(--blue);flex:1">📏 Medição</button>
-        <button onclick="openEditObra('${o.id}')" class="btn btn-outline btn-sm" style="color:var(--amber);border-color:var(--amber);flex:1">✏️ Editar</button>
+        <button onclick="G.abrirDiarioObra('${o.id}')" class="btn btn-outline btn-sm" style="color:var(--green);border-color:var(--green);flex:1">📷 Diário</button>
+        <button onclick="registrarMedicaoRapida('${o.id}')" class="btn btn-outline btn-sm" style="color:var(--blue);border-color:var(--blue);flex:1">📏</button>
+        <button onclick="openEditObra('${o.id}')" class="btn btn-outline btn-sm" style="color:var(--amber);border-color:var(--amber);flex:1">✏️</button>
         <button onclick="delObra('${o.id}')" class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red)">✕</button>
       </div>
     </div>`;
