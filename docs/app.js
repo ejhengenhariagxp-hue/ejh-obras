@@ -1331,10 +1331,15 @@ window._aplicarTemplateCaixa = function() {
     { etapa:'Complementos (Limpeza Final e Calafete)',                 incidencia:1.56 },
     { etapa:'Outros / Serviços Adicionais',                            incidencia:0 },
   ];
-  const jaExistem = new Set(state.cron.filter(c=>c.obraId===obraId).map(c=>c.etapa));
-  let adicionadas = 0;
+  const existentes = state.cron.filter(c=>c.obraId===obraId);
+  const mapaExist = new Map(existentes.map(c=>[c.etapa, c]));
+  let adicionadas = 0, atualizadas = 0;
   etapasCEF.forEach(({etapa:nome, incidencia}) => {
-    if (jaExistem.has(nome)) return;
+    const exist = mapaExist.get(nome);
+    if (exist) {
+      if ((exist.incidencia||0) !== incidencia) { exist.incidencia = incidencia; atualizadas++; }
+      return;
+    }
     state.cron.push({ id:'CRN-'+pad(state.counters.cron), obraId, etapa:nome, inicio:'', fim:'', prev:100, conc:0, incidencia });
     state.counters.cron++;
     adicionadas++;
@@ -1342,7 +1347,10 @@ window._aplicarTemplateCaixa = function() {
   saveStateLocal();
   if (window._fbUser) { clearTimeout(_fbSaveTimer); _fbSaveTimer = setTimeout(()=>saveToCloud(),400); }
   renderAtiva();
-  showToast(`✅ ${adicionadas} etapa(s) CEF adicionadas!`);
+  const msgs = [];
+  if (adicionadas) msgs.push(`${adicionadas} adicionada(s)`);
+  if (atualizadas) msgs.push(`${atualizadas} incidência(s) atualizada(s)`);
+  showToast(`✅ ${msgs.join(', ') || 'Nenhuma alteração'}.`);
 };
 G.openModalFin = tipo => openModalFin(state, tipo);
 G.openModalFinPessoal = tipo => openModalFinPessoal(state, tipo);
