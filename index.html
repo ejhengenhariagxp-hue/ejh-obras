@@ -23,7 +23,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260515g"></script>
+<script type="module" src="./app.js?v=20260515h"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Lucide icons (modern SVG icon library) -->
@@ -116,27 +116,62 @@
     </div>
   </div>
 
-  <!-- 1. Alertas urgentes (vermelho/laranja) - sempre no topo -->
+  <!-- Alertas urgentes -->
   <div id="dash-alertas-urgentes"></div>
 
-  <!-- 2. Banner de status do portfolio -->
+  <!-- Banner portfolio -->
   <div id="dash-portfolio"></div>
 
-  <!-- 3. KPIs principais -->
+  <!-- KPIs com ícones -->
   <div class="kpi-grid kpi-dashboard-ejhv">
-    <div class="kpi blue"><div class="kpi-label">Projetos e Obras Ativos</div><div class="kpi-value" id="kpi-total">0</div><div class="kpi-sub">cadastrados</div></div>
-    <div class="kpi green"><div class="kpi-label">Orçamento Total</div><div class="kpi-value" id="kpi-orc">R$0</div><div class="kpi-sub">soma dos itens</div></div>
-    <div class="kpi amber"><div class="kpi-label">Realizado</div><div class="kpi-value" id="kpi-real">R$0</div><div class="kpi-sub" id="kpi-real-pct"></div></div>
-    <div class="kpi teal"><div class="kpi-label">Saldo Financeiro</div><div class="kpi-value" id="kpi-saldo">R$0</div><div class="kpi-sub">receitas − despesas</div></div>
+    <div class="kpi blue">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="kpi-label">Projetos e Obras</div>
+        <span style="font-size:22px;line-height:1">🏗</span>
+      </div>
+      <div class="kpi-value" id="kpi-total">0</div>
+      <div class="kpi-sub" id="kpi-total-sub">cadastrados</div>
+    </div>
+    <div class="kpi green">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="kpi-label">Orçamento Total</div>
+        <span style="font-size:22px;line-height:1">📋</span>
+      </div>
+      <div class="kpi-value" id="kpi-orc">R$0</div>
+      <div class="kpi-sub">soma dos orçamentos</div>
+    </div>
+    <div class="kpi amber">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="kpi-label">Realizado</div>
+        <span style="font-size:22px;line-height:1">📊</span>
+      </div>
+      <div class="kpi-value" id="kpi-real">R$0</div>
+      <div style="margin-top:6px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px">
+          <span id="kpi-real-pct"></span>
+        </div>
+        <div style="height:4px;background:#f1f5f9;border-radius:4px;overflow:hidden">
+          <div id="kpi-real-bar" style="height:100%;background:var(--amber,#f59e0b);border-radius:4px;width:0%;transition:width .4s"></div>
+        </div>
+      </div>
+    </div>
+    <div class="kpi teal">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="kpi-label">Saldo Financeiro</div>
+        <span style="font-size:22px;line-height:1">💰</span>
+      </div>
+      <div class="kpi-value" id="kpi-saldo">R$0</div>
+      <div class="kpi-sub">receitas − despesas</div>
+    </div>
   </div>
 
-  <!-- 3b. Mini stats: Produção e Propostas -->
+  <!-- Stats: Produção + Propostas -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-    <div id="dash-producao-stats" style="background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px"></div>
-    <div id="dash-propostas-stats" style="background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px"></div>
+    <div id="dash-producao-stats" style="background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px"></div>
+    <div id="dash-propostas-stats" style="background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px"></div>
   </div>
 
-  <!-- 4. Atalhos rápidos (4 ações principais) -->
+  <!-- Atalhos rápidos -->
   <div class="quick-shortcuts">
     <button class="quick-card" onclick="openModalDiario()">
       <span class="quick-icon">📷</span>
@@ -150,8 +185,8 @@
     </button>
     <button class="quick-card" onclick="openModalFin('Despesa')">
       <span class="quick-icon">💸</span>
-      <span class="quick-label">Despesa</span>
-      <span class="quick-sub">lançar agora</span>
+      <span class="quick-label">Lançar Despesa</span>
+      <span class="quick-sub">movimentação rápida</span>
     </button>
     <button class="quick-card" onclick="nav('relatorio',null)">
       <span class="quick-icon">📄</span>
@@ -160,17 +195,32 @@
     </button>
   </div>
 
-  <!-- 5. Ações pendentes + comunicações recentes (lado a lado) -->
+  <!-- Obras em andamento (posição prioritária) -->
+  <div class="section" style="margin-bottom:20px">
+    <div class="section-hdr">
+      <div class="section-title">🏗 Projetos e Obras em Andamento</div>
+      <button class="btn btn-outline btn-xs" onclick="nav('obras',null)" style="font-size:11px;padding:4px 10px">Ver todas →</button>
+    </div>
+    <div class="cards-grid" id="dash-obras"></div>
+  </div>
+
+  <!-- Ações pendentes + Comunicações recentes -->
   <div class="dash-row">
     <div class="section dash-col"><div class="section-hdr"><div class="section-title">🔥 Próximas Ações</div></div><div id="dash-acoes"></div></div>
     <div class="section dash-col"><div class="section-hdr"><div class="section-title">📡 Últimas Comunicações</div><button class="btn btn-outline btn-xs" onclick="nav('captura',null)" style="font-size:11px;padding:4px 10px">Ver todas →</button></div><div id="dash-coms"></div></div>
   </div>
 
-  <!-- 6. Obras em andamento -->
-  <div class="section"><div class="section-hdr"><div class="section-title">Projetos e Obras em Andamento</div></div><div class="cards-grid" id="dash-obras"></div></div>
-
-  <!-- 7. Últimas movimentações financeiras -->
-  <div class="section"><div class="section-hdr"><div class="section-title">Últimas Movimentações</div></div><div id="dash-fin"></div></div>
+  <!-- Alertas financeiros: A receber + A pagar -->
+  <div class="dash-row">
+    <div class="section dash-col">
+      <div class="section-hdr"><div class="section-title">📥 A Receber</div><span id="dash-receber-total" style="font-size:12px;font-weight:700;color:var(--green)"></span></div>
+      <div id="dash-receber"></div>
+    </div>
+    <div class="section dash-col">
+      <div class="section-hdr"><div class="section-title">📤 A Pagar</div><span id="dash-pagar-total" style="font-size:12px;font-weight:700;color:var(--red)"></span></div>
+      <div id="dash-pagar"></div>
+    </div>
+  </div>
 </div>
 
 <!-- OBRAS -->

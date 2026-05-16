@@ -308,10 +308,9 @@ function renderDashboard() {
   const hoje = new Date();
   safeText('dash-date', hoje.toLocaleDateString('pt-BR',{weekday:'long',year:'numeric',month:'long',day:'numeric'}));
 
-  // Card de alertas urgentes — só aparece se houver problema crítico
   renderAlertaUrgente();
 
-  // Status geral do portfolio
+  // Banner portfolio
   const sp = statusPortfolio();
   safeInner('dash-portfolio', `<div class="portfolio-banner portfolio-${sp.cor}">
     <div class="portfolio-icon">${sp.icon}</div>
@@ -320,53 +319,75 @@ function renderDashboard() {
       <div class="portfolio-sub">${sp.sub}</div>
     </div>
   </div>`);
+
+  // KPIs
   const totOrc  = state.orc.reduce((a,x)=>a+x.qtd*x.vunit, 0);
   const totReal = state.orc.reduce((a,x)=>a+x.real, 0);
   const rec = state.fin.filter(x=>x.tipo==='Receita' && !x.transferGroupId && !x.pessoal).reduce((a,x)=>a+x.valor, 0);
   const des = state.fin.filter(x=>x.tipo==='Despesa' && !x.transferGroupId && !x.pessoal).reduce((a,x)=>a+x.valor, 0);
+  const andamento = state.obras.filter(o=>o.status==='Em andamento').length;
   safeText('kpi-total', state.obras.length);
+  const kpiTotalSub = document.getElementById('kpi-total-sub');
+  if (kpiTotalSub) kpiTotalSub.textContent = andamento > 0 ? `${andamento} em andamento` : 'cadastrados';
   safeText('kpi-orc',   fmt(totOrc));
   safeText('kpi-real',  fmt(totReal));
-  safeText('kpi-real-pct', totOrc > 0 ? Math.round(totReal/totOrc*100)+'% do orçado' : '');
+  const pct = totOrc > 0 ? Math.round(totReal/totOrc*100) : 0;
+  const kpiPct = document.getElementById('kpi-real-pct');
+  if (kpiPct) kpiPct.textContent = totOrc > 0 ? `${pct}% do orçado` : '';
+  const kpiBar = document.getElementById('kpi-real-bar');
+  if (kpiBar) kpiBar.style.width = Math.min(pct,100) + '%';
   safeText('kpi-saldo', fmt(rec-des));
   const sEl = document.getElementById('kpi-saldo');
   if (sEl) sEl.style.color = (rec-des) >= 0 ? 'var(--green)' : 'var(--red)';
 
-  // Mini painel de produção (m² e ton)
-  const obrasCivil = state.obras.filter(o => !o.unidadeArea || o.unidadeArea === 'm2');
-  const obrasMetalAndamento = state.obras.filter(o => (o.unidadeArea === 'ton' || o.unidadeArea === 'kg') && o.status !== 'Concluída');
-  const obrasMetalConcluida = state.obras.filter(o => (o.unidadeArea === 'ton' || o.unidadeArea === 'kg') && o.status === 'Concluída');
-  const m2Total   = obrasCivil.reduce((a,o) => a + (o.area||0), 0);
-  const m2And     = obrasCivil.filter(o=>o.status!=='Concluída').reduce((a,o)=>a+(o.area||0),0);
-  const m2Conc    = obrasCivil.filter(o=>o.status==='Concluída').reduce((a,o)=>a+(o.area||0),0);
-  const toTon     = o => o.unidadeArea === 'kg' ? (o.area||0)/1000 : (o.area||0);
-  const tonAnd    = obrasMetalAndamento.reduce((a,o)=>a+toTon(o),0);
-  const tonConc   = obrasMetalConcluida.reduce((a,o)=>a+toTon(o),0);
-  const tonTotal  = tonAnd + tonConc;
+  // Produção (m² e ton)
   const fmtN = n => n.toLocaleString('pt-BR',{maximumFractionDigits:1});
+  const obrasCivil = state.obras.filter(o => !o.unidadeArea || o.unidadeArea === 'm2');
+  const obrasMetalAnd = state.obras.filter(o => (o.unidadeArea === 'ton' || o.unidadeArea === 'kg') && o.status !== 'Concluída');
+  const obrasMetalConc = state.obras.filter(o => (o.unidadeArea === 'ton' || o.unidadeArea === 'kg') && o.status === 'Concluída');
+  const m2Total = obrasCivil.reduce((a,o)=>a+(o.area||0),0);
+  const m2And   = obrasCivil.filter(o=>o.status!=='Concluída').reduce((a,o)=>a+(o.area||0),0);
+  const m2Conc  = obrasCivil.filter(o=>o.status==='Concluída').reduce((a,o)=>a+(o.area||0),0);
+  const toTon   = o => o.unidadeArea === 'kg' ? (o.area||0)/1000 : (o.area||0);
+  const tonAnd  = obrasMetalAnd.reduce((a,o)=>a+toTon(o),0);
+  const tonConc = obrasMetalConc.reduce((a,o)=>a+toTon(o),0);
+  const tonTotal= tonAnd + tonConc;
+  const m2PctAnd = m2Total > 0 ? Math.round(m2And/m2Total*100) : 0;
   safeInner('dash-producao-stats', `
-    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:10px;letter-spacing:.5px">📐 PRODUÇÃO</div>
-    <div style="display:flex;gap:12px;flex-wrap:wrap">
-      <div style="flex:1;min-width:80px">
-        <div style="font-size:10px;color:var(--muted);font-weight:600">CIVIL (m²)</div>
-        <div style="font-size:20px;font-weight:800;color:var(--navy)">${fmtN(m2Total)}</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:2px">
-          <span style="color:#2563eb">▶ ${fmtN(m2And)} exec.</span> &nbsp;
-          <span style="color:#059669">✓ ${fmtN(m2Conc)} conc.</span>
+    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:12px;letter-spacing:.5px;display:flex;align-items:center;gap:6px">
+      <span>📐</span> PRODUÇÃO ACUMULADA
+    </div>
+    <div style="display:grid;grid-template-columns:${tonTotal>0?'1fr 1fr':'1fr'};gap:12px">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px">CIVIL</div>
+        <div style="font-size:24px;font-weight:800;color:var(--navy);line-height:1">${fmtN(m2Total)}<span style="font-size:13px;font-weight:400;color:var(--muted)"> m²</span></div>
+        <div style="margin-top:8px">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px">
+            <span style="color:#2563eb">▶ ${fmtN(m2And)} exec.</span>
+            <span style="color:#059669">✓ ${fmtN(m2Conc)} conc.</span>
+          </div>
+          <div style="height:5px;background:#f1f5f9;border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${m2PctAnd}%;background:#2563eb;border-radius:4px"></div>
+          </div>
         </div>
       </div>
-      ${tonTotal > 0 ? `<div style="flex:1;min-width:80px">
-        <div style="font-size:10px;color:var(--muted);font-weight:600">METÁLICA (ton)</div>
-        <div style="font-size:20px;font-weight:800;color:var(--navy)">${fmtN(tonTotal)}</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:2px">
-          <span style="color:#d97706">▶ ${fmtN(tonAnd)} exec.</span> &nbsp;
-          <span style="color:#059669">✓ ${fmtN(tonConc)} conc.</span>
+      ${tonTotal > 0 ? `<div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px">METÁLICA</div>
+        <div style="font-size:24px;font-weight:800;color:var(--navy);line-height:1">${fmtN(tonTotal)}<span style="font-size:13px;font-weight:400;color:var(--muted)"> ton</span></div>
+        <div style="margin-top:8px">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px">
+            <span style="color:#d97706">▶ ${fmtN(tonAnd)} exec.</span>
+            <span style="color:#059669">✓ ${fmtN(tonConc)} conc.</span>
+          </div>
+          <div style="height:5px;background:#f1f5f9;border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${tonTotal>0?Math.round(tonAnd/tonTotal*100):0}%;background:#d97706;border-radius:4px"></div>
+          </div>
         </div>
       </div>` : ''}
     </div>
   `);
 
-  // Mini painel de propostas
+  // Propostas
   const props = Array.isArray(state.propostas) ? state.propostas : [];
   const pTotal   = props.length;
   const pFechado = props.filter(p=>p.status==='fechado').length;
@@ -374,27 +395,35 @@ function renderDashboard() {
   const pPerdeu  = props.filter(p=>p.status==='nao_fechou').length;
   const pPct     = pTotal ? Math.round(pFechado/pTotal*100) : 0;
   const valAberto= props.filter(p=>p.status==='em_negociacao'||p.status==='em_revisao').reduce((a,p)=>a+(p.total||0),0);
+  const valFechado= props.filter(p=>p.status==='fechado').reduce((a,p)=>a+(p.total||0),0);
   safeInner('dash-propostas-stats', `
-    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:10px;letter-spacing:.5px">📝 PROPOSTAS</div>
+    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:12px;letter-spacing:.5px;display:flex;align-items:center;gap:6px">
+      <span>📝</span> PROPOSTAS
+    </div>
     ${pTotal === 0 ? '<div style="font-size:12px;color:var(--muted)">Nenhuma proposta ainda</div>' : `
-    <div style="display:flex;align-items:center;gap:12px">
-      <div style="position:relative;width:56px;height:56px;flex-shrink:0">
-        <svg width="56" height="56" viewBox="0 0 56 56">
-          <circle r="22" cx="28" cy="28" fill="none" stroke="#f1f5f9" stroke-width="10"/>
-          <circle r="22" cx="28" cy="28" fill="none" stroke="#6ee7b7" stroke-width="10"
-            stroke-dasharray="${138.2*pPct/100} ${138.2}" stroke-dashoffset="34.6" transform="rotate(-90 28 28)"/>
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="position:relative;width:64px;height:64px;flex-shrink:0">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle r="26" cx="32" cy="32" fill="none" stroke="#f1f5f9" stroke-width="11"/>
+          <circle r="26" cx="32" cy="32" fill="none" stroke="#6ee7b7" stroke-width="11"
+            stroke-dasharray="${163.4*pPct/100} ${163.4}" stroke-dashoffset="40.8" transform="rotate(-90 32 32)"/>
         </svg>
-        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--navy)">${pPct}%</div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--navy)">${pPct}%</div>
       </div>
-      <div style="flex:1">
-        <div style="font-size:10px;color:var(--muted);font-weight:600">TOTAL · ${pTotal}</div>
-        <div style="font-size:11px;margin-top:3px"><span style="color:#065f46;font-weight:700">✅ ${pFechado}</span> &nbsp; <span style="color:#1d4ed8;font-weight:700">🤝 ${pAberto}</span> &nbsp; <span style="color:#991b1b;font-weight:700">❌ ${pPerdeu}</span></div>
-        ${valAberto>0?`<div style="font-size:10px;color:var(--muted);margin-top:2px">Em aberto: <strong>${fmt(valAberto)}</strong></div>`:''}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">${pTotal} proposta${pTotal!==1?'s':''} enviada${pTotal!==1?'s':''}</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+          <span style="font-size:12px;color:#065f46;font-weight:700">✅ ${pFechado} fechad${pFechado!==1?'os':'o'}</span>
+          <span style="font-size:12px;color:#1d4ed8;font-weight:700">🤝 ${pAberto} aberto${pAberto!==1?'s':''}</span>
+          <span style="font-size:12px;color:#991b1b;font-weight:700">❌ ${pPerdeu}</span>
+        </div>
+        ${valFechado>0?`<div style="font-size:10px;color:var(--muted)">Fechado: <strong style="color:#065f46">${fmt(valFechado)}</strong></div>`:''}
+        ${valAberto>0?`<div style="font-size:10px;color:var(--muted)">Em aberto: <strong>${fmt(valAberto)}</strong></div>`:''}
       </div>
     </div>`}
   `);
 
-  // Empty state: zero obras cadastradas
+  // Empty state
   if (state.obras.length === 0) {
     safeInner('dash-obras', `
       <div class="empty-hero">
@@ -403,9 +432,10 @@ function renderDashboard() {
         <div class="empty-hero-sub">Crie sua primeira obra e comece a controlar custos, prazo e execução.</div>
         <button class="btn btn-primary" onclick="resetFormObra();openModal('modal-obra')">＋ Criar Primeira Obra</button>
       </div>`);
-    safeInner('dash-fin', '<div style="color:var(--muted);padding:14px;text-align:center;font-size:13px">Sem movimentações ainda.</div>');
-    safeInner('dash-acoes', '<div style="color:var(--muted);padding:14px;text-align:center;font-size:13px">Cadastre uma obra para ver suas pendências aqui.</div>');
-    safeInner('dash-coms', '<div style="color:var(--muted);padding:14px;text-align:center;font-size:13px">Sem comunicações ainda.</div>');
+    ['dash-acoes','dash-coms','dash-receber','dash-pagar'].forEach(id =>
+      safeInner(id, '<div style="color:var(--muted);padding:14px;text-align:center;font-size:13px">Sem dados ainda.</div>'));
+    safeText('dash-receber-total','');
+    safeText('dash-pagar-total','');
     return;
   }
 
@@ -420,7 +450,7 @@ function renderDashboard() {
       </div>
     </div>`).join('') : '<div style="color:var(--green);padding:14px;text-align:center;font-size:13px">✅ Tudo em dia! Sem pendências.</div>');
 
-  // Últimas Comunicações (de capturas)
+  // Últimas Comunicações
   const coms = [...(state.capturas || [])].sort((a,b) => b.ts - a.ts).slice(0, 4);
   safeInner('dash-coms', coms.length ? coms.map(c => {
     const obra = state.obras.find(o => o.id === c.obraId);
@@ -436,7 +466,7 @@ function renderDashboard() {
     </div>`;
   }).join('') : '<div style="color:var(--muted);padding:14px;text-align:center;font-size:13px">Sem comunicações registradas. <br><a href="#" onclick="event.preventDefault();nav(\'captura\',null)" style="color:var(--blue);font-weight:600">Registrar a primeira →</a></div>');
 
-  // Cards ativos com semáforo de status
+  // Obras em andamento
   const active = state.obras.filter(o => o.status === 'Em andamento');
   safeInner('dash-obras', active.map(o => {
     const etapas = state.cron.filter(c=>c.obraId===o.id);
@@ -457,20 +487,39 @@ function renderDashboard() {
     </div>`;
   }).join('') || '<div style="color:var(--muted);padding:20px;text-align:center">Nenhuma obra em andamento.</div>');
 
-  // Últimas 5 movimentações financeiras
-  const ultFin = [...state.fin].sort((a,b)=>(b.data||'').localeCompare(a.data||'')).slice(0,5);
-  safeInner('dash-fin', ultFin.length ? ultFin.map(f => {
+  // Alertas financeiros — A receber e A pagar
+  const todayStr = hoje.toISOString().split('T')[0];
+  const pendentes = state.fin.filter(f => f.status && f.status !== 'pago' && !f.transferGroupId && !f.pessoal);
+  const aReceber = pendentes.filter(f => f.tipo === 'Receita').sort((a,b)=>(a.data||'').localeCompare(b.data||'')).slice(0,6);
+  const aPagar   = pendentes.filter(f => f.tipo === 'Despesa').sort((a,b)=>(a.data||'').localeCompare(b.data||'')).slice(0,6);
+  const totalReceber = pendentes.filter(f=>f.tipo==='Receita').reduce((a,f)=>a+f.valor,0);
+  const totalPagar   = pendentes.filter(f=>f.tipo==='Despesa').reduce((a,f)=>a+f.valor,0);
+
+  const finItemHtml = (f, tipo) => {
     const obra = state.obras.find(o=>o.id===f.obraId);
-    const cor = f.tipo === 'Receita' ? 'var(--green)' : 'var(--red)';
-    const sinal = f.tipo === 'Receita' ? '+' : '−';
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px">
+    const vencido = f.data && f.data < todayStr;
+    const cor = tipo === 'Receita' ? 'var(--green)' : (vencido ? 'var(--red)' : 'var(--amber)');
+    const statusTag = vencido
+      ? `<span style="font-size:10px;background:#fee2e2;color:#991b1b;border-radius:4px;padding:1px 5px;font-weight:700">VENCIDO</span>`
+      : `<span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 5px">${fmtD(f.data)}</span>`;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-bottom:1px solid var(--border);font-size:12.5px;gap:8px">
       <div style="flex:1;min-width:0">
         <div style="font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.desc || '—'}</div>
-        <div style="font-size:11.5px;color:var(--muted)">${fmtD(f.data)} • ${obra ? obra.nome : '—'} • ${f.cat || ''}</div>
+        <div style="font-size:11px;color:var(--muted);display:flex;gap:6px;align-items:center;margin-top:2px">
+          ${obra ? `<span>🏗 ${obra.nome}</span>` : ''}
+          ${statusTag}
+        </div>
       </div>
-      <div style="font-weight:700;color:${cor};margin-left:12px;white-space:nowrap">${sinal} ${fmt(f.valor)}</div>
+      <div style="font-weight:700;color:${cor};white-space:nowrap">${fmt(f.valor)}</div>
     </div>`;
-  }).join('') : '<div style="color:var(--muted);padding:14px;text-align:center;font-size:13px">Sem movimentações ainda.</div>');
+  };
+
+  const emptyFin = (msg) => `<div style="color:var(--muted);padding:14px;text-align:center;font-size:13px">${msg}</div>`;
+
+  safeInner('dash-receber', aReceber.length ? aReceber.map(f=>finItemHtml(f,'Receita')).join('') : emptyFin('✅ Nenhum valor pendente'));
+  safeInner('dash-pagar',   aPagar.length   ? aPagar.map(f=>finItemHtml(f,'Despesa')).join('')   : emptyFin('✅ Nenhuma despesa pendente'));
+  safeText('dash-receber-total', totalReceber > 0 ? fmt(totalReceber) : '');
+  safeText('dash-pagar-total',   totalPagar   > 0 ? fmt(totalPagar)   : '');
 }
 
 function exportJSON() {
