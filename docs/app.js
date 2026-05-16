@@ -10,7 +10,7 @@ import { loadState, fbInit, fbLoginGoogle, fbLogout,
          fbMigrarFotosAntigas, fbSalvarSnapshot } from './services.js?v=20260515b';
 import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra, filtrarObras, limparFiltrosObras } from './modules/obras.js?v=20260516e';
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260501g';
-import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt, renderCronAtivo } from './modules/cronograma.js?v=20260508d';
+import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt, renderCronAtivo } from './modules/cronograma.js?v=20260516m';
 import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario, abrirDiarioObra, voltarDiarioObras, filtrarDiario } from './modules/diario.js?v=20260516d';
 import { addFin, delFin, openEditFin, openModalFin, openModalFinPessoal, isModalFinPessoal, renderFinanceiro, toggleHideRT, marcarFinPago,
          addCustoFixo, delCustoFixo, toggleCustoFixoAtivo, openEditCustoFixo, abrirModalCustoFixo,
@@ -1310,16 +1310,32 @@ window._aplicarTemplateCaixa = function() {
   const obra = state.obras.find(o => o.id === obraId);
   if (!confirm(`Adicionar etapas padrão CEF/Caixa à obra "${obra?.nome || obraId}"?\n\nEtapas já existentes serão mantidas.`)) return;
   const etapasCEF = [
-    'Serviços Preliminares','Fundações','Estrutura','Vedação / Alvenaria',
-    'Cobertura','Instalações Hidráulicas e Sanitárias','Instalações Elétricas',
-    'Revestimentos Internos','Revestimentos Externos','Esquadrias',
-    'Louças, Metais e Acessórios','Pintura','Serviços Complementares / Urbanização'
+    { etapa:'Barração+Lig. Provisórias (Água/Luz)+Projetos/Aprovs.', incidencia:2.19 },
+    { etapa:'Infraestrutura (Estacas, Brocas, Baldrames, Sapatas)',   incidencia:6.94 },
+    { etapa:'Supraestrutura (Vigas, Pilares, Cintas, Escadas)',        incidencia:14.93 },
+    { etapa:'Paredes e Painéis',                                       incidencia:9.03 },
+    { etapa:'Esquadrias',                                              incidencia:7.81 },
+    { etapa:'Vidros e Plásticos',                                      incidencia:1.56 },
+    { etapa:'Coberturas (Estrutura e Telhas)',                         incidencia:7.92 },
+    { etapa:'Impermeabilizações',                                      incidencia:1.56 },
+    { etapa:'Revestimentos Internos',                                  incidencia:8.91 },
+    { etapa:'Forros',                                                  incidencia:0.94 },
+    { etapa:'Revestimentos Externos',                                  incidencia:5.16 },
+    { etapa:'Pinturas',                                                incidencia:4.91 },
+    { etapa:'Pisos',                                                   incidencia:9.06 },
+    { etapa:'Acabamentos (Soleiras, Rodapés, Peitoril etc.)',          incidencia:1.13 },
+    { etapa:'Instalações Elétricas e Telefônicas',                     incidencia:4.66 },
+    { etapa:'Instalações Hidráulicas',                                 incidencia:3.79 },
+    { etapa:'Instalações: Esgoto e Águas Pluviais',                   incidencia:3.66 },
+    { etapa:'Louças e Metais',                                         incidencia:4.29 },
+    { etapa:'Complementos (Limpeza Final e Calafete)',                 incidencia:1.56 },
+    { etapa:'Outros / Serviços Adicionais',                            incidencia:0 },
   ];
   const jaExistem = new Set(state.cron.filter(c=>c.obraId===obraId).map(c=>c.etapa));
   let adicionadas = 0;
-  etapasCEF.forEach(nome => {
+  etapasCEF.forEach(({etapa:nome, incidencia}) => {
     if (jaExistem.has(nome)) return;
-    state.cron.push({ id:'CRN-'+pad(state.counters.cron), obraId, etapa:nome, inicio:'', fim:'', prev:100, conc:0 });
+    state.cron.push({ id:'CRN-'+pad(state.counters.cron), obraId, etapa:nome, inicio:'', fim:'', prev:100, conc:0, incidencia });
     state.counters.cron++;
     adicionadas++;
   });

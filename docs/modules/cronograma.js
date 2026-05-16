@@ -16,6 +16,7 @@ export function addCron(state){
     fim:document.getElementById('f-cron-fim').value,
     prev:+document.getElementById('f-cron-prev').value||100,
     conc:+document.getElementById('f-cron-conc').value||0,
+    incidencia:+document.getElementById('f-cron-incidencia').value||0,
   });
   state.counters.cron++;
   closeModal('modal-cron');
@@ -38,6 +39,7 @@ export function saveCronEdit(state){
   if(!c)return;
   c.conc=+document.getElementById('f-edit-conc').value;
   c.prev=+document.getElementById('f-edit-prev').value||c.prev;
+  c.incidencia=+document.getElementById('f-edit-incidencia').value||c.incidencia||0;
   const newFim=document.getElementById('f-edit-fim').value;
   if(newFim) c.fim=newFim;
   closeModal('modal-cron-edit');
@@ -53,6 +55,7 @@ export function openCronEdit(state, id){
   document.getElementById('f-edit-conc').value=c.conc;
   document.getElementById('edit-pct-label').textContent=c.conc+'%';
   document.getElementById('f-edit-prev').value=c.prev;
+  document.getElementById('f-edit-incidencia').value=c.incidencia||0;
   document.getElementById('f-edit-fim').value=c.fim;
   document.getElementById('f-edit-obs').value='';
   openModal('modal-cron-edit');
@@ -85,12 +88,13 @@ export function renderCron(state){
   const filterObraId=document.getElementById('cron-obra-sel')?.value||'';
   const etapas=filterObraId?state.cron.filter(c=>c.obraId===filterObraId):state.cron;
   if(!etapas.length){
-    safeInner('tbody-cron', `<tr><td colspan="9" style="padding:36px;text-align:center;color:var(--muted)">
+    safeInner('tbody-cron', `<tr><td colspan="10" style="padding:36px;text-align:center;color:var(--muted)">
       <div style="font-size:32px;margin-bottom:8px">📅</div>
       <div style="font-weight:600;color:var(--navy);font-size:14px;margin-bottom:4px">${filterObraId?'Nenhuma etapa para esta obra':'Nenhuma etapa cadastrada'}</div>
       <div style="font-size:12.5px;margin-bottom:14px">${filterObraId?'Selecione outra obra ou adicione etapas para esta':'Adicione etapas para acompanhar prazo e avanço físico'}</div>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-cron')">＋ Primeira Etapa</button>
     </td></tr>`);
+    safeInner('cron-avanco-ponderado','');
     return;
   }
   safeInner('tbody-cron', etapas.map(x=>{
@@ -98,11 +102,13 @@ export function renderCron(state){
     const sit=x.conc>=100?'<span class="badge badge-green">✅ Concluída</span>':
               x.conc===0?'<span class="badge badge-amber">⏳ Aguardando</span>':
               '<span class="badge badge-blue">🔨 Em execução</span>';
+    const incLabel=x.incidencia>0?`<span style="font-weight:600;color:var(--navy)">${x.incidencia.toFixed(2)}%</span>`:`<span style="color:var(--muted)">—</span>`;
     return `<tr>
       <td class="td-id">${x.id}</td><td>${obraName(state, x.obraId)}</td>
       <td style="font-weight:500">${escapeHtml(x.etapa)}</td>
       <td>${fmtD(x.inicio)}</td><td>${fmtD(x.fim)}</td>
       <td>${x.prev}%</td>
+      <td style="text-align:center">${incLabel}</td>
       <td><div style="display:flex;align-items:center;gap:9px">
         <div class="progress-wrap" style="flex:1"><div class="progress-bar" style="width:${x.conc}%;background:${col}"></div></div>
         <span style="font-weight:700;color:${col};min-width:34px">${x.conc}%</span>
@@ -114,6 +120,25 @@ export function renderCron(state){
       </td>
     </tr>`;
   }).join(''));
+
+  // Avanço físico ponderado pelas incidências CEF
+  const comIncid = etapas.filter(x=>x.incidencia>0);
+  const totalIncid = comIncid.reduce((s,x)=>s+x.incidencia,0);
+  if(totalIncid>0){
+    const avancoP = comIncid.reduce((s,x)=>s+(x.conc*x.incidencia),0)/totalIncid;
+    const col=avancoP>=100?'var(--green)':avancoP===0?'#94a3b8':'var(--blue)';
+    safeInner('cron-avanco-ponderado',`
+      <div style="margin-top:14px;padding:14px 18px;background:#f0f7ff;border:1.5px solid #bfdbfe;border-radius:12px;display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+        <div style="font-size:13px;font-weight:700;color:var(--navy)">📊 Avanço Físico Ponderado (CEF)</div>
+        <div style="flex:1;min-width:160px">
+          <div class="progress-wrap"><div class="progress-bar" style="width:${avancoP.toFixed(1)}%;background:${col}"></div></div>
+        </div>
+        <div style="font-size:20px;font-weight:800;color:${col};min-width:52px">${avancoP.toFixed(1)}%</div>
+        <div style="font-size:11px;color:var(--muted)">Soma ponderada pelas incidências PCI/Caixa</div>
+      </div>`);
+  } else {
+    safeInner('cron-avanco-ponderado','');
+  }
 }
 
 export function renderGantt(state){
