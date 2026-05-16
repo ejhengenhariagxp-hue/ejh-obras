@@ -363,34 +363,36 @@ function renderIAsoContextual() {
   const extras = alertas.slice(3);
 
   el.innerHTML = `
-    <div style="background:#1e2e24;border:1px solid rgba(42,122,80,.4);border-radius:var(--radius);padding:14px 18px;box-shadow:var(--shadow)">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+    <div style="border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--border)">
+      <div style="background:#1e2e24;padding:12px 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <span style="font-size:18px">👷</span>
         <span style="font-family:'Syne',sans-serif;font-weight:700;color:#fff;font-size:14px">IAsô — Alertas do dia</span>
-        <span style="font-size:11px;color:rgba(255,255,255,.55);margin-left:auto">${alertas.length} item${alertas.length > 1 ? 's' : ''}</span>
+        <span style="font-size:11px;color:rgba(255,255,255,.6);margin-left:auto">${alertas.length} item${alertas.length > 1 ? 's' : ''}</span>
       </div>
-      <div id="iaso-alertas-lista" style="display:flex;flex-direction:column;gap:6px">
-        ${visiveis.map(a => `
-          <div onclick="${a.onclick}" style="display:flex;align-items:flex-start;gap:10px;background:rgba(255,255,255,.07);border-left:3px solid ${a.cor};border-radius:7px;padding:9px 12px;cursor:pointer;transition:background .15s"
-            onmouseover="this.style.background='rgba(255,255,255,.12)'" onmouseout="this.style.background='rgba(255,255,255,.07)'">
-            <span style="font-size:15px;flex-shrink:0;margin-top:1px">${a.icon}</span>
-            <span style="font-size:13.5px;color:#fff;line-height:1.4">${a.msg}</span>
-          </div>`).join('')}
-      </div>
-      ${extras.length ? `
-        <div id="iaso-alertas-extras" style="display:none;flex-direction:column;gap:6px;margin-top:6px">
-          ${extras.map(a => `
-            <div onclick="${a.onclick}" style="display:flex;align-items:flex-start;gap:10px;background:rgba(255,255,255,.07);border-left:3px solid ${a.cor};border-radius:7px;padding:9px 12px;cursor:pointer;transition:background .15s"
-              onmouseover="this.style.background='rgba(255,255,255,.12)'" onmouseout="this.style.background='rgba(255,255,255,.07)'">
+      <div style="background:var(--card);padding:12px 16px">
+        <div id="iaso-alertas-lista" style="display:flex;flex-direction:column;gap:5px">
+          ${visiveis.map(a => `
+            <div onclick="${a.onclick}" style="display:flex;align-items:flex-start;gap:10px;background:#fff;border-left:3px solid ${a.cor};border-radius:7px;padding:9px 12px;cursor:pointer;transition:background .15s;box-shadow:0 1px 4px rgba(0,0,0,.05)"
+              onmouseover="this.style.background='#f5f9f6'" onmouseout="this.style.background='#fff'">
               <span style="font-size:15px;flex-shrink:0;margin-top:1px">${a.icon}</span>
-              <span style="font-size:13.5px;color:#fff;line-height:1.4">${a.msg}</span>
+              <span style="font-size:13.5px;color:var(--text);line-height:1.4">${a.msg}</span>
             </div>`).join('')}
         </div>
-        <button onclick="const e=document.getElementById('iaso-alertas-extras');const b=document.getElementById('iaso-ver-mais');if(e.style.display==='none'){e.style.display='flex';b.textContent='Ver menos ▲'}else{e.style.display='none';b.textContent='Ver mais (${extras.length}) ▼'}"
-          id="iaso-ver-mais"
-          style="margin-top:10px;background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;width:100%">
-          Ver mais (${extras.length}) ▼
-        </button>` : ''}
+        ${extras.length ? `
+          <div id="iaso-alertas-extras" style="display:none;flex-direction:column;gap:5px;margin-top:5px">
+            ${extras.map(a => `
+              <div onclick="${a.onclick}" style="display:flex;align-items:flex-start;gap:10px;background:#fff;border-left:3px solid ${a.cor};border-radius:7px;padding:9px 12px;cursor:pointer;transition:background .15s;box-shadow:0 1px 4px rgba(0,0,0,.05)"
+                onmouseover="this.style.background='#f5f9f6'" onmouseout="this.style.background='#fff'">
+                <span style="font-size:15px;flex-shrink:0;margin-top:1px">${a.icon}</span>
+                <span style="font-size:13.5px;color:var(--text);line-height:1.4">${a.msg}</span>
+              </div>`).join('')}
+          </div>
+          <button onclick="const e=document.getElementById('iaso-alertas-extras');const b=document.getElementById('iaso-ver-mais');if(e.style.display==='none'){e.style.display='flex';b.textContent='Ver menos ▲'}else{e.style.display='none';b.textContent='Ver mais (${extras.length}) ▼'}"
+            id="iaso-ver-mais"
+            style="margin-top:10px;background:none;border:1px solid var(--border);color:var(--muted);border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;width:100%">
+            Ver mais (${extras.length}) ▼
+          </button>` : ''}
+      </div>
     </div>
   `;
 }
@@ -426,10 +428,13 @@ function renderAgendaSemanal() {
   const hoje = new Date();
   const hojeStr = hoje.toISOString().split('T')[0];
 
-  // Segunda-feira da semana atual
-  const diaSemana = hoje.getDay() === 0 ? 6 : hoje.getDay() - 1;
+  // Sábado (6) ou domingo (0) → mostra próxima semana
+  const diaSemanaJS = hoje.getDay();
+  const diaSemana = diaSemanaJS === 0 ? 6 : diaSemanaJS - 1;
   const segunda = new Date(hoje);
-  segunda.setDate(hoje.getDate() - diaSemana);
+  const offsetParaSegunda = diaSemanaJS === 0 ? -6 : -(diaSemanaJS - 1);
+  segunda.setDate(hoje.getDate() + offsetParaSegunda);
+  if (diaSemanaJS === 6 || diaSemanaJS === 0) segunda.setDate(segunda.getDate() + 7);
 
   const diasSemana = ['Segunda','Terça','Quarta','Quinta','Sexta'];
   const slots = [0,1,2,3,4].map(i => {
@@ -504,40 +509,42 @@ function renderAgendaSemanal() {
   const semanaLabel = `${slots[0].data.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})} – ${slots[4].data.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})}`;
 
   const diasHtml = slots.map((s, i) => {
-    const isHoje = i === diaSemana;
+    const isHoje = i === diaSemana && (diaSemanaJS !== 6 && diaSemanaJS !== 0);
     const passou = s.str < hojeStr;
-    const opacity = passou ? '.5' : '1';
+    const opacity = passou ? '.55' : '1';
     const manuais = itensManual[s.str] || [];
     return `<div style="flex:1;min-width:130px;opacity:${opacity}">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <span style="font-size:11px;font-weight:700;color:${isHoje ? '#6ee7b7' : '#fff'};text-transform:uppercase;letter-spacing:.4px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:${isHoje ? '#1e2e24' : '#2a3a2e'};border-radius:7px 7px 0 0;margin-bottom:0">
+        <span style="font-size:11px;font-weight:700;color:${isHoje ? '#6ee7b7' : 'rgba(255,255,255,.85)'};text-transform:uppercase;letter-spacing:.4px">
           ${s.nome}${isHoje ? ' · Hoje' : ''}
         </span>
         ${!passou ? `<button onclick="_agendaAddItem('${s.str}')" title="Adicionar item"
-          style="background:rgba(255,255,255,.1);border:none;color:#6ee7b7;border-radius:5px;width:20px;height:20px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">＋</button>` : ''}
+          style="background:rgba(110,231,183,.15);border:none;color:#6ee7b7;border-radius:4px;width:18px;height:18px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">＋</button>` : ''}
       </div>
-      ${s.tarefas.map(t => `
-        <div onclick="${t.onclick}" style="background:rgba(255,255,255,.08);border-left:3px solid ${t.cor};border-radius:6px;padding:7px 9px;margin-bottom:4px;cursor:pointer;font-size:12px;color:#fff;line-height:1.3;transition:background .15s"
-          onmouseover="this.style.background='rgba(255,255,255,.14)'" onmouseout="this.style.background='rgba(255,255,255,.08)'">
-          <span style="margin-right:4px">${t.icon}</span>${t.texto}
-        </div>`).join('')}
-      ${manuais.map(m => `
-        <div style="background:rgba(255,255,255,.05);border-left:3px solid #6ee7b7;border-radius:6px;padding:7px 9px;margin-bottom:4px;font-size:12px;color:#fff;line-height:1.3;display:flex;align-items:flex-start;gap:6px">
-          <span style="flex:1">📌 ${m.texto.replace(/</g,'&lt;')}</span>
-          <button onclick="_agendaDelItem('${s.str}',${m.id})" style="background:rgba(239,68,68,.3);border:none;color:#fff;border-radius:4px;width:16px;height:16px;font-size:10px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center" title="Remover">✕</button>
-        </div>`).join('')}
-      ${s.tarefas.length === 0 && manuais.length === 0 ? `<div style="font-size:11.5px;color:rgba(255,255,255,.25);padding:6px 0">Livre</div>` : ''}
+      <div style="background:var(--card);border-radius:0 0 7px 7px;padding:6px 6px 6px;min-height:40px;display:flex;flex-direction:column;gap:4px">
+        ${s.tarefas.map(t => `
+          <div onclick="${t.onclick}" style="background:#fff;border-left:3px solid ${t.cor};border-radius:5px;padding:6px 8px;cursor:pointer;font-size:11.5px;color:var(--text);line-height:1.3;transition:background .15s;box-shadow:0 1px 3px rgba(0,0,0,.06)"
+            onmouseover="this.style.background='#f0f7f3'" onmouseout="this.style.background='#fff'">
+            <span style="margin-right:3px">${t.icon}</span>${t.texto}
+          </div>`).join('')}
+        ${manuais.map(m => `
+          <div style="background:#fff;border-left:3px solid #2a7a50;border-radius:5px;padding:6px 8px;font-size:11.5px;color:var(--text);line-height:1.3;display:flex;align-items:flex-start;gap:5px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+            <span style="flex:1">📌 ${m.texto.replace(/</g,'&lt;')}</span>
+            <button onclick="_agendaDelItem('${s.str}',${m.id})" style="background:#fee2e2;border:none;color:#dc2626;border-radius:3px;width:15px;height:15px;font-size:9px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center" title="Remover">✕</button>
+          </div>`).join('')}
+        ${s.tarefas.length === 0 && manuais.length === 0 ? `<div style="font-size:11px;color:var(--muted);padding:4px 2px">Livre</div>` : ''}
+      </div>
     </div>`;
   }).join('');
 
   el.innerHTML = `
-    <div style="background:#1e2e24;border:1px solid rgba(42,122,80,.4);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+    <div style="border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--border)">
+      <div style="background:#1e2e24;padding:12px 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <span style="font-size:18px">🗓</span>
         <span style="font-family:'Syne',sans-serif;font-weight:700;color:#fff;font-size:14px">Agenda da Semana — IAsô</span>
-        <span style="font-size:11px;color:rgba(255,255,255,.4);margin-left:auto">${semanaLabel}</span>
+        <span style="font-size:11px;color:rgba(255,255,255,.5);margin-left:auto">${semanaLabel}</span>
       </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">${diasHtml}</div>
+      <div style="background:#2a3a2e;padding:12px 14px;display:flex;gap:8px;flex-wrap:wrap">${diasHtml}</div>
     </div>
   `;
 }
