@@ -1045,7 +1045,10 @@ export function gerarObraDeProposta(state, propostaId) {
   const p = state.propostas.find(x => x.id === propostaId);
   if (!p) { showToast('⚠️ Proposta não encontrada'); return null; }
   if (p.obraId) { showToast('⚠️ Esta proposta já gerou ' + p.obraId); return p.obraId; }
-  if (!Array.isArray(state.obras)) state.obras = [];
+  if (p.status !== 'fechado') {
+    showToast('⚠️ Só é possível gerar obra/projeto de propostas com status "Fechado"', 4000);
+    return null;
+  }
   if (!state.counters) state.counters = {};
   if (!state.counters.obra) state.counters.obra = 1;
   const obraId = 'OBR-' + pad(state.counters.obra);
