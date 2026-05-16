@@ -55,6 +55,7 @@ function lerFormObra() {
     periodicidade: val('f-obra-periodicidade'),
     diamed:        num('f-obra-diamed'),
     obscontrato:   val('f-obra-obscontrato'),
+    freqVisita:    val('f-obra-freq-visita') || '',
   };
 }
 
@@ -110,6 +111,7 @@ export function openEditObra(state, id) {
   set('f-obra-periodicidade', o.periodicidade);
   set('f-obra-diamed', o.diamed);
   set('f-obra-obscontrato', o.obscontrato);
+  set('f-obra-freq-visita', o.freqVisita || '');
   const t = document.getElementById('modal-obra-title');
   if (t) t.textContent = '✏️ Editar ' + o.id;
   openModal('modal-obra');
@@ -139,6 +141,8 @@ export function resetFormObra() {
   ids.forEach(k => { const el = document.getElementById(k); if (el) el.value = ''; });
   const unidSel = document.getElementById('f-obra-unidade');
   if (unidSel) unidSel.value = 'm2';
+  const freqSel = document.getElementById('f-obra-freq-visita');
+  if (freqSel) freqSel.value = '';
   const tipoSel = document.getElementById('f-obra-tipo');
   if (tipoSel) tipoSel.value = 'obra';
   if (typeof window.toggleObraTipoCustom === 'function') window.toggleObraTipoCustom();

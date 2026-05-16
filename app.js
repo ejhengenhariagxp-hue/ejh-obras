@@ -8,7 +8,7 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
 import { loadState, fbInit, fbLoginGoogle, fbLogout,
          saveIaKey, getIaKey, setIaKey,
          fbMigrarFotosAntigas, fbSalvarSnapshot } from './services.js?v=20260515b';
-import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra, filtrarObras, limparFiltrosObras } from './modules/obras.js?v=20260516b';
+import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra, filtrarObras, limparFiltrosObras } from './modules/obras.js?v=20260516c';
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260501g';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt, renderCronAtivo } from './modules/cronograma.js?v=20260508d';
 import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario, abrirDiarioObra, voltarDiarioObras, filtrarDiario } from './modules/diario.js?v=20260516c';
@@ -397,6 +397,85 @@ function renderIAsoContextual() {
   `;
 }
 
+window._abrirGerenciarRotinas = function() {
+  let rotinas = [];
+  try { rotinas = JSON.parse(localStorage.getItem('ejh_rotinas') || '[]'); } catch(e) {}
+  const dias = ['Segunda','Terça','Quarta','Quinta','Sexta'];
+  const lista = rotinas.map(r => {
+    const freq = r.freq === 'diaria' ? 'Diária' : r.freq === 'semanal' ? `Semanal (${dias[r.diaSemana]||'?'})` : r.freq === 'quinzenal' ? `Quinzenal (${dias[r.diaSemana]||'?'})` : `Mensal (dia ${r.diaMes})`;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8f6f2;border-radius:7px;margin-bottom:6px">
+      <span style="flex:1;font-size:13px">📌 <strong>${r.texto}</strong> — ${freq}</span>
+      <button onclick="_delRotina(${r.id})" style="background:#fee2e2;border:none;color:#dc2626;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer">Remover</button>
+    </div>`;
+  }).join('') || '<div style="color:var(--muted);font-size:13px;padding:8px 0">Nenhuma rotina cadastrada ainda.</div>';
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-rotinas-bg';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = `
+    <div style="background:var(--card);border-radius:16px;padding:28px;width:100%;max-width:500px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+      <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:var(--navy);margin-bottom:16px">⚙ Gerenciar Rotinas Recorrentes</div>
+      <div id="rotinas-lista" style="margin-bottom:18px">${lista}</div>
+      <div style="border-top:1px solid var(--border);padding-top:16px">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:10px">ADICIONAR NOVA ROTINA</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <input id="rot-texto" placeholder="Ex: Reunião com equipe, Visita à prefeitura, Enviar relatório…" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+          <div style="display:flex;gap:8px">
+            <select id="rot-freq" onchange="_rotFreqChange()" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+              <option value="diaria">Diária</option>
+              <option value="semanal" selected>Semanal</option>
+              <option value="quinzenal">Quinzenal</option>
+              <option value="mensal">Mensal</option>
+            </select>
+            <select id="rot-dia-semana" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+              <option value="0">Segunda</option><option value="1">Terça</option><option value="2">Quarta</option><option value="3">Quinta</option><option value="4">Sexta</option>
+            </select>
+            <input id="rot-dia-mes" type="number" min="1" max="31" placeholder="Dia (1-31)" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px;display:none">
+          </div>
+          <button onclick="_addRotina()" style="background:var(--blue);color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer">＋ Adicionar Rotina</button>
+        </div>
+      </div>
+      <div style="margin-top:14px;text-align:right">
+        <button onclick="document.getElementById('modal-rotinas-bg').remove()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:7px 16px;font-size:13px;cursor:pointer;color:var(--muted)">Fechar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+};
+
+window._rotFreqChange = function() {
+  const freq = document.getElementById('rot-freq')?.value;
+  const ds = document.getElementById('rot-dia-semana');
+  const dm = document.getElementById('rot-dia-mes');
+  if (!ds || !dm) return;
+  ds.style.display = (freq === 'semanal' || freq === 'quinzenal') ? '' : 'none';
+  dm.style.display = freq === 'mensal' ? '' : 'none';
+};
+
+window._addRotina = function() {
+  const texto = document.getElementById('rot-texto')?.value.trim();
+  if (!texto) { alert('Digite o nome da rotina'); return; }
+  const freq = document.getElementById('rot-freq')?.value;
+  let rotinas = [];
+  try { rotinas = JSON.parse(localStorage.getItem('ejh_rotinas') || '[]'); } catch(e) {}
+  const nova = { id: Date.now(), texto, freq };
+  if (freq === 'semanal' || freq === 'quinzenal') nova.diaSemana = +document.getElementById('rot-dia-semana')?.value;
+  if (freq === 'mensal') nova.diaMes = +document.getElementById('rot-dia-mes')?.value || 1;
+  rotinas.push(nova);
+  try { localStorage.setItem('ejh_rotinas', JSON.stringify(rotinas)); } catch(e) {}
+  document.getElementById('modal-rotinas-bg')?.remove();
+  if (window._renderAgendaSemanal) window._renderAgendaSemanal();
+};
+
+window._delRotina = function(id) {
+  let rotinas = [];
+  try { rotinas = JSON.parse(localStorage.getItem('ejh_rotinas') || '[]'); } catch(e) {}
+  rotinas = rotinas.filter(r => r.id !== id);
+  try { localStorage.setItem('ejh_rotinas', JSON.stringify(rotinas)); } catch(e) {}
+  document.getElementById('modal-rotinas-bg')?.remove();
+  if (window._renderAgendaSemanal) window._renderAgendaSemanal();
+};
+
 window._agendaAddItem = function(slotStr) {
   const texto = prompt('Adicionar à agenda (' + new Date(slotStr + 'T12:00:00').toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'short'}) + '):');
   if (!texto || !texto.trim()) return;
@@ -421,9 +500,11 @@ function renderAgendaSemanal() {
   const el = document.getElementById('dash-agenda-semanal');
   if (!el) return;
 
-  // Carrega itens manuais do localStorage
+  // Carrega itens manuais e rotinas recorrentes do localStorage
   let itensManual = {};
   try { itensManual = JSON.parse(localStorage.getItem('ejh_agenda_manual') || '{}'); } catch(e) {}
+  let rotinas = [];
+  try { rotinas = JSON.parse(localStorage.getItem('ejh_rotinas') || '[]'); } catch(e) {}
 
   const hoje = new Date();
   const hojeStr = hoje.toISOString().split('T')[0];
@@ -495,14 +576,77 @@ function renderAgendaSemanal() {
       onclick: `nav('cronograma',null)`, prefSlot: slotIdx >= 0 ? [slotIdx] : [2] });
   });
 
-  if (!tarefas.length) { el.innerHTML = ''; return; }
+  // Obras com frequência de visita definida
+  const semanaNum = Math.floor((new Date(slots[0].str) - new Date('2024-01-01')) / (7 * 86400000));
+  state.obras.filter(o => o.status === 'Em andamento' && o.freqVisita).forEach(o => {
+    const freq = o.freqVisita;
+    if (freq === 'diaria') {
+      // Uma entrada por dia útil (slots 0-4)
+      slots.forEach((s, i) => {
+        tarefas.push({ prioridade: 0, tipo: 'rotina', icon: '🔁', cor: '#2a7a50',
+          texto: `<strong>${o.nome}</strong> — visita diária`,
+          onclick: `abrirDiarioObra('${o.id}')`, prefSlot: [i], fixedSlot: i });
+      });
+    } else if (freq === 'semanal') {
+      tarefas.push({ prioridade: 0, tipo: 'rotina', icon: '🔁', cor: '#2a7a50',
+        texto: `<strong>${o.nome}</strong> — visita semanal`,
+        onclick: `abrirDiarioObra('${o.id}')`, prefSlot: [0,2,4] });
+    } else if (freq === 'quinzenal') {
+      if (semanaNum % 2 === 0) {
+        tarefas.push({ prioridade: 0, tipo: 'rotina', icon: '🔁', cor: '#2a7a50',
+          texto: `<strong>${o.nome}</strong> — visita quinzenal`,
+          onclick: `abrirDiarioObra('${o.id}')`, prefSlot: [0,2,4] });
+      }
+    } else if (freq === 'mensal') {
+      // Mostra só na semana que contém o dia de início (ou dia 1 se não houver)
+      const diaRef = o.inicio ? new Date(o.inicio).getDate() : 1;
+      const temNaSemana = slots.some(s => new Date(s.str).getDate() === diaRef);
+      if (temNaSemana) {
+        const slotIdx = slots.findIndex(s => new Date(s.str).getDate() === diaRef);
+        tarefas.push({ prioridade: 0, tipo: 'rotina', icon: '🔁', cor: '#2a7a50',
+          texto: `<strong>${o.nome}</strong> — visita mensal`,
+          onclick: `abrirDiarioObra('${o.id}')`, prefSlot: slotIdx >= 0 ? [slotIdx] : [0] });
+      }
+    }
+  });
 
-  // Distribui tarefas nos slots da semana (máx 2 por dia)
+  // Rotinas recorrentes livres (não vinculadas a obras)
+  rotinas.forEach(r => {
+    if (r.freq === 'diaria') {
+      slots.forEach((s, i) => {
+        tarefas.push({ prioridade: 1, tipo: 'rotina-livre', icon: '📌', cor: '#7c3aed',
+          texto: r.texto, onclick: '', prefSlot: [i], fixedSlot: i });
+      });
+    } else if (r.freq === 'semanal' && r.diaSemana !== undefined) {
+      tarefas.push({ prioridade: 1, tipo: 'rotina-livre', icon: '📌', cor: '#7c3aed',
+        texto: r.texto, onclick: '', prefSlot: [r.diaSemana] });
+    } else if (r.freq === 'quinzenal' && r.diaSemana !== undefined) {
+      if (semanaNum % 2 === 0) {
+        tarefas.push({ prioridade: 1, tipo: 'rotina-livre', icon: '📌', cor: '#7c3aed',
+          texto: r.texto, onclick: '', prefSlot: [r.diaSemana] });
+      }
+    } else if (r.freq === 'mensal' && r.diaMes !== undefined) {
+      const temNaSemana = slots.some(s => new Date(s.str).getDate() === r.diaMes);
+      if (temNaSemana) {
+        const slotIdx = slots.findIndex(s => new Date(s.str).getDate() === r.diaMes);
+        tarefas.push({ prioridade: 1, tipo: 'rotina-livre', icon: '📌', cor: '#7c3aed',
+          texto: r.texto, onclick: '', prefSlot: slotIdx >= 0 ? [slotIdx] : [0] });
+      }
+    }
+  });
+
+  if (!tarefas.length && !rotinas.length && !Object.values(itensManual).flat().length) { el.innerHTML = ''; return; }
+
+  // Distribui tarefas nos slots da semana (máx 3 por dia; diárias fixas já têm slot)
   tarefas.sort((a,b) => a.prioridade - b.prioridade);
   tarefas.forEach(t => {
-    const ordem = [...(t.prefSlot || [0,1,2,3,4]), 0,1,2,3,4];
-    for (const s of ordem) {
-      if (slots[s] && slots[s].tarefas.length < 2) { slots[s].tarefas.push(t); break; }
+    if (t.fixedSlot !== undefined && slots[t.fixedSlot]) {
+      slots[t.fixedSlot].tarefas.push(t);
+    } else {
+      const ordem = [...(t.prefSlot || [0,1,2,3,4]), 0,1,2,3,4];
+      for (const s of ordem) {
+        if (slots[s] && slots[s].tarefas.length < 3) { slots[s].tarefas.push(t); break; }
+      }
     }
   });
 
@@ -542,7 +686,8 @@ function renderAgendaSemanal() {
       <div style="background:#1e2e24;padding:12px 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <span style="font-size:18px">🗓</span>
         <span style="font-family:'Syne',sans-serif;font-weight:700;color:#fff;font-size:14px">Agenda da Semana — IAsô</span>
-        <span style="font-size:11px;color:rgba(255,255,255,.5);margin-left:auto">${semanaLabel}</span>
+        <button onclick="_abrirGerenciarRotinas()" style="margin-left:auto;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);border-radius:7px;padding:4px 10px;font-size:11px;cursor:pointer">⚙ Rotinas</button>
+        <span style="font-size:11px;color:rgba(255,255,255,.5)">${semanaLabel}</span>
       </div>
       <div style="background:#2a3a2e;padding:12px 14px;display:flex;gap:8px;flex-wrap:wrap">${diasHtml}</div>
     </div>
