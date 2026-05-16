@@ -379,12 +379,126 @@ function renderIAsoContextual() {
   `;
 }
 
+function renderAgendaSemanal() {
+  const el = document.getElementById('dash-agenda-semanal');
+  if (!el) return;
+
+  const hoje = new Date();
+  const hojeStr = hoje.toISOString().split('T')[0];
+
+  // Segunda-feira da semana atual
+  const diaSemana = hoje.getDay() === 0 ? 6 : hoje.getDay() - 1;
+  const segunda = new Date(hoje);
+  segunda.setDate(hoje.getDate() - diaSemana);
+
+  const diasSemana = ['Segunda','Terça','Quarta','Quinta','Sexta'];
+  const slots = [0,1,2,3,4].map(i => {
+    const d = new Date(segunda);
+    d.setDate(segunda.getDate() + i);
+    return { nome: diasSemana[i], data: d, str: d.toISOString().split('T')[0], tarefas: [] };
+  });
+
+  // Coleta tarefas priorizadas
+  const tarefas = [];
+
+  // Obras sem diário (visitas de campo — seg/qua/sex)
+  state.obras.filter(o => o.status === 'Em andamento').forEach(o => {
+    const registros = (state.diario || []).filter(d => d.obraId === o.id);
+    const ultimo = registros.length ? registros.map(d => d.data).sort().reverse()[0] : null;
+    const dias = ultimo ? Math.floor((hoje - new Date(ultimo)) / 86400000) : 999;
+    if (dias >= 3) {
+      tarefas.push({ prioridade: dias >= 7 ? 0 : 1, tipo: 'visita', icon: '🏗', cor: dias >= 7 ? '#ef4444' : '#e07b39',
+        texto: `Visitar <strong>${o.nome}</strong>${dias < 999 ? ` (${dias}d sem registro)` : ' (sem registros)'}`,
+        onclick: `abrirDiarioObra('${o.id}')`, prefSlot: [0,2,4] });
+    }
+  });
+
+  // Propostas para retornar (contato — ter/qui)
+  (state.propostas || []).filter(p => p.status === 'em_negociacao' || p.status === 'em_revisao').forEach(p => {
+    const dias = p.criadoEm ? Math.floor((hoje - new Date(p.criadoEm)) / 86400000) : 0;
+    if (dias >= 5) {
+      tarefas.push({ prioridade: dias >= 14 ? 0 : 2, tipo: 'contato', icon: '📞', cor: '#2a7a50',
+        texto: `Retornar proposta <strong>${p.empreend || p.cliente || p.id}</strong> (${dias}d em negociação)`,
+        onclick: `nav('propostas',null)`, prefSlot: [1,3] });
+    }
+  });
+
+  // Lançamentos vencendo esta semana
+  const fimSemana = slots[4].str;
+  (state.fin || []).filter(f => f.status && f.status !== 'pago' && f.data && f.data >= hojeStr && f.data <= fimSemana && !f.transferGroupId && !f.pessoal).forEach(f => {
+    const slotIdx = slots.findIndex(s => s.str === f.data);
+    tarefas.push({ prioridade: 1, tipo: 'fin', icon: f.tipo === 'Receita' ? '💵' : '💸', cor: f.tipo === 'Receita' ? '#2a7a50' : '#ef4444',
+      texto: `${f.tipo === 'Receita' ? 'Receber' : 'Pagar'}: <strong>${f.desc}</strong> — ${fmt(f.valor)}`,
+      onclick: `nav('financeiro',null)`, prefSlot: slotIdx >= 0 ? [slotIdx] : [1,3] });
+  });
+
+  // Lançamentos já vencidos (atrasar resolução)
+  const vencidos = (state.fin || []).filter(f => f.status && f.status !== 'pago' && f.data && f.data < hojeStr && !f.transferGroupId && !f.pessoal);
+  if (vencidos.length) {
+    const tot = vencidos.reduce((a,f) => a+f.valor, 0);
+    tarefas.push({ prioridade: 0, tipo: 'fin', icon: '⚠️', cor: '#ef4444',
+      texto: `Resolver <strong>${vencidos.length} lançamento${vencidos.length>1?'s':''} vencido${vencidos.length>1?'s':''}</strong> — ${fmt(tot)}`,
+      onclick: `nav('financeiro',null)`, prefSlot: [0] });
+  }
+
+  // Etapas do cronograma com prazo esta semana
+  (state.cron || []).filter(c => c.fim && c.fim >= hojeStr && c.fim <= fimSemana && c.conc < 100).forEach(c => {
+    const slotIdx = slots.findIndex(s => s.str === c.fim);
+    const obra = state.obras.find(o => o.id === c.obraId);
+    tarefas.push({ prioridade: 1, tipo: 'cron', icon: '📅', cor: '#7c3aed',
+      texto: `Prazo: <strong>${c.nome||'Etapa'}</strong>${obra ? ` — ${obra.nome}` : ''} (${c.conc||0}% concluído)`,
+      onclick: `nav('cronograma',null)`, prefSlot: slotIdx >= 0 ? [slotIdx] : [2] });
+  });
+
+  if (!tarefas.length) { el.innerHTML = ''; return; }
+
+  // Distribui tarefas nos slots da semana (máx 2 por dia)
+  tarefas.sort((a,b) => a.prioridade - b.prioridade);
+  tarefas.forEach(t => {
+    const ordem = [...(t.prefSlot || [0,1,2,3,4]), 0,1,2,3,4];
+    for (const s of ordem) {
+      if (slots[s] && slots[s].tarefas.length < 2) { slots[s].tarefas.push(t); break; }
+    }
+  });
+
+  const semanaLabel = `${slots[0].data.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})} – ${slots[4].data.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})}`;
+
+  const diasHtml = slots.map((s, i) => {
+    const isHoje = i === diaSemana;
+    const passou = s.str < hojeStr;
+    const opacity = passou ? '.45' : '1';
+    return `<div style="flex:1;min-width:120px;opacity:${opacity}">
+      <div style="font-size:11px;font-weight:700;color:${isHoje ? '#6ee7b7' : 'rgba(255,255,255,.5)'};margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">
+        ${s.nome}${isHoje ? ' · Hoje' : ''}
+      </div>
+      ${s.tarefas.length ? s.tarefas.map(t => `
+        <div onclick="${t.onclick}" style="background:rgba(255,255,255,.07);border-left:3px solid ${t.cor};border-radius:7px;padding:8px 10px;margin-bottom:5px;cursor:pointer;font-size:12px;color:rgba(255,255,255,.88);line-height:1.35;transition:background .15s"
+          onmouseover="this.style.background='rgba(255,255,255,.13)'" onmouseout="this.style.background='rgba(255,255,255,.07)'">
+          <span style="margin-right:5px">${t.icon}</span>${t.texto}
+        </div>`).join('')
+      : `<div style="font-size:11.5px;color:rgba(255,255,255,.22);padding:8px 0">Livre</div>`}
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="background:linear-gradient(135deg,#1a2a1e,#18181a);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);border:1px solid rgba(42,122,80,.3)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <span style="font-size:18px">🗓</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;color:#fff;font-size:14px">Agenda da Semana — IAsô</span>
+        <span style="font-size:11px;color:rgba(255,255,255,.4);margin-left:auto">${semanaLabel}</span>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">${diasHtml}</div>
+    </div>
+  `;
+}
+
 function renderDashboard() {
   const hoje = new Date();
   safeText('dash-date', hoje.toLocaleDateString('pt-BR',{weekday:'long',year:'numeric',month:'long',day:'numeric'}));
 
   renderAlertaUrgente();
   renderIAsoContextual();
+  renderAgendaSemanal();
 
   // Banner portfolio
   const sp = statusPortfolio();
