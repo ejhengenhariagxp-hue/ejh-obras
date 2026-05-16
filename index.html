@@ -23,7 +23,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260516k"></script>
+<script type="module" src="./app.js?v=20260516l"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Lucide icons (modern SVG icon library) -->
@@ -853,7 +853,7 @@
     <div class="form-group"><label>Data</label><input id="f-dia-data" type="date"></div>
     <div class="form-group full">
       <label>Descrição das Atividades <span style="color:var(--muted);font-weight:400;font-size:11px">(uma por linha — Enter para nova)</span></label>
-      <textarea id="f-dia-desc" rows="5" placeholder="Concretagem da laje 2&#10;Alvenaria do banheiro&#10;Instalação elétrica do quarto&#10;Limpeza geral"></textarea>
+      <textarea id="f-dia-desc" rows="8" style="width:100%;resize:vertical;min-height:160px" placeholder="Concretagem da laje 2&#10;Alvenaria do banheiro&#10;Instalação elétrica do quarto&#10;Limpeza geral"></textarea>
     </div>
     <div class="form-group full">
       <label>Equipe — Marque os profissionais e quantidade</label>
@@ -865,6 +865,7 @@
         <button type="button" class="btn btn-outline btn-xs" onclick="adicionarEquipeOutro()" style="color:var(--blue);border-color:var(--blue)">＋ Add</button>
       </div>
     </div>
+    <div class="form-group full"><label>Ocorrências</label><input id="f-dia-ocorr" placeholder="Sem ocorrências / descreva se houver"></div>
     <div class="form-group"><label>Clima</label><select id="f-dia-clima">
       <option>☀️ Ensolarado</option><option>⛅ Parcialmente nublado</option>
       <option>🌧 Chuva</option><option>⛈ Tempestade</option><option>🌥 Nublado</option>
@@ -874,9 +875,8 @@
         <input type="range" id="f-dia-avanco" min="0" max="100" step="5" value="" style="flex:1;accent-color:var(--blue)" oninput="document.getElementById('f-dia-avanco-label').textContent=this.value+'%'">
         <span id="f-dia-avanco-label" style="font-size:14px;font-weight:700;color:var(--blue);min-width:38px">—</span>
       </div>
-      <div style="font-size:11px;color:var(--muted);margin-top:3px">% físico registrado nesta visita/PLS — deixe em branco se não quiser informar</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px">% físico desta visita/PLS</div>
     </div>
-    <div class="form-group full"><label>Ocorrências</label><input id="f-dia-ocorr" placeholder="Sem ocorrências / descreva se houver"></div>
     <div class="form-group full">
       <label>📷 Fotos da Obra</label>
       <div class="foto-upload-buttons">

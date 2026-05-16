@@ -242,6 +242,7 @@ tfoot td{background:#f5f3f0;font-weight:700;font-size:13px;padding:13px 16px;bor
 .modal-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--navy);margin-bottom:18px}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
 .fg{display:flex;flex-direction:column;gap:5px}.fg.full{grid-column:1/-1}
+.form-group{display:flex;flex-direction:column;gap:5px}.form-group.full{grid-column:1/-1}
 label{font-size:12px;font-weight:600;color:var(--muted)}
 input,select,textarea{padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;transition:border-color .15s;width:100%}
 input:focus,select:focus,textarea:focus{border-color:var(--sky)}
