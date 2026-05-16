@@ -24,7 +24,15 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 /* SIDEBAR — Modern v2 */
-.sidebar{position:fixed;left:0;top:0;bottom:0;width:248px;background:linear-gradient(180deg,#1e2022 0%,#13151a 100%);display:flex;flex-direction:column;z-index:100;overflow-y:auto;border-right:1px solid rgba(255,255,255,.06)}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:248px;background:linear-gradient(180deg,#1e2022 0%,#13151a 100%);display:flex;flex-direction:column;z-index:100;overflow-y:auto;border-right:1px solid rgba(255,255,255,.06);transition:transform .25s cubic-bezier(.4,0,.2,1)}
+.sidebar-collapsed .sidebar{transform:translateX(-248px)}
+.sidebar-collapsed .main{margin-left:0!important}
+.main{transition:margin-left .25s cubic-bezier(.4,0,.2,1)}
+.sidebar-tab{position:fixed;top:50%;transform:translateY(-50%);left:248px;width:20px;height:56px;background:#2a7a50;border-radius:0 8px 8px 0;cursor:pointer;z-index:101;display:flex;align-items:center;justify-content:center;transition:left .25s cubic-bezier(.4,0,.2,1);box-shadow:3px 0 10px rgba(0,0,0,.2)}
+.sidebar-tab svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+.sidebar-collapsed .sidebar-tab{left:0;border-radius:0 8px 8px 0}
+.sidebar-collapsed .sidebar-tab svg{transform:rotate(180deg)}
+.sidebar-tab:hover{background:#35935f}
 .sidebar::-webkit-scrollbar{width:4px}
 .sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
 

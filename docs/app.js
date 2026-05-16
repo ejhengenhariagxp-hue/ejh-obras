@@ -11,7 +11,7 @@ import { loadState, fbInit, fbLoginGoogle, fbLogout,
 import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra, filtrarObras, limparFiltrosObras } from './modules/obras.js?v=20260516b';
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260501g';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt, renderCronAtivo } from './modules/cronograma.js?v=20260508d';
-import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario, abrirDiarioObra, voltarDiarioObras, filtrarDiario } from './modules/diario.js?v=20260515e';
+import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario, abrirDiarioObra, voltarDiarioObras, filtrarDiario } from './modules/diario.js?v=20260516c';
 import { addFin, delFin, openEditFin, openModalFin, openModalFinPessoal, isModalFinPessoal, renderFinanceiro, toggleHideRT, marcarFinPago,
          addCustoFixo, delCustoFixo, toggleCustoFixoAtivo, openEditCustoFixo, abrirModalCustoFixo,
          preencherCustoFixoPadrao, gerarLancamentosCustosFixos,
@@ -1204,6 +1204,13 @@ G.importarMesPlanilha = mesKey => {
     renderAtiva();
   }
 };
+G.toggleSidebar = () => {
+  const collapsed = document.body.classList.toggle('sidebar-collapsed');
+  try { localStorage.setItem('ejh_sidebar_collapsed', collapsed ? '1' : '0'); } catch(e) {}
+};
+// Restaura estado da sidebar ao carregar
+try { if (localStorage.getItem('ejh_sidebar_collapsed') === '1') document.body.classList.add('sidebar-collapsed'); } catch(e) {}
+
 G.togglePrivacyMode = () => {
   const on = !document.body.classList.contains('privacy-mode');
   document.body.classList.toggle('privacy-mode', on);

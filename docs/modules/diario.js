@@ -275,8 +275,8 @@ function _cardDiario(state, d) {
         ${d.clima ? `<span style="font-size:18px" title="${d.clima}">${d.clima.split(' ')[0]}</span>` : ''}
         ${fotos.length ? `<span style="background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px">📷 ${fotos.length}</span>` : ''}
         ${d.assinatura?.dataUrl ? `<span style="background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px">✍️</span>` : ''}
-        <button class="btn btn-outline btn-xs" onclick="openEditDiario('${d.id}')" style="color:rgba(255,255,255,.8);border-color:rgba(255,255,255,.3);margin-left:4px" title="Editar">✏️</button>
-        <button class="btn btn-outline btn-xs" onclick="delDiario('${d.id}')" style="color:rgba(255,255,255,.8);border-color:rgba(255,255,255,.3)" title="Excluir">✕</button>
+        <button class="btn btn-outline btn-xs" onclick="openEditDiario('${d.id}')" style="color:#fff;border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.12);margin-left:4px" title="Editar">✏️</button>
+        <button class="btn btn-outline btn-xs" onclick="delDiario('${d.id}')" style="color:#fff;border-color:rgba(239,68,68,.7);background:rgba(239,68,68,.35)" title="Excluir">🗑</button>
       </div>
     </div>
     <div class="diario-item-body">
