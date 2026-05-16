@@ -359,29 +359,69 @@ function renderIAsoContextual() {
     return;
   }
 
+  const visiveis = alertas.slice(0, 3);
+  const extras = alertas.slice(3);
+
   el.innerHTML = `
-    <div style="background:linear-gradient(135deg,#1e3d2a,#18181a);border-radius:var(--radius);padding:14px 18px;box-shadow:var(--shadow)">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-        <span style="font-size:20px">👷</span>
+    <div style="background:#1e2e24;border:1px solid rgba(42,122,80,.4);border-radius:var(--radius);padding:14px 18px;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <span style="font-size:18px">👷</span>
         <span style="font-family:'Syne',sans-serif;font-weight:700;color:#fff;font-size:14px">IAsô — Alertas do dia</span>
-        <span style="font-size:11px;color:rgba(255,255,255,.5);margin-left:auto">${alertas.length} item${alertas.length > 1 ? 's' : ''}</span>
+        <span style="font-size:11px;color:rgba(255,255,255,.55);margin-left:auto">${alertas.length} item${alertas.length > 1 ? 's' : ''}</span>
       </div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        ${alertas.map(a => `
-          <div onclick="${a.onclick}" style="display:flex;align-items:flex-start;gap:10px;background:rgba(255,255,255,.06);border-left:3px solid ${a.cor};border-radius:8px;padding:10px 12px;cursor:pointer;transition:background .15s"
-            onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='rgba(255,255,255,.06)'">
-            <span style="font-size:16px;flex-shrink:0;margin-top:1px">${a.icon}</span>
-            <span style="font-size:13px;color:rgba(255,255,255,.9);line-height:1.4">${a.msg}</span>
-          </div>
-        `).join('')}
+      <div id="iaso-alertas-lista" style="display:flex;flex-direction:column;gap:6px">
+        ${visiveis.map(a => `
+          <div onclick="${a.onclick}" style="display:flex;align-items:flex-start;gap:10px;background:rgba(255,255,255,.07);border-left:3px solid ${a.cor};border-radius:7px;padding:9px 12px;cursor:pointer;transition:background .15s"
+            onmouseover="this.style.background='rgba(255,255,255,.12)'" onmouseout="this.style.background='rgba(255,255,255,.07)'">
+            <span style="font-size:15px;flex-shrink:0;margin-top:1px">${a.icon}</span>
+            <span style="font-size:13.5px;color:#fff;line-height:1.4">${a.msg}</span>
+          </div>`).join('')}
       </div>
+      ${extras.length ? `
+        <div id="iaso-alertas-extras" style="display:none;flex-direction:column;gap:6px;margin-top:6px">
+          ${extras.map(a => `
+            <div onclick="${a.onclick}" style="display:flex;align-items:flex-start;gap:10px;background:rgba(255,255,255,.07);border-left:3px solid ${a.cor};border-radius:7px;padding:9px 12px;cursor:pointer;transition:background .15s"
+              onmouseover="this.style.background='rgba(255,255,255,.12)'" onmouseout="this.style.background='rgba(255,255,255,.07)'">
+              <span style="font-size:15px;flex-shrink:0;margin-top:1px">${a.icon}</span>
+              <span style="font-size:13.5px;color:#fff;line-height:1.4">${a.msg}</span>
+            </div>`).join('')}
+        </div>
+        <button onclick="const e=document.getElementById('iaso-alertas-extras');const b=document.getElementById('iaso-ver-mais');if(e.style.display==='none'){e.style.display='flex';b.textContent='Ver menos ▲'}else{e.style.display='none';b.textContent='Ver mais (${extras.length}) ▼'}"
+          id="iaso-ver-mais"
+          style="margin-top:10px;background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;width:100%">
+          Ver mais (${extras.length}) ▼
+        </button>` : ''}
     </div>
   `;
 }
 
+window._agendaAddItem = function(slotStr) {
+  const texto = prompt('Adicionar à agenda (' + new Date(slotStr + 'T12:00:00').toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'short'}) + '):');
+  if (!texto || !texto.trim()) return;
+  let itens = {};
+  try { itens = JSON.parse(localStorage.getItem('ejh_agenda_manual') || '{}'); } catch(e) {}
+  if (!itens[slotStr]) itens[slotStr] = [];
+  itens[slotStr].push({ id: Date.now(), texto: texto.trim() });
+  try { localStorage.setItem('ejh_agenda_manual', JSON.stringify(itens)); } catch(e) {}
+  if (window._renderAgendaSemanal) window._renderAgendaSemanal();
+};
+
+window._agendaDelItem = function(slotStr, id) {
+  let itens = {};
+  try { itens = JSON.parse(localStorage.getItem('ejh_agenda_manual') || '{}'); } catch(e) {}
+  if (itens[slotStr]) itens[slotStr] = itens[slotStr].filter(x => x.id !== id);
+  try { localStorage.setItem('ejh_agenda_manual', JSON.stringify(itens)); } catch(e) {}
+  if (window._renderAgendaSemanal) window._renderAgendaSemanal();
+};
+
 function renderAgendaSemanal() {
+  window._renderAgendaSemanal = renderAgendaSemanal;
   const el = document.getElementById('dash-agenda-semanal');
   if (!el) return;
+
+  // Carrega itens manuais do localStorage
+  let itensManual = {};
+  try { itensManual = JSON.parse(localStorage.getItem('ejh_agenda_manual') || '{}'); } catch(e) {}
 
   const hoje = new Date();
   const hojeStr = hoje.toISOString().split('T')[0];
@@ -466,22 +506,32 @@ function renderAgendaSemanal() {
   const diasHtml = slots.map((s, i) => {
     const isHoje = i === diaSemana;
     const passou = s.str < hojeStr;
-    const opacity = passou ? '.45' : '1';
-    return `<div style="flex:1;min-width:120px;opacity:${opacity}">
-      <div style="font-size:11px;font-weight:700;color:${isHoje ? '#6ee7b7' : 'rgba(255,255,255,.5)'};margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">
-        ${s.nome}${isHoje ? ' · Hoje' : ''}
+    const opacity = passou ? '.5' : '1';
+    const manuais = itensManual[s.str] || [];
+    return `<div style="flex:1;min-width:130px;opacity:${opacity}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:11px;font-weight:700;color:${isHoje ? '#6ee7b7' : '#fff'};text-transform:uppercase;letter-spacing:.4px">
+          ${s.nome}${isHoje ? ' · Hoje' : ''}
+        </span>
+        ${!passou ? `<button onclick="_agendaAddItem('${s.str}')" title="Adicionar item"
+          style="background:rgba(255,255,255,.1);border:none;color:#6ee7b7;border-radius:5px;width:20px;height:20px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">＋</button>` : ''}
       </div>
-      ${s.tarefas.length ? s.tarefas.map(t => `
-        <div onclick="${t.onclick}" style="background:rgba(255,255,255,.07);border-left:3px solid ${t.cor};border-radius:7px;padding:8px 10px;margin-bottom:5px;cursor:pointer;font-size:12px;color:rgba(255,255,255,.88);line-height:1.35;transition:background .15s"
-          onmouseover="this.style.background='rgba(255,255,255,.13)'" onmouseout="this.style.background='rgba(255,255,255,.07)'">
-          <span style="margin-right:5px">${t.icon}</span>${t.texto}
-        </div>`).join('')
-      : `<div style="font-size:11.5px;color:rgba(255,255,255,.22);padding:8px 0">Livre</div>`}
+      ${s.tarefas.map(t => `
+        <div onclick="${t.onclick}" style="background:rgba(255,255,255,.08);border-left:3px solid ${t.cor};border-radius:6px;padding:7px 9px;margin-bottom:4px;cursor:pointer;font-size:12px;color:#fff;line-height:1.3;transition:background .15s"
+          onmouseover="this.style.background='rgba(255,255,255,.14)'" onmouseout="this.style.background='rgba(255,255,255,.08)'">
+          <span style="margin-right:4px">${t.icon}</span>${t.texto}
+        </div>`).join('')}
+      ${manuais.map(m => `
+        <div style="background:rgba(255,255,255,.05);border-left:3px solid #6ee7b7;border-radius:6px;padding:7px 9px;margin-bottom:4px;font-size:12px;color:#fff;line-height:1.3;display:flex;align-items:flex-start;gap:6px">
+          <span style="flex:1">📌 ${m.texto.replace(/</g,'&lt;')}</span>
+          <button onclick="_agendaDelItem('${s.str}',${m.id})" style="background:rgba(239,68,68,.3);border:none;color:#fff;border-radius:4px;width:16px;height:16px;font-size:10px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center" title="Remover">✕</button>
+        </div>`).join('')}
+      ${s.tarefas.length === 0 && manuais.length === 0 ? `<div style="font-size:11.5px;color:rgba(255,255,255,.25);padding:6px 0">Livre</div>` : ''}
     </div>`;
   }).join('');
 
   el.innerHTML = `
-    <div style="background:linear-gradient(135deg,#1a2a1e,#18181a);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);border:1px solid rgba(42,122,80,.3)">
+    <div style="background:#1e2e24;border:1px solid rgba(42,122,80,.4);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
         <span style="font-size:18px">🗓</span>
         <span style="font-family:'Syne',sans-serif;font-weight:700;color:#fff;font-size:14px">Agenda da Semana — IAsô</span>
