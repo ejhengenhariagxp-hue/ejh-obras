@@ -379,7 +379,7 @@ export function renderObras(state) {
       <td>${statusBadge(o.status)}</td>
       <td>${avgHtml}</td>
       <td style="white-space:nowrap">
-        <button onclick="G.abrirDiarioObra('${o.id}')" class="btn btn-outline btn-xs" style="color:var(--green);border-color:var(--green);margin-right:3px" title="Abrir diário desta obra">📷</button>
+        <button onclick="abrirDiarioObra('${o.id}')" class="btn btn-outline btn-xs" style="color:var(--green);border-color:var(--green);margin-right:3px" title="Abrir diário desta obra">📷</button>
         <button onclick="registrarMedicaoRapida('${o.id}')" class="btn btn-outline btn-xs" style="color:var(--blue);border-color:var(--blue);margin-right:3px" title="Registrar medição">📏</button>
         <button onclick="openEditObra('${o.id}')" class="btn btn-outline btn-xs" style="color:var(--amber);border-color:var(--amber);margin-right:3px" title="Editar obra">✏️</button>
         <button onclick="delObra('${o.id}')" class="btn btn-outline btn-xs" style="color:var(--red);border-color:var(--red)">✕</button>
@@ -424,7 +424,7 @@ export function renderObras(state) {
         <span style="font-size:12px;font-weight:700;color:${avgCol};min-width:34px">${avg}%</span>
       </div>`:''}
       <div class="obra-mobile-acoes">
-        <button onclick="G.abrirDiarioObra('${o.id}')" class="btn btn-outline btn-sm" style="color:var(--green);border-color:var(--green);flex:1">📷 Diário</button>
+        <button onclick="abrirDiarioObra('${o.id}')" class="btn btn-outline btn-sm" style="color:var(--green);border-color:var(--green);flex:1">📷 Diário</button>
         <button onclick="registrarMedicaoRapida('${o.id}')" class="btn btn-outline btn-sm" style="color:var(--blue);border-color:var(--blue);flex:1">📏</button>
         <button onclick="openEditObra('${o.id}')" class="btn btn-outline btn-sm" style="color:var(--amber);border-color:var(--amber);flex:1">✏️</button>
         <button onclick="delObra('${o.id}')" class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red)">✕</button>
