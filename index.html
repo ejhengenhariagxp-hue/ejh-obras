@@ -23,7 +23,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260515h"></script>
+<script type="module" src="./app.js?v=20260515i"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Lucide icons (modern SVG icon library) -->
@@ -123,42 +123,41 @@
   <div id="dash-portfolio"></div>
 
   <!-- KPIs com ícones -->
+  <!-- KPIs com ícones -->
   <div class="kpi-grid kpi-dashboard-ejhv">
     <div class="kpi blue">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div class="kpi-label">Projetos e Obras</div>
-        <span style="font-size:22px;line-height:1">🏗</span>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div class="kpi-label" style="padding-top:4px">Projetos e Obras</div>
+        <div class="kpi-icon">🏗</div>
       </div>
       <div class="kpi-value" id="kpi-total">0</div>
       <div class="kpi-sub" id="kpi-total-sub">cadastrados</div>
     </div>
     <div class="kpi green">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div class="kpi-label">Orçamento Total</div>
-        <span style="font-size:22px;line-height:1">📋</span>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div class="kpi-label" style="padding-top:4px">Orçamento Total</div>
+        <div class="kpi-icon">📋</div>
       </div>
       <div class="kpi-value" id="kpi-orc">R$0</div>
       <div class="kpi-sub">soma dos orçamentos</div>
     </div>
     <div class="kpi amber">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div class="kpi-label">Realizado</div>
-        <span style="font-size:22px;line-height:1">📊</span>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div class="kpi-label" style="padding-top:4px">Realizado</div>
+        <div class="kpi-icon">📊</div>
       </div>
       <div class="kpi-value" id="kpi-real">R$0</div>
       <div style="margin-top:6px">
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px">
-          <span id="kpi-real-pct"></span>
-        </div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:3px" id="kpi-real-pct"></div>
         <div style="height:4px;background:#f1f5f9;border-radius:4px;overflow:hidden">
           <div id="kpi-real-bar" style="height:100%;background:var(--amber,#f59e0b);border-radius:4px;width:0%;transition:width .4s"></div>
         </div>
       </div>
     </div>
     <div class="kpi teal">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div class="kpi-label">Saldo Financeiro</div>
-        <span style="font-size:22px;line-height:1">💰</span>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div class="kpi-label" style="padding-top:4px">Saldo Financeiro</div>
+        <div class="kpi-icon">💰</div>
       </div>
       <div class="kpi-value" id="kpi-saldo">R$0</div>
       <div class="kpi-sub">receitas − despesas</div>
@@ -173,23 +172,23 @@
 
   <!-- Atalhos rápidos -->
   <div class="quick-shortcuts">
-    <button class="quick-card" onclick="openModalDiario()">
-      <span class="quick-icon">📷</span>
+    <button class="quick-card qc-diary" onclick="openModalDiario()">
+      <div class="quick-icon-wrap">📷</div>
       <span class="quick-label">Diário do dia</span>
       <span class="quick-sub">com fotos</span>
     </button>
-    <button class="quick-card quick-ia" onclick="nav('captura',null)">
-      <span class="quick-icon">👷</span>
+    <button class="quick-card qc-ia" onclick="nav('captura',null)">
+      <div class="quick-icon-wrap">👷</div>
       <span class="quick-label">IAsô</span>
       <span class="quick-sub">WhatsApp/email/foto</span>
     </button>
-    <button class="quick-card" onclick="openModalFin('Despesa')">
-      <span class="quick-icon">💸</span>
+    <button class="quick-card qc-despesa" onclick="openModalFin('Despesa')">
+      <div class="quick-icon-wrap">💸</div>
       <span class="quick-label">Lançar Despesa</span>
       <span class="quick-sub">movimentação rápida</span>
     </button>
-    <button class="quick-card" onclick="nav('relatorio',null)">
-      <span class="quick-icon">📄</span>
+    <button class="quick-card qc-relatorio" onclick="nav('relatorio',null)">
+      <div class="quick-icon-wrap">📄</div>
       <span class="quick-label">Relatório</span>
       <span class="quick-sub">PDF / WhatsApp</span>
     </button>
