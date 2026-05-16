@@ -177,7 +177,8 @@ export function delObra(state, id) {
   state.fin         = state.fin.filter(x=>x.obraId!==id);
   state.medicoes    = state.medicoes.filter(x=>x.obraId!==id);
   state.empreita    = (state.empreita || []).filter(x=>x.obraId!==id);
-  state.propostas   = (state.propostas || []).filter(x=>x.obraId!==id);
+  // Propostas: desvincula da obra mas não apaga (podem ser reaproveitadas)
+  (state.propostas || []).forEach(p => { if (p.obraId === id) { p.obraId = null; } });
   state.checklists  = (state.checklists || []).filter(x=>x.obraId!==id);
   state.capturas    = (state.capturas || []).filter(x=>x.obraId!==id);
   state.composicoes = (state.composicoes || []).filter(x=>x.obraId!==id);
@@ -189,7 +190,7 @@ export function delObra(state, id) {
   finIds.forEach(i => markDeleted(state, 'fin', i));
   medIds.forEach(i => markDeleted(state, 'medicoes', i));
   empIds.forEach(i => markDeleted(state, 'empreita', i));
-  propIds.forEach(i => markDeleted(state, 'propostas', i));
+  // propIds não geram tombstone — propostas foram apenas desvinculadas, não excluídas
   ckIds.forEach(i => markDeleted(state, 'checklists', i));
   capIds.forEach(i => markDeleted(state, 'capturas', i));
   compIds.forEach(i => markDeleted(state, 'composicoes', i));
