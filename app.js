@@ -1301,7 +1301,7 @@ G.openEditDiario = id => openEditDiario(state, id);
 G.handleFotos = inp => handleFotos(state, inp);
 G.removePendingFoto = i => removePendingFoto(state, i);
 G.gerarDiarioComFoto = () => gerarDiarioComFoto(state);
-G.abrirDiarioObra = id => { abrirDiarioObra(id); renderAtiva(); };
+G.abrirDiarioObra = id => { abrirDiarioObra(id); nav('diario'); renderAtiva(); };
 G.voltarDiarioObras = () => { voltarDiarioObras(); renderAtiva(); };
 
 window._aplicarTemplateCaixa = function() {
