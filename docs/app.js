@@ -304,11 +304,87 @@ function renderAlertaUrgente() {
   </div>`;
 }
 
+function renderIAsoContextual() {
+  const el = document.getElementById('dash-iaso-contextual');
+  if (!el) return;
+
+  const hoje = new Date();
+  const hojeStr = hoje.toISOString().split('T')[0];
+  const alertas = [];
+
+  // Obras sem registro no diário há mais de 3 dias
+  const obrasAndamento = state.obras.filter(o => o.status === 'Em andamento');
+  obrasAndamento.forEach(o => {
+    const registros = (state.diario || []).filter(d => d.obraId === o.id);
+    if (!registros.length) {
+      alertas.push({ tipo: 'diario', icon: '📋', cor: '#e07b39', msg: `<strong>${o.nome}</strong> não tem nenhum registro no diário ainda.`, onclick: `abrirDiarioObra('${o.id}')` });
+      return;
+    }
+    const ultimo = registros.map(d => d.data).sort().reverse()[0];
+    const diasSem = Math.floor((hoje - new Date(ultimo)) / 86400000);
+    if (diasSem >= 3) {
+      alertas.push({ tipo: 'diario', icon: '📋', cor: diasSem >= 7 ? '#ef4444' : '#e07b39', msg: `<strong>${o.nome}</strong> está há <strong>${diasSem} dias</strong> sem registro no diário.`, onclick: `abrirDiarioObra('${o.id}')` });
+    }
+  });
+
+  // Propostas em negociação há mais de 7 dias sem atualização
+  const props = (state.propostas || []).filter(p => p.status === 'em_negociacao' || p.status === 'em_revisao');
+  props.forEach(p => {
+    const criado = p.criadoEm ? new Date(p.criadoEm) : null;
+    if (criado) {
+      const dias = Math.floor((hoje - criado) / 86400000);
+      if (dias >= 7) {
+        alertas.push({ tipo: 'proposta', icon: '📝', cor: '#2a7a50', msg: `Proposta <strong>${p.empreend || p.cliente || p.id}</strong> em negociação há <strong>${dias} dias</strong>.`, onclick: `nav('propostas',null)` });
+      }
+    }
+  });
+
+  // Lançamentos vencidos (não pagos)
+  const vencidos = (state.fin || []).filter(f => f.status && f.status !== 'pago' && f.data && f.data < hojeStr && !f.transferGroupId && !f.pessoal);
+  if (vencidos.length) {
+    const total = vencidos.reduce((a, f) => a + f.valor, 0);
+    const tipoMais = vencidos.filter(f => f.tipo === 'Despesa').length >= vencidos.filter(f => f.tipo === 'Receita').length ? 'pagar' : 'receber';
+    alertas.push({ tipo: 'fin', icon: '💰', cor: '#ef4444', msg: `<strong>${vencidos.length} lançamento${vencidos.length > 1 ? 's' : ''} vencido${vencidos.length > 1 ? 's' : ''}</strong> — total de <strong>${fmt(total)}</strong> a ${tipoMais}.`, onclick: `nav('financeiro',null)` });
+  }
+
+  // Cronogramas atrasados
+  const hoje2 = hojeStr;
+  const atrasadas = (state.cron || []).filter(c => c.fim && c.fim < hoje2 && c.conc < 100);
+  if (atrasadas.length) {
+    alertas.push({ tipo: 'cron', icon: '📅', cor: '#ef4444', msg: `<strong>${atrasadas.length} etapa${atrasadas.length > 1 ? 's' : ''} do cronograma</strong> com prazo vencido e pendente de conclusão.`, onclick: `nav('cronograma',null)` });
+  }
+
+  if (!alertas.length) {
+    el.innerHTML = '';
+    return;
+  }
+
+  el.innerHTML = `
+    <div style="background:linear-gradient(135deg,#1e3d2a,#18181a);border-radius:var(--radius);padding:14px 18px;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:20px">👷</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;color:#fff;font-size:14px">IAsô — Alertas do dia</span>
+        <span style="font-size:11px;color:rgba(255,255,255,.5);margin-left:auto">${alertas.length} item${alertas.length > 1 ? 's' : ''}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${alertas.map(a => `
+          <div onclick="${a.onclick}" style="display:flex;align-items:flex-start;gap:10px;background:rgba(255,255,255,.06);border-left:3px solid ${a.cor};border-radius:8px;padding:10px 12px;cursor:pointer;transition:background .15s"
+            onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='rgba(255,255,255,.06)'">
+            <span style="font-size:16px;flex-shrink:0;margin-top:1px">${a.icon}</span>
+            <span style="font-size:13px;color:rgba(255,255,255,.9);line-height:1.4">${a.msg}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
 function renderDashboard() {
   const hoje = new Date();
   safeText('dash-date', hoje.toLocaleDateString('pt-BR',{weekday:'long',year:'numeric',month:'long',day:'numeric'}));
 
   renderAlertaUrgente();
+  renderIAsoContextual();
 
   // Banner portfolio
   const sp = statusPortfolio();

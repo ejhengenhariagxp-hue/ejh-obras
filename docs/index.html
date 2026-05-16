@@ -23,7 +23,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260516c"></script>
+<script type="module" src="./app.js?v=20260516d"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Lucide icons (modern SVG icon library) -->
@@ -74,31 +74,71 @@
   </div>
 
   <div class="nav">
-    <div class="nav-group">Visão</div>
-    <div class="nav-item active" onclick="nav('dashboard',this)"><i class="nav-icon" data-lucide="layout-dashboard"></i><span>Dashboard</span></div>
-    <div class="nav-item" onclick="nav('obras',this)"><i class="nav-icon" data-lucide="building-2"></i><span>Projetos & Obras</span></div>
-    <div class="nav-item" onclick="nav('relatorio',this)"><i class="nav-icon" data-lucide="file-text"></i><span>Relatório</span></div>
+    <!-- GRUPO PRINCIPAL -->
+    <div class="nav-group">Principal</div>
+    <div class="nav-item active" onclick="nav('dashboard',this)">
+      <span class="nav-emoji">⬛</span><span>Dashboard</span>
+    </div>
+    <div class="nav-item" onclick="nav('obras',this)">
+      <span class="nav-emoji">🏗</span><span>Projetos & Obras</span>
+    </div>
+    <div class="nav-item" onclick="nav('financeiro',this)">
+      <span class="nav-emoji">💰</span><span>Financeiro</span>
+    </div>
+    <div class="nav-item" onclick="nav('propostas',this)">
+      <span class="nav-emoji">📝</span><span>Propostas</span>
+    </div>
+    <div class="nav-item" onclick="nav('relatorio',this)">
+      <span class="nav-emoji">📄</span><span>Relatório</span>
+    </div>
 
+    <!-- GRUPO EXECUÇÃO -->
     <div class="nav-group">Execução</div>
-    <div class="nav-item" onclick="nav('diario',this)"><i class="nav-icon" data-lucide="clipboard-list"></i><span>Diário de Obra</span></div>
-    <div class="nav-item" onclick="nav('cronograma',this)"><i class="nav-icon" data-lucide="calendar-days"></i><span>Cronograma</span></div>
-    <div class="nav-item" onclick="nav('orcamento',this)"><i class="nav-icon" data-lucide="calculator"></i><span>Orçamento</span></div>
-    <div class="nav-item" onclick="nav('medicao',this)"><i class="nav-icon" data-lucide="ruler"></i><span>Medição</span></div>
-    <div class="nav-item" onclick="nav('empreita',this)"><i class="nav-icon" data-lucide="handshake"></i><span>Empreita M.O.</span></div>
-    <div class="nav-item" onclick="nav('financeiro',this)"><i class="nav-icon" data-lucide="wallet"></i><span>Financeiro</span></div>
-    <div class="nav-item" onclick="nav('propostas',this)"><i class="nav-icon" data-lucide="file-signature"></i><span>Propostas</span></div>
-    <div class="nav-item" onclick="nav('captura',this)"><span class="nav-icon nav-emoji">👷</span><span>IAsô (Captura)</span></div>
+    <div class="nav-item" onclick="nav('diario',this)">
+      <span class="nav-emoji">📋</span><span>Diário de Obra</span>
+    </div>
+    <div class="nav-item" onclick="nav('cronograma',this)">
+      <span class="nav-emoji">📅</span><span>Cronograma</span>
+    </div>
+    <div class="nav-item" onclick="nav('orcamento',this)">
+      <span class="nav-emoji">🧮</span><span>Orçamento</span>
+    </div>
+    <div class="nav-item" onclick="nav('medicao',this)">
+      <span class="nav-emoji">📐</span><span>Medição</span>
+    </div>
+    <div class="nav-item" onclick="nav('empreita',this)">
+      <span class="nav-emoji">👷</span><span>Empreita M.O.</span>
+    </div>
+    <div class="nav-item" onclick="nav('captura',this)">
+      <span class="nav-emoji">🤖</span><span>IAsô (Captura)</span>
+    </div>
 
+    <!-- GRUPO PESSOAL -->
     <div class="nav-group">Pessoal</div>
-    <div class="nav-item" onclick="nav('ejhlife',this)"><span class="nav-icon nav-emoji">💼</span><span>EJH Life</span></div>
+    <div class="nav-item" onclick="nav('ejhlife',this)">
+      <span class="nav-emoji">🌱</span><span>EJH Life</span>
+    </div>
 
+    <!-- GRUPO CADASTROS -->
     <div class="nav-group">Cadastros & Config</div>
-    <div class="nav-item" onclick="nav('tabelas',this)"><i class="nav-icon" data-lucide="book-open"></i><span>SINAPI / SICOR-MG</span></div>
-    <div class="nav-item" onclick="nav('composicoes',this)"><i class="nav-icon" data-lucide="layers"></i><span>Composições</span></div>
-    <div class="nav-item" onclick="nav('importar',this)"><i class="nav-icon" data-lucide="file-input"></i><span>Importar Orçamento</span></div>
-    <div class="nav-item" onclick="openIaConfig()"><i class="nav-icon" data-lucide="key-round"></i><span>Configurar IAsô</span></div>
-    <div class="nav-item" onclick="openModal('modal-settings')"><i class="nav-icon" data-lucide="settings"></i><span>Configurações</span></div>
-    <div class="nav-item" onclick="abrirOnboarding()"><i class="nav-icon" data-lucide="life-buoy"></i><span>Tutorial</span></div>
+    <div class="nav-item" onclick="nav('sinapi',this)">
+      <span class="nav-emoji">📦</span><span>SINAPI / SICOR-MG</span>
+    </div>
+    <div class="nav-item" onclick="nav('composicoes',this)">
+      <span class="nav-emoji">🔧</span><span>Composições</span>
+    </div>
+    <div class="nav-item" onclick="nav('importar',this)">
+      <span class="nav-emoji">📥</span><span>Importar Orçamento</span>
+    </div>
+    <div class="nav-item" onclick="openModal('modal-ia-config')">
+      <span class="nav-emoji">⚙️</span><span>Configurar IAsô</span>
+    </div>
+    <div class="nav-item" onclick="openModal('modal-settings')">
+      <span class="nav-emoji">⚙️</span><span>Configurações</span>
+    </div>
+    <div class="nav-item" onclick="openModal('modal-onboarding')">
+      <span class="nav-emoji">📖</span><span>Tutorial</span>
+    </div>
   </div>
 
   <div class="sidebar-footer">
@@ -121,6 +161,9 @@
 
   <!-- Alertas urgentes -->
   <div id="dash-alertas-urgentes"></div>
+
+  <!-- IAsô contextual -->
+  <div id="dash-iaso-contextual" style="margin-bottom:16px"></div>
 
   <!-- Banner portfolio -->
   <div id="dash-portfolio"></div>
