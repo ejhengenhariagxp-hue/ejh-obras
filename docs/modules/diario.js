@@ -269,28 +269,31 @@ function _cardDiario(state, d) {
     ? `<div class="diario-equipe-chips">${eqList.map(e => `<span class="equipe-chip">👷 ${e.qtd} ${escapeHtml(e.cargo)}</span>`).join('')}</div>`
     : (d.equipe ? `<div class="diario-equipe-chips"><span class="equipe-chip">👷 ${escapeHtml(d.equipe)}</span></div>` : '');
   return `<div class="diario-item">
-    <div style="display:flex;justify-content:space-between">
-      <div style="flex:1">
-        <div class="diario-date">${fmtD(d.data)}</div>
-        <div class="diario-section-title">📋 Atividades realizadas</div>
-        ${ativsHtml}
-        ${equipeChips ? `<div class="diario-section-title" style="margin-top:10px">👷 Equipe</div>${equipeChips}` : ''}
-        ${d.ocorr && d.ocorr !== 'Sem ocorrências' && d.ocorr !== 'Nenhuma'
-          ? `<div class="diario-ocorr">⚠️ ${escapeHtml(d.ocorr)}</div>` : ''}
-        <div class="diario-tags">
-          <span class="badge badge-amber">${d.clima}</span>
-          ${fotos.length ? `<span class="badge badge-purple">📷 ${fotos.length} foto${fotos.length>1?'s':''}</span>` : ''}
-          ${d.assinatura?.dataUrl ? `<span class="badge badge-teal">✍️ Assinado</span>` : ''}
-        </div>
-        ${galeriaHtml}
-        ${d.assinatura?.dataUrl ? `<div style="margin-top:10px;padding:8px 12px;background:#fafbff;border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;gap:10px">
-          <img src="${d.assinatura.dataUrl}" style="height:40px;max-width:160px" alt="Assinatura">
-          <span style="font-size:11.5px;color:var(--muted)">Assinado em ${d.assinatura.data || ''} — ${state.engNome || 'Resp. Técnico'}${state.engRegistro ? ` (${state.engRegistro})` : ''}</span>
-        </div>` : ''}
+    <div class="diario-item-header">
+      <div class="diario-date">${fmtD(d.data)}</div>
+      <div class="diario-header-badges">
+        ${d.clima ? `<span style="font-size:18px" title="${d.clima}">${d.clima.split(' ')[0]}</span>` : ''}
+        ${fotos.length ? `<span style="background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px">📷 ${fotos.length}</span>` : ''}
+        ${d.assinatura?.dataUrl ? `<span style="background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px">✍️</span>` : ''}
+        <button class="btn btn-outline btn-xs" onclick="openEditDiario('${d.id}')" style="color:rgba(255,255,255,.8);border-color:rgba(255,255,255,.3);margin-left:4px" title="Editar">✏️</button>
+        <button class="btn btn-outline btn-xs" onclick="delDiario('${d.id}')" style="color:rgba(255,255,255,.8);border-color:rgba(255,255,255,.3)" title="Excluir">✕</button>
       </div>
-      <div style="display:flex;gap:6px;margin-left:12px;align-self:flex-start">
-        <button class="btn btn-outline btn-xs" onclick="openEditDiario('${d.id}')" style="color:var(--amber);border-color:var(--amber)" title="Editar">✏️</button>
-        <button class="btn btn-outline btn-xs" onclick="delDiario('${d.id}')" style="color:var(--red);border-color:var(--red)" title="Excluir">✕</button>
+    </div>
+    <div class="diario-item-body">
+      <div class="diario-section-title">Atividades realizadas</div>
+      ${ativsHtml}
+      ${equipeChips ? `<div class="diario-section-title" style="margin-top:10px">Equipe</div>${equipeChips}` : ''}
+      ${d.ocorr && d.ocorr !== 'Sem ocorrências' && d.ocorr !== 'Nenhuma'
+        ? `<div class="diario-ocorr">⚠️ ${escapeHtml(d.ocorr)}</div>` : ''}
+      ${galeriaHtml}
+      ${d.assinatura?.dataUrl ? `<div style="margin-top:10px;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;gap:10px">
+        <img src="${d.assinatura.dataUrl}" style="height:40px;max-width:160px" alt="Assinatura">
+        <span style="font-size:11.5px;color:var(--muted)">Assinado em ${d.assinatura.data || ''} — ${state.engNome || 'Resp. Técnico'}${state.engRegistro ? ` (${state.engRegistro})` : ''}</span>
+      </div>` : ''}
+      <div class="diario-tags">
+        ${d.clima ? `<span class="badge badge-amber">${d.clima}</span>` : ''}
+        ${fotos.length ? `<span class="badge badge-green">📷 ${fotos.length} foto${fotos.length>1?'s':''}</span>` : ''}
+        ${d.assinatura?.dataUrl ? `<span class="badge badge-teal">✍️ Assinado</span>` : ''}
       </div>
     </div>
   </div>`;
