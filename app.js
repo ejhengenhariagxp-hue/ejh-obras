@@ -8,10 +8,10 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
 import { loadState, fbInit, fbLoginGoogle, fbLogout,
          saveIaKey, getIaKey, setIaKey,
          fbMigrarFotosAntigas, fbSalvarSnapshot } from './services.js?v=20260515b';
-import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra, filtrarObras, limparFiltrosObras } from './modules/obras.js?v=20260516d';
+import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra, filtrarObras, limparFiltrosObras } from './modules/obras.js?v=20260516e';
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260501g';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt, renderCronAtivo } from './modules/cronograma.js?v=20260508d';
-import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario, abrirDiarioObra, voltarDiarioObras, filtrarDiario } from './modules/diario.js?v=20260516c';
+import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario, abrirDiarioObra, voltarDiarioObras, filtrarDiario } from './modules/diario.js?v=20260516d';
 import { addFin, delFin, openEditFin, openModalFin, openModalFinPessoal, isModalFinPessoal, renderFinanceiro, toggleHideRT, marcarFinPago,
          addCustoFixo, delCustoFixo, toggleCustoFixoAtivo, openEditCustoFixo, abrirModalCustoFixo,
          preencherCustoFixoPadrao, gerarLancamentosCustosFixos,
@@ -238,7 +238,18 @@ function statusPortfolio() {
 }
 
 function statusObra(o, etapas) {
-  const avg = etapas.length ? Math.round(etapas.reduce((a,x)=>a+x.conc,0)/etapas.length) : 0;
+  let avg;
+  if (etapas.length) {
+    avg = Math.round(etapas.reduce((a,x)=>a+(x.conc||0),0)/etapas.length);
+  } else {
+    const diasComAvanco = (state.diario||[]).filter(d=>d.obraId===o.id && d.avancoPct!=null);
+    if (diasComAvanco.length) {
+      const ultimo = diasComAvanco.sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0];
+      avg = ultimo.avancoPct;
+    } else {
+      avg = 0;
+    }
+  }
   if (!o.inicio || !o.fim) return { avg, cor:'green', icon:'🟢', label:'Em dia' };
   const ini = new Date(o.inicio).getTime();
   const fim = new Date(o.fim).getTime();
@@ -1292,6 +1303,31 @@ G.removePendingFoto = i => removePendingFoto(state, i);
 G.gerarDiarioComFoto = () => gerarDiarioComFoto(state);
 G.abrirDiarioObra = id => { abrirDiarioObra(id); renderAtiva(); };
 G.voltarDiarioObras = () => { voltarDiarioObras(); renderAtiva(); };
+
+window._aplicarTemplateCaixa = function() {
+  const obraId = document.getElementById('cron-obra-sel')?.value;
+  if (!obraId) { showToast('⚠️ Selecione uma obra antes de aplicar o template.'); return; }
+  const obra = state.obras.find(o => o.id === obraId);
+  if (!confirm(`Adicionar etapas padrão CEF/Caixa à obra "${obra?.nome || obraId}"?\n\nEtapas já existentes serão mantidas.`)) return;
+  const etapasCEF = [
+    'Serviços Preliminares','Fundações','Estrutura','Vedação / Alvenaria',
+    'Cobertura','Instalações Hidráulicas e Sanitárias','Instalações Elétricas',
+    'Revestimentos Internos','Revestimentos Externos','Esquadrias',
+    'Louças, Metais e Acessórios','Pintura','Serviços Complementares / Urbanização'
+  ];
+  const jaExistem = new Set(state.cron.filter(c=>c.obraId===obraId).map(c=>c.etapa));
+  let adicionadas = 0;
+  etapasCEF.forEach(nome => {
+    if (jaExistem.has(nome)) return;
+    state.cron.push({ id:'CRN-'+pad(state.counters.cron), obraId, etapa:nome, inicio:'', fim:'', prev:100, conc:0 });
+    state.counters.cron++;
+    adicionadas++;
+  });
+  saveStateLocal();
+  if (window._fbUser) { clearTimeout(_fbSaveTimer); _fbSaveTimer = setTimeout(()=>saveToCloud(),400); }
+  renderAtiva();
+  showToast(`✅ ${adicionadas} etapa(s) CEF adicionadas!`);
+};
 G.openModalFin = tipo => openModalFin(state, tipo);
 G.openModalFinPessoal = tipo => openModalFinPessoal(state, tipo);
 // Metas Pessoais

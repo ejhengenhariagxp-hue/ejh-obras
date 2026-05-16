@@ -61,6 +61,8 @@ export function addDiario(state){
     }).filter(Boolean);
     const sig = window._diarioGetSig?.() || null;
     const equipeList = window._diarioGetEquipe?.() || [];
+    const avEl = document.getElementById('f-dia-avanco');
+    const avancoPct = avEl && avEl.value !== '' ? +avEl.value : null;
     const dadosForm = {
       obraId: obraId,
       data:   data,
@@ -71,6 +73,7 @@ export function addDiario(state){
       ocorr:  document.getElementById('f-dia-ocorr')?.value || '',
       fotos:  fotosFinais,
       assinatura: sig ? { dataUrl: sig, data: new Date().toLocaleDateString('pt-BR') } : null,
+      ...(avancoPct !== null ? { avancoPct } : {}),
     };
 
     if (editId) {
@@ -119,6 +122,10 @@ export function openEditDiario(state, id) {
   set('f-dia-equipe', d.equipe);
   set('f-dia-clima', d.clima);
   set('f-dia-ocorr', d.ocorr);
+  const avEl = document.getElementById('f-dia-avanco');
+  const avLabel = document.getElementById('f-dia-avanco-label');
+  if (avEl) { avEl.value = d.avancoPct ?? ''; }
+  if (avLabel) avLabel.textContent = d.avancoPct != null ? d.avancoPct + '%' : '—';
   // Carrega assinatura existente (se houver)
   window._diarioSetSig?.(d.assinatura?.dataUrl || null);
   // Carrega equipe estruturada (ou tenta inferir de string legada)
@@ -229,6 +236,8 @@ export function openModalDiario(state){
   popularSelectsObras(state);
   // limpa modo edição e campos
   ['f-dia-id','f-dia-desc','f-dia-equipe','f-dia-ocorr','f-dia-equipe-outro','f-dia-equipe-outro-qtd'].forEach(k => { const el = document.getElementById(k); if (el) el.value = ''; });
+  const avEl = document.getElementById('f-dia-avanco'); if (avEl) avEl.value = '';
+  const avLbl = document.getElementById('f-dia-avanco-label'); if (avLbl) avLbl.textContent = '—';
   if(document.getElementById('f-dia-data')) document.getElementById('f-dia-data').value = new Date().toISOString().split('T')[0];
   // Pré-seleciona a obra ativa (quando chamado de dentro de uma obra)
   if (_diarObraAtiva) {

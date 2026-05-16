@@ -356,7 +356,9 @@ export function renderObras(state) {
                          : (o.tipo==='projeto' || o.tipo==='R1' ? 'badge-purple' : 'badge-blue');
     const tipoBadgeIcon  = o.tipo==='acompanhamento' ? '🔍 ' : '';
     const etapas = (state.cron||[]).filter(c=>c.obraId===o.id);
-    const avg = etapas.length ? Math.round(etapas.reduce((a,x)=>a+(x.conc||0),0)/etapas.length) : null;
+    const diasAv = (state.diario||[]).filter(d=>d.obraId===o.id&&d.avancoPct!=null);
+    const avgDiario = diasAv.length ? diasAv.sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0].avancoPct : null;
+    const avg = etapas.length ? Math.round(etapas.reduce((a,x)=>a+(x.conc||0),0)/etapas.length) : avgDiario;
     const avgCol = avg===null?'var(--muted)':avg>=100?'var(--green)':avg>0?'var(--blue)':'var(--muted)';
     const avgHtml = avg===null
       ? `<span style="font-size:11px;color:var(--muted)">—</span>`
@@ -396,7 +398,9 @@ export function renderObras(state) {
                          : (o.tipo==='projeto' || o.tipo==='R1' ? 'badge-purple' : 'badge-blue');
     const tipoBadgeIcon  = o.tipo==='acompanhamento' ? '🔍 ' : '';
     const etapas = (state.cron||[]).filter(c=>c.obraId===o.id);
-    const avg = etapas.length ? Math.round(etapas.reduce((a,x)=>a+(x.conc||0),0)/etapas.length) : null;
+    const diasAv = (state.diario||[]).filter(d=>d.obraId===o.id&&d.avancoPct!=null);
+    const avgDiario = diasAv.length ? diasAv.sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0].avancoPct : null;
+    const avg = etapas.length ? Math.round(etapas.reduce((a,x)=>a+(x.conc||0),0)/etapas.length) : avgDiario;
     const avgCol = avg===null?'var(--muted)':avg>=100?'var(--green)':avg>0?'var(--blue)':'var(--muted)';
     return `<div class="obra-mobile-card">
       <div class="obra-mobile-hdr">
