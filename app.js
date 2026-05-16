@@ -702,190 +702,27 @@ function renderDashboard() {
   renderIAsoContextual();
   renderAgendaSemanal();
 
-  // Banner portfolio
-  const sp = statusPortfolio();
-  safeInner('dash-portfolio', `<div class="portfolio-banner portfolio-${sp.cor}">
-    <div class="portfolio-icon">${sp.icon}</div>
-    <div class="portfolio-body">
-      <div class="portfolio-titulo">${sp.titulo}</div>
-      <div class="portfolio-sub">${sp.sub}</div>
-    </div>
-  </div>`);
-
   // KPIs
-  const totOrc  = state.orc.reduce((a,x)=>a+x.qtd*x.vunit, 0);
-  const totReal = state.orc.reduce((a,x)=>a+x.real, 0);
   const rec = state.fin.filter(x=>x.tipo==='Receita' && !x.transferGroupId && !x.pessoal).reduce((a,x)=>a+x.valor, 0);
   const des = state.fin.filter(x=>x.tipo==='Despesa' && !x.transferGroupId && !x.pessoal).reduce((a,x)=>a+x.valor, 0);
   const andamento = state.obras.filter(o=>o.status==='Em andamento').length;
-  safeText('kpi-total', state.obras.length);
+  safeText('kpi-total', andamento);
   const kpiTotalSub = document.getElementById('kpi-total-sub');
-  if (kpiTotalSub) kpiTotalSub.textContent = andamento > 0 ? `${andamento} em andamento` : 'cadastrados';
-  safeText('kpi-orc',   fmt(totOrc));
-  safeText('kpi-real',  fmt(totReal));
-  const pct = totOrc > 0 ? Math.round(totReal/totOrc*100) : 0;
-  const kpiPct = document.getElementById('kpi-real-pct');
-  if (kpiPct) kpiPct.textContent = totOrc > 0 ? `${pct}% do orçado` : '';
-  const kpiBar = document.getElementById('kpi-real-bar');
-  if (kpiBar) kpiBar.style.width = Math.min(pct,100) + '%';
+  if (kpiTotalSub) kpiTotalSub.textContent = `de ${state.obras.length} cadastrada${state.obras.length!==1?'s':''}`;
   safeText('kpi-saldo', fmt(rec-des));
   const sEl = document.getElementById('kpi-saldo');
   if (sEl) sEl.style.color = (rec-des) >= 0 ? 'var(--green)' : 'var(--red)';
 
-  // Produção (m² e ton)
-  const fmtN = n => n.toLocaleString('pt-BR',{maximumFractionDigits:1});
-  const obrasCivil = state.obras.filter(o => !o.unidadeArea || o.unidadeArea === 'm2');
-  const obrasMetalAnd = state.obras.filter(o => (o.unidadeArea === 'ton' || o.unidadeArea === 'kg') && o.status !== 'Concluída');
-  const obrasMetalConc = state.obras.filter(o => (o.unidadeArea === 'ton' || o.unidadeArea === 'kg') && o.status === 'Concluída');
-  const m2Total = obrasCivil.reduce((a,o)=>a+(o.area||0),0);
-  const m2And   = obrasCivil.filter(o=>o.status!=='Concluída').reduce((a,o)=>a+(o.area||0),0);
-  const m2Conc  = obrasCivil.filter(o=>o.status==='Concluída').reduce((a,o)=>a+(o.area||0),0);
-  const toTon   = o => o.unidadeArea === 'kg' ? (o.area||0)/1000 : (o.area||0);
-  const tonAnd  = obrasMetalAnd.reduce((a,o)=>a+toTon(o),0);
-  const tonConc = obrasMetalConc.reduce((a,o)=>a+toTon(o),0);
-  const tonTotal= tonAnd + tonConc;
-  const m2PctAnd = m2Total > 0 ? Math.round(m2And/m2Total*100) : 0;
-  safeInner('dash-producao-stats', `
-    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:12px;letter-spacing:.5px;display:flex;align-items:center;gap:6px">
-      <span>📐</span> PRODUÇÃO ACUMULADA
-    </div>
-    <div style="display:grid;grid-template-columns:${tonTotal>0?'1fr 1fr':'1fr'};gap:12px">
-      <div>
-        <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px">CIVIL</div>
-        <div style="font-size:24px;font-weight:800;color:var(--navy);line-height:1">${fmtN(m2Total)}<span style="font-size:13px;font-weight:400;color:var(--muted)"> m²</span></div>
-        <div style="margin-top:8px">
-          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px">
-            <span style="color:#2563eb">▶ ${fmtN(m2And)} exec.</span>
-            <span style="color:#059669">✓ ${fmtN(m2Conc)} conc.</span>
-          </div>
-          <div style="height:5px;background:#f1f5f9;border-radius:4px;overflow:hidden">
-            <div style="height:100%;width:${m2PctAnd}%;background:#2563eb;border-radius:4px"></div>
-          </div>
-        </div>
-      </div>
-      ${tonTotal > 0 ? `<div>
-        <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px">METÁLICA</div>
-        <div style="font-size:24px;font-weight:800;color:var(--navy);line-height:1">${fmtN(tonTotal)}<span style="font-size:13px;font-weight:400;color:var(--muted)"> ton</span></div>
-        <div style="margin-top:8px">
-          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px">
-            <span style="color:#d97706">▶ ${fmtN(tonAnd)} exec.</span>
-            <span style="color:#059669">✓ ${fmtN(tonConc)} conc.</span>
-          </div>
-          <div style="height:5px;background:#f1f5f9;border-radius:4px;overflow:hidden">
-            <div style="height:100%;width:${tonTotal>0?Math.round(tonAnd/tonTotal*100):0}%;background:#d97706;border-radius:4px"></div>
-          </div>
-        </div>
-      </div>` : ''}
-    </div>
-  `);
-
-  // Propostas
-  const props = Array.isArray(state.propostas) ? state.propostas : [];
-  const pTotal   = props.length;
-  const pFechado = props.filter(p=>p.status==='fechado').length;
-  const pAberto  = props.filter(p=>p.status==='em_negociacao'||p.status==='em_revisao').length;
-  const pPerdeu  = props.filter(p=>p.status==='nao_fechou').length;
-  const pPct     = pTotal ? Math.round(pFechado/pTotal*100) : 0;
-  const valAberto= props.filter(p=>p.status==='em_negociacao'||p.status==='em_revisao').reduce((a,p)=>a+(p.total||0),0);
-  const valFechado= props.filter(p=>p.status==='fechado').reduce((a,p)=>a+(p.total||0),0);
-  safeInner('dash-propostas-stats', `
-    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:12px;letter-spacing:.5px;display:flex;align-items:center;gap:6px">
-      <span>📝</span> PROPOSTAS
-    </div>
-    ${pTotal === 0 ? '<div style="font-size:12px;color:var(--muted)">Nenhuma proposta ainda</div>' : `
-    <div style="display:flex;align-items:center;gap:14px">
-      <div style="position:relative;width:64px;height:64px;flex-shrink:0">
-        <svg width="64" height="64" viewBox="0 0 64 64">
-          <circle r="26" cx="32" cy="32" fill="none" stroke="#f1f5f9" stroke-width="11"/>
-          <circle r="26" cx="32" cy="32" fill="none" stroke="#6ee7b7" stroke-width="11"
-            stroke-dasharray="${163.4*pPct/100} ${163.4}" stroke-dashoffset="40.8" transform="rotate(-90 32 32)"/>
-        </svg>
-        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--navy)">${pPct}%</div>
-      </div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">${pTotal} proposta${pTotal!==1?'s':''} enviada${pTotal!==1?'s':''}</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
-          <span style="font-size:12px;color:#065f46;font-weight:700">✅ ${pFechado} fechad${pFechado!==1?'os':'o'}</span>
-          <span style="font-size:12px;color:#1d4ed8;font-weight:700">🤝 ${pAberto} aberto${pAberto!==1?'s':''}</span>
-          <span style="font-size:12px;color:#991b1b;font-weight:700">❌ ${pPerdeu}</span>
-        </div>
-        ${valFechado>0?`<div style="font-size:10px;color:var(--muted)">Fechado: <strong style="color:#065f46">${fmt(valFechado)}</strong></div>`:''}
-        ${valAberto>0?`<div style="font-size:10px;color:var(--muted)">Em aberto: <strong>${fmt(valAberto)}</strong></div>`:''}
-      </div>
-    </div>`}
-  `);
-
-  // Empty state
-  if (state.obras.length === 0) {
-    safeInner('dash-obras', `
-      <div class="empty-hero">
-        <div class="empty-hero-icon">🚧</div>
-        <div class="empty-hero-title">Nenhuma obra cadastrada</div>
-        <div class="empty-hero-sub">Crie sua primeira obra e comece a controlar custos, prazo e execução.</div>
-        <button class="btn btn-primary" onclick="resetFormObra();openModal('modal-obra')">＋ Criar Primeira Obra</button>
-      </div>`);
-    ['dash-acoes','dash-coms','dash-receber','dash-pagar'].forEach(id =>
-      safeInner(id, '<div style="color:var(--muted);padding:14px;text-align:center;font-size:13px">Sem dados ainda.</div>'));
-    safeText('dash-receber-total','');
-    safeText('dash-pagar-total','');
-    return;
-  }
-
-  // Próximas Ações
-  const acoes = calcAcoes();
-  safeInner('dash-acoes', acoes.length ? acoes.map(a => `
-    <div class="acao-item acao-${a.cor}" onclick="${a.onclick}">
-      <span class="acao-icon">${a.icon}</span>
-      <div class="acao-body">
-        <div class="acao-title">${a.title}</div>
-        <div class="acao-sub">${a.sub}</div>
-      </div>
-    </div>`).join('') : '<div style="color:var(--green);padding:14px;text-align:center;font-size:13px">✅ Tudo em dia! Sem pendências.</div>');
-
-  // Últimas Comunicações
-  const coms = [...(state.capturas || [])].sort((a,b) => b.ts - a.ts).slice(0, 4);
-  safeInner('dash-coms', coms.length ? coms.map(c => {
-    const obra = state.obras.find(o => o.id === c.obraId);
-    const dt = new Date(c.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-    const hora = new Date(c.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    return `<div class="com-item" onclick="nav('captura',null)">
-      <div class="com-title">${(c.resumo || 'Comunicação').substring(0,80)}</div>
-      <div class="com-meta">
-        <span>🏗 ${obra ? obra.nome : c.obraId || '—'}</span>
-        <span>📅 ${dt} ${hora}</span>
-        <span style="color:var(--green)">✅ ${c.salvos || 0} registro(s)</span>
-      </div>
-    </div>`;
-  }).join('') : '<div style="color:var(--muted);padding:14px;text-align:center;font-size:13px">Sem comunicações registradas. <br><a href="#" onclick="event.preventDefault();nav(\'captura\',null)" style="color:var(--blue);font-weight:600">Registrar a primeira →</a></div>');
-
-  // Obras em andamento
-  const active = state.obras.filter(o => o.status === 'Em andamento');
-  safeInner('dash-obras', active.map(o => {
-    const etapas = state.cron.filter(c=>c.obraId===o.id);
-    const st = statusObra(o, etapas);
-    const rtBadge = o.tipo === 'acompanhamento'
-      ? '<span class="badge badge-teal" style="margin-right:6px;font-size:10px">🔍 RT</span>'
-      : '';
-    return `<div class="obra-card status-${st.cor}" onclick="window.nav('obras',null)" style="cursor:pointer">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-        <div class="obra-card-title">${rtBadge}${o.nome}</div>
-        <span class="status-pill status-pill-${st.cor}" title="${st.label}">${st.icon} ${st.label}</span>
-      </div>
-      <div class="obra-card-meta"><span>👤 ${o.cliente}</span><span>📐 ${(o.area||0).toLocaleString('pt-BR')} ${o.unidadeArea==='ton'?'ton':o.unidadeArea==='kg'?'kg':'m²'}</span></div>
-      <div style="margin-top:10px">
-        <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px"><span style="color:var(--muted)">Avanço</span><strong>${st.avg}%</strong></div>
-        <div class="prog-obra"><div class="prog-obra-fill" style="width:${st.avg}%"></div></div>
-      </div>
-    </div>`;
-  }).join('') || '<div style="color:var(--muted);padding:20px;text-align:center">Nenhuma obra em andamento.</div>');
-
-  // Alertas financeiros — A receber e A pagar
+  // Alertas financeiros
   const todayStr = hoje.toISOString().split('T')[0];
   const pendentes = state.fin.filter(f => f.status && f.status !== 'pago' && !f.transferGroupId && !f.pessoal);
   const aReceber = pendentes.filter(f => f.tipo === 'Receita').sort((a,b)=>(a.data||'').localeCompare(b.data||'')).slice(0,6);
   const aPagar   = pendentes.filter(f => f.tipo === 'Despesa').sort((a,b)=>(a.data||'').localeCompare(b.data||'')).slice(0,6);
   const totalReceber = pendentes.filter(f=>f.tipo==='Receita').reduce((a,f)=>a+f.valor,0);
   const totalPagar   = pendentes.filter(f=>f.tipo==='Despesa').reduce((a,f)=>a+f.valor,0);
+
+  safeText('kpi-a-receber', fmt(totalReceber));
+  safeText('kpi-a-pagar',   fmt(totalPagar));
 
   const finItemHtml = (f, tipo) => {
     const obra = state.obras.find(o=>o.id===f.obraId);

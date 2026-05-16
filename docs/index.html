@@ -23,7 +23,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- Main module -->
-<script type="module" src="./app.js?v=20260516h"></script>
+<script type="module" src="./app.js?v=20260516i"></script>
 <!-- SheetJS for Excel import -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Lucide icons (modern SVG icon library) -->
@@ -168,40 +168,15 @@
   <!-- Agenda semanal IAsô -->
   <div id="dash-agenda-semanal" style="margin-bottom:16px"></div>
 
-  <!-- Banner portfolio -->
-  <div id="dash-portfolio"></div>
-
-  <!-- KPIs com ícones -->
-  <!-- KPIs com ícones -->
-  <div class="kpi-grid kpi-dashboard-ejhv">
+  <!-- KPIs: 4 números chave -->
+  <div class="kpi-grid kpi-dashboard-ejhv" style="margin-bottom:16px">
     <div class="kpi blue">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-        <div class="kpi-label" style="padding-top:4px">Projetos e Obras</div>
+        <div class="kpi-label" style="padding-top:4px">Obras em Andamento</div>
         <div class="kpi-icon">🏗</div>
       </div>
       <div class="kpi-value" id="kpi-total">0</div>
-      <div class="kpi-sub" id="kpi-total-sub">cadastrados</div>
-    </div>
-    <div class="kpi green">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-        <div class="kpi-label" style="padding-top:4px">Orçamento Total</div>
-        <div class="kpi-icon">📋</div>
-      </div>
-      <div class="kpi-value" id="kpi-orc">R$0</div>
-      <div class="kpi-sub">soma dos orçamentos</div>
-    </div>
-    <div class="kpi amber">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-        <div class="kpi-label" style="padding-top:4px">Realizado</div>
-        <div class="kpi-icon">📊</div>
-      </div>
-      <div class="kpi-value" id="kpi-real">R$0</div>
-      <div style="margin-top:6px">
-        <div style="font-size:10px;color:var(--muted);margin-bottom:3px" id="kpi-real-pct"></div>
-        <div style="height:4px;background:#f1f5f9;border-radius:4px;overflow:hidden">
-          <div id="kpi-real-bar" style="height:100%;background:var(--amber,#f59e0b);border-radius:4px;width:0%;transition:width .4s"></div>
-        </div>
-      </div>
+      <div class="kpi-sub" id="kpi-total-sub">de 0 cadastradas</div>
     </div>
     <div class="kpi teal">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
@@ -211,51 +186,22 @@
       <div class="kpi-value" id="kpi-saldo">R$0</div>
       <div class="kpi-sub">receitas − despesas</div>
     </div>
-  </div>
-
-  <!-- Stats: Produção + Propostas -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-    <div id="dash-producao-stats" style="background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px"></div>
-    <div id="dash-propostas-stats" style="background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px"></div>
-  </div>
-
-  <!-- Atalhos rápidos -->
-  <div class="quick-shortcuts">
-    <button class="quick-card qc-diary" onclick="openModalDiario()">
-      <div class="quick-icon-wrap">📷</div>
-      <span class="quick-label">Diário do dia</span>
-      <span class="quick-sub">com fotos</span>
-    </button>
-    <button class="quick-card qc-ia" onclick="nav('captura',null)">
-      <div class="quick-icon-wrap">👷</div>
-      <span class="quick-label">IAsô</span>
-      <span class="quick-sub">WhatsApp/email/foto</span>
-    </button>
-    <button class="quick-card qc-despesa" onclick="openModalFin('Despesa')">
-      <div class="quick-icon-wrap">💸</div>
-      <span class="quick-label">Lançar Despesa</span>
-      <span class="quick-sub">movimentação rápida</span>
-    </button>
-    <button class="quick-card qc-relatorio" onclick="nav('relatorio',null)">
-      <div class="quick-icon-wrap">📄</div>
-      <span class="quick-label">Relatório</span>
-      <span class="quick-sub">PDF / WhatsApp</span>
-    </button>
-  </div>
-
-  <!-- Obras em andamento (posição prioritária) -->
-  <div class="section" style="margin-bottom:20px">
-    <div class="section-hdr">
-      <div class="section-title">🏗 Projetos e Obras em Andamento</div>
-      <button class="btn btn-outline btn-xs" onclick="nav('obras',null)" style="font-size:11px;padding:4px 10px">Ver todas →</button>
+    <div class="kpi green">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div class="kpi-label" style="padding-top:4px">A Receber</div>
+        <div class="kpi-icon">📥</div>
+      </div>
+      <div class="kpi-value" id="kpi-a-receber">R$0</div>
+      <div class="kpi-sub">pendente</div>
     </div>
-    <div class="cards-grid" id="dash-obras"></div>
-  </div>
-
-  <!-- Ações pendentes + Comunicações recentes -->
-  <div class="dash-row">
-    <div class="section dash-col"><div class="section-hdr"><div class="section-title">🔥 Próximas Ações</div></div><div id="dash-acoes"></div></div>
-    <div class="section dash-col"><div class="section-hdr"><div class="section-title">📡 Últimas Comunicações</div><button class="btn btn-outline btn-xs" onclick="nav('captura',null)" style="font-size:11px;padding:4px 10px">Ver todas →</button></div><div id="dash-coms"></div></div>
+    <div class="kpi amber">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div class="kpi-label" style="padding-top:4px">A Pagar</div>
+        <div class="kpi-icon">📤</div>
+      </div>
+      <div class="kpi-value" id="kpi-a-pagar">R$0</div>
+      <div class="kpi-sub">pendente</div>
+    </div>
   </div>
 
   <!-- Alertas financeiros: A receber + A pagar -->
