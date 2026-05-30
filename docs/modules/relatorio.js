@@ -44,6 +44,8 @@ export function renderReport(state){
       <div style="text-align:right;font-size:12.5px;color:#6b7068">
         <div><strong>Emissão:</strong> ${hoje}</div>
         ${obraId?`<div><strong>Obra:</strong> ${obras[0]?.nome||''}</div>`:'<div><strong>Escopo:</strong> Todas as obras</div>'}
+        ${state.engNome?`<div style="margin-top:6px;font-weight:700;color:#1c2126">${state.engNome}</div>`:''}
+        ${state.engRegistro?`<div style="font-size:11.5px;color:#2c657a;font-weight:600">${state.engRegistro}</div>`:''}
       </div>
     </div>
 
@@ -168,8 +170,11 @@ export function renderReport(state){
         }).join('')}
 
     <!-- Rodapé -->
-    <div style="margin-top:24px;padding-top:14px;border-top:1px solid #dbd9d4;display:flex;justify-content:space-between;font-size:11px;color:#6b7068">
-      <span>${state.relatorioRodape || 'EJH Engenharia — Sistema de Gestão de Obras'}</span>
+    <div style="margin-top:24px;padding-top:14px;border-top:1px solid #dbd9d4;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#6b7068">
+      <div>
+        ${state.engNome?`<div style="font-weight:700;color:#1c2126;font-size:12px">${state.engNome}${state.engRegistro?' — '+state.engRegistro:''}</div>`:''}
+        <div>${state.relatorioRodape || 'EJH Engenharia — Sistema de Gestão de Obras'}</div>
+      </div>
       <span>Emitido em ${hoje}</span>
     </div>
 
