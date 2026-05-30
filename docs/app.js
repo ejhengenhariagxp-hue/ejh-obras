@@ -1644,11 +1644,16 @@ G.gerarDiarioPDF = () => {
       <div class="meta-doc">
         <div><strong>Emissão:</strong> ${hoje}</div>
         <div><strong>Escopo:</strong> ${obraId ? obras[0].nome : 'Todas as obras'}</div>
+        ${state.engNome ? `<div style="margin-top:6px;font-weight:700;color:#0f2744">${state.engNome}</div>` : ''}
+        ${state.engRegistro ? `<div style="font-size:11px;color:#2563eb;font-weight:600">${state.engRegistro}</div>` : ''}
       </div>
     </div>
     ${corpo}
     <div class="footer">
-      <span>${state.relatorioRodape || 'EJH Engenharia — Sistema de Gestão de Obras'}</span>
+      <div>
+        ${state.engNome ? `<div style="font-weight:700;color:#0f2744">${state.engNome}${state.engRegistro ? ' — ' + state.engRegistro : ''}</div>` : ''}
+        <span>${state.relatorioRodape || 'EJH Engenharia — Sistema de Gestão de Obras'}</span>
+      </div>
       <span>Emitido em ${hoje}</span>
     </div>
     <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script>
@@ -1792,11 +1797,16 @@ G.gerarMedicaoPDF = () => {
       <div class="meta-doc">
         <div><strong>Emissão:</strong> ${hoje}</div>
         <div><strong>Escopo:</strong> ${obraId ? obras[0].nome : 'Todas as obras'}</div>
+        ${state.engNome ? `<div style="margin-top:6px;font-weight:700;color:#0f2744">${state.engNome}</div>` : ''}
+        ${state.engRegistro ? `<div style="font-size:11px;color:#2563eb;font-weight:600">${state.engRegistro}</div>` : ''}
       </div>
     </div>
     ${corpo}
     <div class="footer">
-      <span>${state.relatorioRodape || 'EJH Engenharia — Sistema de Gestão de Obras'}</span>
+      <div>
+        ${state.engNome ? `<div style="font-weight:700;color:#0f2744">${state.engNome}${state.engRegistro ? ' — ' + state.engRegistro : ''}</div>` : ''}
+        <span>${state.relatorioRodape || 'EJH Engenharia — Sistema de Gestão de Obras'}</span>
+      </div>
       <span>Emitido em ${hoje}</span>
     </div>
     <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script>
