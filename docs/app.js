@@ -8,7 +8,7 @@ import { fmt, fmtD, pad, safeInner, safeText, showToast, nav, setBnActive,
 import { loadState, fbInit, fbLoginGoogle, fbLogout,
          saveIaKey, getIaKey, setIaKey,
          fbMigrarFotosAntigas, fbSalvarSnapshot } from './services.js?v=20260515b';
-import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra, filtrarObras, limparFiltrosObras } from './modules/obras.js?v=20260516p';
+import { addObra, delObra, renderObras, registrarMedicaoRapida, openEditObra, salvarObra, resetFormObra, filtrarObras, limparFiltrosObras } from './modules/obras.js?v=20260516e';
 import { addOrc, delOrc, renderOrc, abrirOrcamentoObra, voltarOrcLista, renderOrcDetalhe, gerarOrcamentoComIA } from './modules/orcamento.js?v=20260501g';
 import { addCron, delCron, saveCronEdit, openCronEdit, setCronView, renderCron, renderGantt, renderCronAtivo } from './modules/cronograma.js?v=20260516m';
 import { addDiario, delDiario, handleFotos, removePendingFoto, openModalDiario, openEditDiario, renderDiario, gerarDiarioComFoto, cancelarDiario, abrirDiarioObra, voltarDiarioObras, filtrarDiario } from './modules/diario.js?v=20260516d';
@@ -37,7 +37,7 @@ import { openPropProjeto, openPropObra, calcPropProjeto, calcPropostaObra,
          atualizarStatusProposta, gerarObraDeProposta,
          addPropFoto, removePropFoto, renderPropFotos } from './modules/propostas.js?v=20260516a';
 import { renderTabelas, filterSinapi, setSinapiCat, setTabelaSrc, importSinapi } from './modules/sinapi.js?v=20260501g';
-import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260516n';
+import { renderReport, gerarRelatorioWpp, gerarRelatorioEmail } from './modules/relatorio.js?v=20260508c';
 import { addChecklist, renderChecklist, renderTemplatesNBR, novoChecklist } from './modules/checklist.js?v=20260501g';
 import { renderCaptura, capProcessarIA, capConfirmarTodos, capLimpar, capDescartarResultado, capToggleCard, capProcessarArquivo, capLimparWhatsApp, capSetView, renderHistoricoCaptura, renderTimelineCaptura } from './modules/captura.js?v=20260501g';
 import { novaComposicao, addInsumoComp, renderInsumosComp, calcTotalComp,
@@ -1301,7 +1301,7 @@ G.openEditDiario = id => openEditDiario(state, id);
 G.handleFotos = inp => handleFotos(state, inp);
 G.removePendingFoto = i => removePendingFoto(state, i);
 G.gerarDiarioComFoto = () => gerarDiarioComFoto(state);
-G.abrirDiarioObra = id => { abrirDiarioObra(id); nav('diario'); renderAtiva(); };
+G.abrirDiarioObra = id => { abrirDiarioObra(id); renderAtiva(); };
 G.voltarDiarioObras = () => { voltarDiarioObras(); renderAtiva(); };
 
 window._aplicarTemplateCaixa = function() {
@@ -1331,15 +1331,10 @@ window._aplicarTemplateCaixa = function() {
     { etapa:'Complementos (Limpeza Final e Calafete)',                 incidencia:1.56 },
     { etapa:'Outros / Serviços Adicionais',                            incidencia:0 },
   ];
-  const existentes = state.cron.filter(c=>c.obraId===obraId);
-  const mapaExist = new Map(existentes.map(c=>[c.etapa, c]));
-  let adicionadas = 0, atualizadas = 0;
+  const jaExistem = new Set(state.cron.filter(c=>c.obraId===obraId).map(c=>c.etapa));
+  let adicionadas = 0;
   etapasCEF.forEach(({etapa:nome, incidencia}) => {
-    const exist = mapaExist.get(nome);
-    if (exist) {
-      if ((exist.incidencia||0) !== incidencia) { exist.incidencia = incidencia; atualizadas++; }
-      return;
-    }
+    if (jaExistem.has(nome)) return;
     state.cron.push({ id:'CRN-'+pad(state.counters.cron), obraId, etapa:nome, inicio:'', fim:'', prev:100, conc:0, incidencia });
     state.counters.cron++;
     adicionadas++;
@@ -1347,10 +1342,7 @@ window._aplicarTemplateCaixa = function() {
   saveStateLocal();
   if (window._fbUser) { clearTimeout(_fbSaveTimer); _fbSaveTimer = setTimeout(()=>saveToCloud(),400); }
   renderAtiva();
-  const msgs = [];
-  if (adicionadas) msgs.push(`${adicionadas} adicionada(s)`);
-  if (atualizadas) msgs.push(`${atualizadas} incidência(s) atualizada(s)`);
-  showToast(`✅ ${msgs.join(', ') || 'Nenhuma alteração'}.`);
+  showToast(`✅ ${adicionadas} etapa(s) CEF adicionadas!`);
 };
 G.openModalFin = tipo => openModalFin(state, tipo);
 G.openModalFinPessoal = tipo => openModalFinPessoal(state, tipo);
@@ -1644,16 +1636,11 @@ G.gerarDiarioPDF = () => {
       <div class="meta-doc">
         <div><strong>Emissão:</strong> ${hoje}</div>
         <div><strong>Escopo:</strong> ${obraId ? obras[0].nome : 'Todas as obras'}</div>
-        ${state.engNome ? `<div style="margin-top:6px;font-weight:700;color:#0f2744">${state.engNome}</div>` : ''}
-        ${state.engRegistro ? `<div style="font-size:11px;color:#2563eb;font-weight:600">${state.engRegistro}</div>` : ''}
       </div>
     </div>
     ${corpo}
     <div class="footer">
-      <div>
-        ${state.engNome ? `<div style="font-weight:700;color:#0f2744">${state.engNome}${state.engRegistro ? ' — ' + state.engRegistro : ''}</div>` : ''}
-        <span>${state.relatorioRodape || 'EJH Engenharia — Sistema de Gestão de Obras'}</span>
-      </div>
+      <span>${state.relatorioRodape || 'EJH Engenharia — Sistema de Gestão de Obras'}</span>
       <span>Emitido em ${hoje}</span>
     </div>
     <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script>
@@ -1797,16 +1784,11 @@ G.gerarMedicaoPDF = () => {
       <div class="meta-doc">
         <div><strong>Emissão:</strong> ${hoje}</div>
         <div><strong>Escopo:</strong> ${obraId ? obras[0].nome : 'Todas as obras'}</div>
-        ${state.engNome ? `<div style="margin-top:6px;font-weight:700;color:#0f2744">${state.engNome}</div>` : ''}
-        ${state.engRegistro ? `<div style="font-size:11px;color:#2563eb;font-weight:600">${state.engRegistro}</div>` : ''}
       </div>
     </div>
     ${corpo}
     <div class="footer">
-      <div>
-        ${state.engNome ? `<div style="font-weight:700;color:#0f2744">${state.engNome}${state.engRegistro ? ' — ' + state.engRegistro : ''}</div>` : ''}
-        <span>${state.relatorioRodape || 'EJH Engenharia — Sistema de Gestão de Obras'}</span>
-      </div>
+      <span>${state.relatorioRodape || 'EJH Engenharia — Sistema de Gestão de Obras'}</span>
       <span>Emitido em ${hoje}</span>
     </div>
     <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script>
@@ -2117,6 +2099,28 @@ function stripDataUrls(obj, parentKey) {
   return obj;
 }
 
+// Converte logo PNG → JPEG 70% para salvar espaço no Firestore.
+// PNG bruto de 200px pode ter 300-500KB; JPEG fica em ~20-40KB.
+function _comprimirLogoParaNuvem(dataUrl) {
+  if (!dataUrl || !dataUrl.startsWith('data:image/png')) return Promise.resolve(dataUrl);
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas');
+        c.width = img.width; c.height = img.height;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0);
+        res(c.toDataURL('image/jpeg', 0.7));
+      } catch { res(dataUrl); }
+    };
+    img.onerror = () => res(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 // Save ao cloud — Caminho B: cada diário vai em sub-coleção
 // usuarios/{uid}             ← state principal (diario:[])
 // usuarios/{uid}/diario/{id} ← cada registro com suas fotos (dataUrl)
@@ -2131,7 +2135,14 @@ async function saveToCloud() {
     const uid = window._fbUser.uid;
 
     // 1) Doc principal: tudo menos o array diario (que vai em sub-coleção)
-    const mainState = stripDataUrls({ ...state, diario: [] });
+    // Propostas: strip fotos (dataUrl) — ficam só no localStorage; propostas
+    // são geradas em um único dispositivo, não precisam sincronizar fotos.
+    const propostasCloud = (state.propostas || []).map(p => ({
+      ...p, fotos: (p.fotos || []).map(({ dataUrl: _d, ...rest }) => rest)
+    }));
+    // Logo: comprimir PNG→JPEG para economizar espaço no Firestore
+    const cloudLogo = await _comprimirLogoParaNuvem(state.logoData);
+    const mainState = stripDataUrls({ ...state, diario: [], propostas: propostasCloud, logoData: cloudLogo });
     const main = { ...mainState, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
     const mainKB = Math.round(JSON.stringify(main).length / 1024);
     if (mainKB > 950) {

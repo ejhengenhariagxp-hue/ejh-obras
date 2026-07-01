@@ -2117,6 +2117,28 @@ function stripDataUrls(obj, parentKey) {
   return obj;
 }
 
+// Converte logo PNG → JPEG 70% para salvar espaço no Firestore.
+// PNG bruto de 200px pode ter 300-500KB; JPEG fica em ~20-40KB.
+function _comprimirLogoParaNuvem(dataUrl) {
+  if (!dataUrl || !dataUrl.startsWith('data:image/png')) return Promise.resolve(dataUrl);
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas');
+        c.width = img.width; c.height = img.height;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0);
+        res(c.toDataURL('image/jpeg', 0.7));
+      } catch { res(dataUrl); }
+    };
+    img.onerror = () => res(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 // Save ao cloud — Caminho B: cada diário vai em sub-coleção
 // usuarios/{uid}             ← state principal (diario:[])
 // usuarios/{uid}/diario/{id} ← cada registro com suas fotos (dataUrl)
@@ -2131,7 +2153,14 @@ async function saveToCloud() {
     const uid = window._fbUser.uid;
 
     // 1) Doc principal: tudo menos o array diario (que vai em sub-coleção)
-    const mainState = stripDataUrls({ ...state, diario: [] });
+    // Propostas: strip fotos (dataUrl) — ficam só no localStorage; propostas
+    // são geradas em um único dispositivo, não precisam sincronizar fotos.
+    const propostasCloud = (state.propostas || []).map(p => ({
+      ...p, fotos: (p.fotos || []).map(({ dataUrl: _d, ...rest }) => rest)
+    }));
+    // Logo: comprimir PNG→JPEG para economizar espaço no Firestore
+    const cloudLogo = await _comprimirLogoParaNuvem(state.logoData);
+    const mainState = stripDataUrls({ ...state, diario: [], propostas: propostasCloud, logoData: cloudLogo });
     const main = { ...mainState, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
     const mainKB = Math.round(JSON.stringify(main).length / 1024);
     if (mainKB > 950) {
